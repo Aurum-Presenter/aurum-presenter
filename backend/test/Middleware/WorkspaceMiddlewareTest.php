@@ -105,6 +105,31 @@ final class WorkspaceMiddlewareTest extends ControlTestCase
         $this->middleware->process($this->request($stranger), $this->capture($ignored));
     }
 
+    /**
+     * The change request asks for more than a 403: on a denied path the workspace file must
+     * never be opened at all. Membership is checked in the control database, so a request for
+     * somebody else's workspace leaves no file behind — which is also what stops a stranger
+     * creating workspace files by guessing ids.
+     */
+    public function testADeniedRequestNeverOpensAWorkspaceFile(): void
+    {
+        $stranger = $this->makeUser('stranger@example.com');
+        $unknown = \App\Support\Uuid::generate();
+
+        $request = (new ServerRequest())
+            ->withAttribute(RouteOptions::WORKSPACE_PARAM, $unknown)
+            ->withAttribute(SessionMiddleware::USER_ATTRIBUTE, ['id' => $stranger]);
+
+        try {
+            $this->middleware->process($request, $this->capture($ignored));
+            self::fail('A workspace this account is not in must not be reachable.');
+        } catch (ApiException) {
+            // The refusal is the point; what is on disk afterwards is what this test is about.
+        }
+
+        self::assertSame([], glob($this->directory . '/workspace/' . $unknown . '*') ?: []);
+    }
+
     public function testARouteWithNoWorkspaceParameterPassesStraightThrough(): void
     {
         $seen = null;
