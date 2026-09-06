@@ -96,19 +96,35 @@ export interface Annotation extends SyncColumns {
 export interface SetRecord extends SyncColumns {
   id: string;
   name: string;
+  /** The service or gig date. Null is allowed, but it is what drives the 14-day auto-pin. */
   scheduled_for: string | null;
   notes: string | null;
+  venue: string | null;
+  /** JSON array of user ids. Display only — being named on a set grants nothing. */
+  assigned_members: string | null;
+  pinned: number;
 }
+
+export type SetItemType = 'announcement' | 'scripture' | 'prayer' | 'video' | 'blank' | 'text';
 
 export interface SetItem extends SyncColumns {
   id: string;
   set_id: string;
+  /** A fractional rank string, so two offline reorders merge by string order. */
+  rank: string;
+  /** An item is a song, or it carries its own content. Never both, never neither. */
   song_id: string | null;
-  kind: 'song' | 'note' | 'break' | 'media';
-  title: string | null;
+  item_type: SetItemType | null;
+  content: string | null;
+  /** Kept so a set stays readable after its song is deleted. */
+  title_snapshot: string | null;
   key_override: string | null;
-  position: number;
-  notes: string | null;
+  capo_override: number | null;
+  arrangement_id: string | null;
+  sheet_part_override: string | null;
+  /** JSON array of section indices actually played; null means the whole chart. */
+  sections: string | null;
+  note: string | null;
 }
 
 export interface Preference extends SyncColumns {
@@ -209,6 +225,12 @@ export class WorkspaceDb extends Dexie {
     // version 1: devices in the field already hold version 1 databases.
     this.version(2).stores({
       song_placements: 'id, song_id, folder_id, change_seq',
+    });
+
+    // Set items move from an integer position to a fractional rank, which is the index the
+    // list is read by.
+    this.version(3).stores({
+      set_items: 'id, set_id, song_id, rank, change_seq',
     });
   }
 }

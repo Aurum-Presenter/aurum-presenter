@@ -5,6 +5,10 @@ import { Shell } from './app/Shell';
 import { WorkspaceProvider } from './app/workspace';
 import { LibraryPage } from './library/LibraryPage';
 import { TrashPage } from './library/TrashPage';
+import { PrintPage } from './sets/PrintPage';
+import { ReaderPage } from './sets/ReaderPage';
+import { SetPage } from './sets/SetPage';
+import { SetsPage } from './sets/SetsPage';
 import { SongPage } from './song/SongPage';
 
 type Phase = 'loading' | 'signed-out' | 'totp' | 'ready';
@@ -81,6 +85,10 @@ export function App() {
             <Route path="/library/trash" element={<TrashPage />} />
             <Route path="/song/:songId" element={<SongPage />} />
             <Route path="/song/:songId/edit" element={<SongPage edit />} />
+            <Route path="/sets" element={<SetsPage />} />
+            <Route path="/sets/:setId" element={<SetPage />} />
+            <Route path="/sets/:setId/read/:index" element={<ReaderPage />} />
+            <Route path="/sets/:setId/print" element={<PrintPage />} />
             <Route path="*" element={<Navigate to="/library" replace />} />
           </Route>
         </Routes>

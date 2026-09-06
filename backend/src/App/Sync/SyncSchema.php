@@ -33,8 +33,12 @@ final class SyncSchema
         'song_placements' => ['song_id', 'folder_id'],
         'sheets' => ['song_id', 'sheet_key', 'part', 'position', 'page_count', 'mime_type'],
         'annotations' => ['sheet_id', 'page', 'strokes', 'scope', 'author_id'],
-        'sets' => ['name', 'scheduled_for', 'notes'],
-        'set_items' => ['set_id', 'song_id', 'kind', 'title', 'key_override', 'position', 'notes'],
+        'sets' => ['name', 'scheduled_for', 'notes', 'venue', 'assigned_members', 'pinned'],
+        'set_items' => [
+            'set_id', 'rank', 'song_id', 'item_type', 'content', 'title_snapshot',
+            'key_override', 'capo_override', 'arrangement_id', 'sheet_part_override',
+            'sections', 'note',
+        ],
         'preferences' => ['user_id', 'scope_type', 'scope_id', 'name', 'value'],
     ];
 

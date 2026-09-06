@@ -19,6 +19,9 @@ export function Shell({ onSignOut }: { onSignOut: () => void }) {
           <NavLink to="/library" className={({ isActive }) => (isActive ? 'font-medium' : 'text-slate-500')}>
             Library
           </NavLink>
+          <NavLink to="/sets" className={({ isActive }) => (isActive ? 'font-medium' : 'text-slate-500')}>
+            Sets
+          </NavLink>
         </nav>
 
         <select

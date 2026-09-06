@@ -10,6 +10,7 @@ use App\Http\ApiException;
 use App\Support\Clock;
 use App\Support\Uuid;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception as DbalException;
 
 /**
  * The whole data API: a batch push and a delta pull.
@@ -49,6 +50,17 @@ final class SyncService
             foreach ($ops as $index => $op) {
                 try {
                     $results[] = $this->applyOne($db, $op, $userId, $role, $seq, $now);
+                    $seq++;
+                } catch (DbalException $e) {
+                    // A row the schema refuses — a set item that is both a song and a text item,
+                    // a capo outside 0-11. That is one bad operation, not a broken batch, so it
+                    // parks like any other permanent failure rather than failing the push.
+                    $results[] = [
+                        'op_id'  => is_string($op['op_id'] ?? null) ? $op['op_id'] : sprintf('index-%d', $index),
+                        'status' => 'rejected',
+                        'code'   => 'constraint_violation',
+                        'error'  => 'The server refused this row: ' . $e->getMessage(),
+                    ];
                     $seq++;
                 } catch (ApiException $e) {
                     // A permanent failure parks that one operation; the rest of the batch still
