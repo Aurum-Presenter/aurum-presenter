@@ -56,6 +56,14 @@ smoke: ## End-to-end check against the running stack
 stan: ## Static analysis
 	$(EXEC) vendor/bin/phpstan analyse
 
+.PHONY: mail
+mail: ## Deliver queued email (invitations, password resets)
+	$(EXEC) php bin/aurum mail:send
+
+.PHONY: signal
+signal: ## Follow the stage-pairing signalling relay's log
+	$(COMPOSE) logs -f signal
+
 .PHONY: web
 web: ## Run the PWA dev server
 	cd frontend && npm run dev

@@ -46,21 +46,31 @@ configure.
 | | |
 |---|---|
 | API | http://localhost:8080/api/v1/health |
+| Stage pairing relay | ws://localhost:8081 |
 | Mail (Mailpit) | http://localhost:8025 |
 | Object storage console | http://localhost:9001 |
 | PWA (dev) | http://localhost:5173 |
 
-Other targets: `make migrate`, `make purge`, `make workspaces`, `make logs`, `make shell`,
-`make test`, `make stan`. Run `make` on its own for the full list.
+Other targets: `make migrate`, `make purge`, `make workspaces`, `make mail`, `make signal`,
+`make logs`, `make shell`, `make test`, `make web-test`, `make stan`. Run `make` on its own for
+the full list.
+
+Two processes, not one: `api` serves the HTTP API, and `signal` runs the stage-pairing relay,
+which holds WebSockets open — something a request lifecycle cannot do. The relay carries SDP and
+ICE between two devices on a LAN and nothing else; session state never reaches it.
 
 ## Status
 
-Specification **approved**. Implementation in progress: the API skeleton, the two-tier SQLite
-layer, authentication with TOTP, the sync push/pull engine, the sheet-storage endpoints and the
-chord-chart feature — ChordPro parsing, chords-over-lyrics import, key-signature-aware
-transposition, capo and Nashville numbers — are in place; the presentation and stage-view
-features are not yet built.
+Specification **approved**, and every document in the index is now implemented: accounts,
+workspaces and invitations; the song library with local search and import; chord charts with
+key-signature-aware transposition, capo and Nashville numbers; sheet PDFs with offline files and
+annotations; sets, reader mode and a printable pack; live presentation with audience output,
+stage view and LAN pairing; the sync engine with its conflict review and storage controls; and
+the installable PWA.
 
-Charts are parsed and transposed entirely on the device (`frontend/src/chart/`): the server
-stores the ChordPro text and replicates it, and never re-letters a chord. That is what lets two
-members read the same chart in two different keys, offline, from one byte-identical body.
+Two properties run through all of it. **Charts are parsed and transposed entirely on the
+device** (`frontend/src/chart/`): the server stores the ChordPro text and replicates it, and
+never re-letters a chord — which is what lets two members read the same chart in two different
+keys, offline, from one byte-identical body. And **nothing waits for the network**: every read
+and every write goes to IndexedDB first, and sync is a background reconciliation that can fail
+without a single screen changing.

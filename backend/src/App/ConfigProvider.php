@@ -26,6 +26,7 @@ class ConfigProvider
                     'workspace:list'    => Command\ListWorkspacesCommand::class,
                     'maintenance:purge' => Command\PurgeCommand::class,
                     'signal:serve'      => Command\SignalCommand::class,
+                    'mail:send'         => Command\SendMailCommand::class,
                 ],
             ],
         ];
@@ -62,6 +63,8 @@ class ConfigProvider
 
                 'ObjectStore'                     => Factory\ObjectStoreFactory::class,
                 Signal\SignalServer::class        => Factory\SignalServerFactory::class,
+                Invite\InviteRepository::class    => Factory\InviteRepositoryFactory::class,
+                Auth\PasswordResetService::class  => Factory\PasswordResetServiceFactory::class,
 
                 Middleware\ApiErrorHandlerMiddleware::class => Factory\ApiErrorHandlerMiddlewareFactory::class,
                 Middleware\CorsMiddleware::class            => Factory\CorsMiddlewareFactory::class,

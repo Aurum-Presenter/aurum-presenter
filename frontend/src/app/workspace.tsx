@@ -18,6 +18,8 @@ import { SyncEngine } from '../sync/engine';
  */
 export interface WorkspaceContextValue {
   me: Account;
+  /** True when there is no account yet: everything works, nothing leaves the device. */
+  local: boolean;
   workspace: Workspace;
   db: WorkspaceDb;
   engine: SyncEngine;
@@ -44,7 +46,7 @@ export function useWorkspace(): WorkspaceContextValue {
   return value;
 }
 
-export function WorkspaceProvider({ me, children }: { me: Account; children: React.ReactNode }) {
+export function WorkspaceProvider({ me, local = false, children }: { me: Account; local?: boolean; children: React.ReactNode }) {
   const [workspaceId, setWorkspaceId] = useState(() => {
     const remembered = localStorage.getItem('aurum.workspace');
 
@@ -77,6 +79,12 @@ export function WorkspaceProvider({ me, children }: { me: Account; children: Rea
   }, []);
 
   useEffect(() => {
+    if (local) {
+      // Nothing to sync with. Pretending otherwise would mean a failing request every thirty
+      // seconds and an error chip that means nothing.
+      return;
+    }
+
     const tick = async (): Promise<void> => {
       await engine.sync().catch(() => undefined);
       setPending(await engine.pendingCount());
@@ -91,10 +99,11 @@ export function WorkspaceProvider({ me, children }: { me: Account; children: Rea
     const timer = setInterval(() => void tick(), 30_000);
 
     return () => clearInterval(timer);
-  }, [engine, blobs, db, me.id]);
+  }, [engine, blobs, db, me.id, local]);
 
   const value: WorkspaceContextValue = {
     me,
+    local,
     workspace,
     db,
     engine,

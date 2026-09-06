@@ -171,6 +171,12 @@ export const auth = {
     return result;
   },
 
+  forgotPassword: (email: string) =>
+    api<{ sent: boolean }>('/auth/password/forgot', { method: 'POST', body: JSON.stringify({ email }) }),
+
+  resetPassword: (token: string, password: string) =>
+    api<{ reset: boolean }>('/auth/password/reset', { method: 'POST', body: JSON.stringify({ token, password }) }),
+
   /** Restores a session on app start from the httpOnly refresh cookie. */
   restore: refresh,
 
@@ -182,6 +188,76 @@ export const auth = {
 
 export const account = {
   me: () => api<Account>('/account'),
+
+  totp: {
+    enrol: () => api<{ secret: string; provisioning_uri: string; digits: number; period: number }>(
+      '/account/totp/enrol',
+      { method: 'POST' },
+    ),
+    confirm: (code: string) => api<{ enrolled: boolean; recovery_codes: string[]; notice: string }>(
+      '/account/totp/confirm',
+      { method: 'POST', body: JSON.stringify({ code }) },
+    ),
+    disable: (password: string, code: string) => api<void>('/account/totp', {
+      method: 'DELETE',
+      body: JSON.stringify({ password, code }),
+    }),
+    newRecoveryCodes: (password: string, code: string) => api<{ recovery_codes: string[] }>(
+      '/account/totp/recovery-codes',
+      { method: 'POST', body: JSON.stringify({ password, code }) },
+    ),
+  },
+};
+
+export interface Member {
+  user_id: string;
+  email: string;
+  display_name: string;
+  role: 'owner' | 'editor' | 'viewer';
+}
+
+export interface Invite {
+  id: string;
+  email: string;
+  role: 'editor' | 'viewer';
+  expires_at: string;
+  created_at: string;
+  not_sent?: boolean;
+}
+
+export const members = {
+  list: (workspaceId: string) => api<{ members: Member[] }>(`/workspaces/${workspaceId}/members`),
+
+  setRole: (workspaceId: string, userId: string, role: Member['role']) =>
+    api<{ members: Member[] }>(`/workspaces/${workspaceId}/members/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    }),
+
+  remove: (workspaceId: string, userId: string) =>
+    api<{ members: Member[] }>(`/workspaces/${workspaceId}/members/${userId}`, { method: 'DELETE' }),
+};
+
+export const invites = {
+  list: (workspaceId: string) => api<{ invites: Invite[] }>(`/workspaces/${workspaceId}/invites`),
+
+  create: (workspaceId: string, email: string, role: Invite['role']) =>
+    api<{ invite: Invite; link: string; pending: Invite[] }>(`/workspaces/${workspaceId}/invites`, {
+      method: 'POST',
+      body: JSON.stringify({ email, role }),
+    }),
+
+  revoke: (workspaceId: string, inviteId: string) =>
+    api<{ invites: Invite[] }>(`/workspaces/${workspaceId}/invites/${inviteId}`, { method: 'DELETE' }),
+
+  preview: (token: string) => api<{
+    invite: { workspace_name: string; email: string; role: string; expires_at: string; used: boolean; expired: boolean };
+  }>(`/invites/${token}`),
+
+  accept: (token: string) => api<{ workspace: Workspace; role: string }>('/invites/accept', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  }),
 };
 
 export const workspaces = {
