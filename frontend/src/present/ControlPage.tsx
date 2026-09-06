@@ -20,6 +20,9 @@ import { ControlTransport } from './transport';
  * Every change bumps the revision and goes out to every output at once. Outputs that stop
  * acking are marked and left alone — one dead tablet must not stall the projector.
  */
+/** Per device, not per workspace: it is about this laptop's screens (presenter-output prefs). */
+const HINT_DISMISSED = 'aurum.presenter.hint-dismissed';
+
 export function ControlPage() {
   const { sessionId } = useParams();
   const { db, workspace } = useWorkspace();
@@ -36,6 +39,13 @@ export function ControlPage() {
   const [stageMessage, setStageMessage] = useState('');
   const [themeOpen, setThemeOpen] = useState(false);
   const [ending, setEnding] = useState(false);
+  const [hintDismissed, setHintDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(HINT_DISMISSED) === '1';
+    } catch {
+      return false;
+    }
+  });
 
   // The operator's laptop must not dim between songs any more than a musician's phone does.
   useWakeLock();
@@ -310,7 +320,24 @@ export function ControlPage() {
             </button>
           </div>
 
-          {audience?.hint != null && <p className="mb-2 text-xs text-slate-500">{audience.hint}</p>}
+          {audience?.hint != null && ! hintDismissed && (
+            <p className="mb-2 text-xs text-slate-500">
+              {audience.hint}{' '}
+              <button
+                className="underline"
+                onClick={() => {
+                  setHintDismissed(true);
+                  try {
+                    localStorage.setItem(HINT_DISMISSED, '1');
+                  } catch {
+                    // Without storage it comes back next time, which is the safe direction.
+                  }
+                }}
+              >
+                Got it
+              </button>
+            </p>
+          )}
 
           {codeExpired && (
             <p className="mb-2 text-xs text-amber-700 dark:text-amber-400">
