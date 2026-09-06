@@ -24,11 +24,13 @@ final class SyncSchema
         'songs' => [
             'folder_id', 'title', 'subtitle', 'authors', 'ccli_number', 'copyright', 'notes',
             'original_key', 'tempo', 'time_signature', 'tags',
+            'artist', 'alt_titles', 'duration_sec', 'archived',
         ],
         'arrangements' => [
             'song_id', 'name', 'body', 'default_key', 'is_default', 'position',
             'source_notation', 'source_text', 'capo_hint',
         ],
+        'song_placements' => ['song_id', 'folder_id'],
         'sheets' => ['song_id', 'sheet_key', 'part', 'position', 'page_count', 'mime_type'],
         'annotations' => ['sheet_id', 'page', 'strokes', 'scope', 'author_id'],
         'sets' => ['name', 'scheduled_for', 'notes'],

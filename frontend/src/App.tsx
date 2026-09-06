@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { account, auth, ApiError, type Account, type Workspace } from './api/client';
-import { WorkspaceDb, type Song } from './db/schema';
-import { uuidv7 } from './db/uuid';
+import { useCallback, useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { account, auth, ApiError, type Account } from './api/client';
+import { Shell } from './app/Shell';
+import { WorkspaceProvider } from './app/workspace';
+import { LibraryPage } from './library/LibraryPage';
+import { TrashPage } from './library/TrashPage';
 import { SongPage } from './song/SongPage';
-import { SyncEngine } from './sync/engine';
 
 type Phase = 'loading' | 'signed-out' | 'totp' | 'ready';
 
@@ -69,136 +71,21 @@ export function App() {
     return <TotpPrompt onSubmit={submitCode} error={error} />;
   }
 
-  return <Library me={me!} onSignOut={() => auth.logout().then(() => setPhase('signed-out'))} />;
-}
-
-function Library({ me, onSignOut }: { me: Account; onSignOut: () => void }) {
-  const [workspace, setWorkspace] = useState<Workspace>(me.workspaces[0]!);
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [pending, setPending] = useState(0);
-  const [online, setOnline] = useState(navigator.onLine);
-  const [title, setTitle] = useState('');
-  const [openSongId, setOpenSongId] = useState<string | null>(null);
-
-  const db = useMemo(() => new WorkspaceDb(workspace.id), [workspace.id]);
-  const engine = useMemo(() => new SyncEngine(db, workspace.id), [db, workspace.id]);
-  const canEdit = workspace.role !== 'viewer';
-
-  const refresh = useCallback(async () => {
-    const rows = await db.songs.filter((s) => s.deleted_at === null).toArray();
-    setSongs(rows.sort((a, b) => a.title.localeCompare(b.title)));
-    setPending(await engine.pendingCount());
-  }, [db, engine]);
-
-  useEffect(() => {
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
-
-    setOpenSongId(null);
-    void engine.sync().catch(() => undefined).then(refresh);
-    const timer = setInterval(() => void engine.sync().catch(() => undefined).then(refresh), 30_000);
-
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener('online', goOnline);
-      window.removeEventListener('offline', goOffline);
-      db.close();
-    };
-  }, [db, engine, refresh]);
-
-  const openSong = songs.find((song) => song.id === openSongId);
-
-  const addSong = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (title.trim() === '') return;
-
-    // Writes land locally and the UI updates immediately; the network is a background concern.
-    await engine.record('songs', uuidv7(), 'upsert', { title: title.trim() });
-    setTitle('');
-    await refresh();
-    void engine.sync().catch(() => undefined).then(refresh);
-  };
-
   return (
-    <div className="min-h-dvh bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-        <h1 className="text-lg font-semibold">Aurum Presenter</h1>
-
-        <select
-          className="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
-          value={workspace.id}
-          onChange={(e) => setWorkspace(me.workspaces.find((w) => w.id === e.target.value)!)}
-        >
-          {me.workspaces.map((w) => (
-            <option key={w.id} value={w.id}>{w.name} · {w.role}</option>
-          ))}
-        </select>
-
-        <span
-          className={`ml-auto rounded-full px-3 py-1 text-xs font-medium ${
-            online ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
-          }`}
-          title="Nothing is blocked while offline; the outbox drains when a connection returns."
-        >
-          {online ? 'synced' : 'offline'}{pending > 0 ? ` · ${pending} pending` : ''}
-        </span>
-
-        <button className="text-sm underline" onClick={onSignOut}>Sign out</button>
-      </header>
-
-      {openSong !== undefined ? (
-        <SongPage
-          db={db}
-          engine={engine}
-          song={openSong}
-          userId={me.id}
-          canEdit={canEdit}
-          onBack={() => setOpenSongId(null)}
-          onChanged={() => { void refresh(); void engine.sync().catch(() => undefined).then(refresh); }}
-        />
-      ) : (
-        <main className="mx-auto max-w-2xl p-4">
-          {me.totp.required && !me.totp.enrolled && (
-            <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              You own a band workspace, so two-factor authentication is required on this account.
-            </p>
-          )}
-
-          {canEdit && (
-            <form onSubmit={addSong} className="mb-6 flex gap-2">
-              <input
-                className="flex-1 rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
-                placeholder="Add a song…"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <button className="rounded bg-slate-900 px-4 py-2 text-white dark:bg-slate-100 dark:text-slate-900">
-                Add
-              </button>
-            </form>
-          )}
-
-          {songs.length === 0 ? (
-            <p className="text-sm text-slate-500">No songs yet. Add one — it works offline.</p>
-          ) : (
-            <ul className="divide-y divide-slate-200 dark:divide-slate-800">
-              {songs.map((song) => (
-                <li key={song.id}>
-                  <button className="w-full py-2 text-left" onClick={() => setOpenSongId(song.id)}>
-                    <span className="font-medium">{song.title}</span>
-                    {song.original_key && (
-                      <span className="ml-2 text-sm text-slate-500">key of {song.original_key}</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </main>
-      )}
-    </div>
+    <WorkspaceProvider me={me!}>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Shell onSignOut={() => auth.logout().then(() => setPhase('signed-out'))} />}>
+            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/library/folder/:folderId" element={<LibraryPage />} />
+            <Route path="/library/trash" element={<TrashPage />} />
+            <Route path="/song/:songId" element={<SongPage />} />
+            <Route path="/song/:songId/edit" element={<SongPage edit />} />
+            <Route path="*" element={<Navigate to="/library" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </WorkspaceProvider>
   );
 }
 

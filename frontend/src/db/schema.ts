@@ -25,6 +25,7 @@ export interface Folder extends SyncColumns {
 
 export interface Song extends SyncColumns {
   id: string;
+  /** The home folder. Null is "unfiled", which is a permanent state, not a broken one. */
   folder_id: string | null;
   title: string;
   subtitle: string | null;
@@ -35,7 +36,21 @@ export interface Song extends SyncColumns {
   original_key: string | null;
   tempo: number | null;
   time_signature: string | null;
+  /** JSON array of strings, stored whole: it is read whole and never queried across songs. */
   tags: string | null;
+  artist: string | null;
+  /** JSON array: the other names a congregation knows this song by. */
+  alt_titles: string | null;
+  duration_sec: number | null;
+  /** Out of the way, not gone. Excluded from lists and search unless asked for. */
+  archived: number;
+}
+
+/** A folder a song appears in besides its home folder. */
+export interface SongPlacement extends SyncColumns {
+  id: string;
+  song_id: string;
+  folder_id: string;
 }
 
 export interface Arrangement extends SyncColumns {
@@ -106,7 +121,7 @@ export interface Preference extends SyncColumns {
 }
 
 export type SyncedTable =
-  | 'folders' | 'songs' | 'arrangements' | 'sheets'
+  | 'folders' | 'songs' | 'song_placements' | 'arrangements' | 'sheets'
   | 'annotations' | 'sets' | 'set_items' | 'preferences';
 
 /** A durable local mutation, replayed to the server when connectivity returns. */
@@ -156,6 +171,7 @@ export interface BlobRecord {
 export class WorkspaceDb extends Dexie {
   folders!: EntityTable<Folder, 'id'>;
   songs!: EntityTable<Song, 'id'>;
+  song_placements!: EntityTable<SongPlacement, 'id'>;
   arrangements!: EntityTable<Arrangement, 'id'>;
   sheets!: EntityTable<Sheet, 'id'>;
   annotations!: EntityTable<Annotation, 'id'>;
@@ -188,10 +204,16 @@ export class WorkspaceDb extends Dexie {
       conflicts: 'id, table, record_id, reviewed_at',
       blobs: 'sheet_id, cached_at, pin_reason',
     });
+
+    // A song can be filed in more than one folder. Added in version 2 rather than folded into
+    // version 1: devices in the field already hold version 1 databases.
+    this.version(2).stores({
+      song_placements: 'id, song_id, folder_id, change_seq',
+    });
   }
 }
 
 export const SYNCED_TABLES: SyncedTable[] = [
-  'folders', 'songs', 'arrangements', 'sheets',
+  'folders', 'songs', 'song_placements', 'arrangements', 'sheets',
   'annotations', 'sets', 'set_items', 'preferences',
 ];

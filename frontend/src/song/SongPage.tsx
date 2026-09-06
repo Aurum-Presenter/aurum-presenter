@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useWorkspace } from '../app/workspace';
 import { ChartControls } from '../chart/ChartControls';
 import { ChartEditor, type SaveInput } from '../chart/ChartEditor';
-import { ChartView } from '../chart/ChartView';
+import { ChartView, type DisplayPrefs } from '../chart/ChartView';
 import { effectiveKey, sourceKey } from '../chart/effectiveKey';
 import { formatKey, parseKey, transposeKey, type Key } from '../chart/notes';
-import type { Arrangement, Song, WorkspaceDb } from '../db/schema';
+import type { Arrangement, Song } from '../db/schema';
 import { uuidv7 } from '../db/uuid';
-import { loadDisplay, saveDisplay } from '../prefs/display';
+import { listOf } from '../library/repository';
+import { useDisplay } from '../prefs/display';
 import { NO_PREFS, readSongPrefs, writeSongPrefs, type SongPrefs } from '../prefs/songPrefs';
-import type { SyncEngine } from '../sync/engine';
+import { SongMetadataDrawer } from './SongMetadataDrawer';
 
 /**
  * A song's chart: read it in your key, or edit it.
@@ -16,39 +20,34 @@ import type { SyncEngine } from '../sync/engine';
  * Everything on this page comes out of IndexedDB, so it renders with the radio off. The only
  * thing the network does here is carry the change to everyone else, later.
  */
+export function SongPage({ edit = false }: { edit?: boolean }) {
+  const { db, engine, library, me, canEdit } = useWorkspace();
+  const { songId } = useParams();
+  const navigate = useNavigate();
 
-export interface SongPageProps {
-  db: WorkspaceDb;
-  engine: SyncEngine;
-  song: Song;
-  userId: string;
-  canEdit: boolean;
-  /** A set can override the key for the duration of that set — business rule 7, first level. */
-  setKeyOverride?: string | null;
-  onBack: () => void;
-  onChanged: () => void;
-}
-
-export function SongPage(props: SongPageProps) {
-  const { db, engine, song, userId } = props;
-
-  const [arrangements, setArrangements] = useState<Arrangement[]>([]);
-  const [prefs, setPrefs] = useState<SongPrefs>(NO_PREFS);
-  const [display, setDisplay] = useState(loadDisplay);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(edit);
+  const [drawer, setDrawer] = useState(false);
   const [respelled, setRespelled] = useState(false);
+  const [prefsVersion, setPrefsVersion] = useState(0);
+  const [display, setDisplay] = useDisplay();
 
-  const load = useCallback(async () => {
-    const rows = await db.arrangements
-      .where('song_id').equals(song.id)
+  const song = useLiveQuery(() => db.songs.get(songId!), [db, songId]);
+
+  const arrangements = useLiveQuery(
+    async () => (await db.arrangements
+      .where('song_id').equals(songId!)
       .filter((row) => row.deleted_at === null)
-      .toArray();
+      .toArray())
+      .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name)),
+    [db, songId],
+    [],
+  );
 
-    setArrangements(rows.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name)));
-    setPrefs(await readSongPrefs(db, userId, song.id));
-  }, [db, song.id, userId]);
-
-  useEffect(() => { void load(); }, [load]);
+  const prefs = useLiveQuery(
+    () => readSongPrefs(db, me.id, songId!),
+    [db, me.id, songId, prefsVersion],
+    NO_PREFS,
+  );
 
   const arrangement = useMemo(() => {
     const chosen = arrangements.find((row) => row.id === prefs.arrangement_id);
@@ -58,7 +57,26 @@ export function SongPage(props: SongPageProps) {
     return chosen ?? arrangements.find((row) => row.is_default === 1) ?? arrangements[0] ?? null;
   }, [arrangements, prefs.arrangement_id]);
 
+  if (song === undefined) {
+    return <p className="p-6 text-sm text-slate-500">Loading…</p>;
+  }
+
+  if (song === null || song.deleted_at !== null) {
+    return (
+      <div className="p-6 text-sm">
+        <p className="text-slate-500">This song has been deleted.</p>
+        <Link className="underline" to="/library/trash">Open Trash</Link>
+      </div>
+    );
+  }
+
   const written = sourceKey({
+    arrangementDefault: arrangement?.default_key ?? null,
+    songOriginal: song.original_key,
+  });
+
+  const target = effectiveKey({
+    preferred: prefs.preferred_key,
     arrangementDefault: arrangement?.default_key ?? null,
     songOriginal: song.original_key,
   });
@@ -66,23 +84,9 @@ export function SongPage(props: SongPageProps) {
   // The reader's own capo wins; with none chosen, the arranger's suggestion stands.
   const capo = prefs.capo ?? arrangement?.capo_hint ?? 0;
 
-  const target = effectiveKey({
-    setOverride: props.setKeyOverride ?? null,
-    preferred: prefs.preferred_key,
-    arrangementDefault: arrangement?.default_key ?? null,
-    songOriginal: song.original_key,
-  });
-
   const update = async (changes: Partial<SongPrefs>): Promise<void> => {
-    const next = { ...prefs, ...changes };
-    setPrefs(next);
-    await writeSongPrefs(db, engine, userId, song.id, next);
-    props.onChanged();
-  };
-
-  const setDisplayPrefs = (next: typeof display): void => {
-    setDisplay(next);
-    saveDisplay(next);
+    await writeSongPrefs(db, engine, me.id, songId!, { ...prefs, ...changes });
+    setPrefsVersion((value) => value + 1);
   };
 
   const createArrangement = async (): Promise<void> => {
@@ -98,14 +102,11 @@ export function SongPage(props: SongPageProps) {
     });
 
     await update({ arrangement_id: id });
-    await load();
     setEditing(true);
   };
 
   const changeArrangement = async (id: string, changes: Record<string, unknown>): Promise<void> => {
     await engine.record('arrangements', id, 'upsert', changes);
-    await load();
-    props.onChanged();
   };
 
   /**
@@ -130,25 +131,48 @@ export function SongPage(props: SongPageProps) {
       source_notation: input.sourceNotation,
       source_text: input.sourceText,
     });
-
-    await load();
-    props.onChanged();
   };
 
   const setSongKey = async (key: Key): Promise<void> => {
     await engine.record('songs', song.id, 'upsert', { original_key: formatKey(key) });
-    props.onChanged();
   };
 
   return (
     <div className="mx-auto max-w-5xl p-4">
-      <button className="mb-3 text-sm underline" onClick={props.onBack}>← Library</button>
+      <Link className="text-sm underline" to="/library">← Library</Link>
 
-      <h2 className="text-2xl font-semibold">{song.title}</h2>
+      <div className="mb-3 mt-2 flex flex-wrap items-baseline gap-3">
+        <h2 className="text-2xl font-semibold">{song.title}</h2>
+        {song.artist !== null && <span className="text-slate-500">{song.artist}</span>}
+        {song.tempo !== null && <span className="text-sm text-slate-500">{song.tempo} bpm</span>}
+        {song.time_signature !== null && <span className="text-sm text-slate-500">{song.time_signature}</span>}
+        {listOf(song.tags).map((tag) => (
+          <span key={tag} className="rounded bg-slate-100 px-2 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">{tag}</span>
+        ))}
+
+        {canEdit && (
+          <span className="ml-auto flex gap-3 text-sm">
+            <button className="underline" onClick={() => setDrawer(true)}>Details</button>
+            <button className="underline" onClick={() => void library.duplicateSong(song.id).then((id) => id !== null && navigate(`/song/${id}`))}>
+              Duplicate
+            </button>
+            <button className="underline" onClick={() => void library.setArchived(song.id, song.archived === 0)}>
+              {song.archived === 1 ? 'Unarchive' : 'Archive'}
+            </button>
+            <button
+              className="underline text-red-700 dark:text-red-400"
+              onClick={() => { void library.deleteSong(song.id); navigate('/library'); }}
+            >
+              Delete
+            </button>
+          </span>
+        )}
+      </div>
+
       {song.subtitle !== null && <p className="mb-3 text-slate-500">{song.subtitle}</p>}
 
       {written === null ? (
-        <NoKeyYet canEdit={props.canEdit} onPick={setSongKey} />
+        <NoKeyYet canEdit={canEdit} onPick={(key) => void setSongKey(key)} />
       ) : (
         <ChartControls
           arrangements={arrangements.map((row) => ({ id: row.id, name: row.name }))}
@@ -161,9 +185,9 @@ export function SongPage(props: SongPageProps) {
           capo={capo}
           onCapo={(next) => void update({ capo: next })}
           display={display}
-          onDisplay={setDisplayPrefs}
+          onDisplay={setDisplay}
           respelled={respelled}
-          canEdit={props.canEdit}
+          canEdit={canEdit}
           editing={editing}
           onToggleEdit={() => setEditing((value) => ! value)}
         />
@@ -171,28 +195,28 @@ export function SongPage(props: SongPageProps) {
 
       <div className="mt-4">
         {arrangement === null ? (
-          <EmptyChart canEdit={props.canEdit} onCreate={() => void createArrangement()} />
-        ) : editing && props.canEdit ? (
+          <EmptyChart canEdit={canEdit} onCreate={() => void createArrangement()} />
+        ) : editing && canEdit ? (
           <>
-          <ArrangementSettings
-            arrangement={arrangement}
-            onChange={(changes) => void changeArrangement(arrangement.id, changes)}
-            onMakeDefault={() => void makeDefault(arrangement.id)}
-          />
-          <ChartEditor
-            body={arrangement.body}
-            onSave={(input) => void save(input)}
-            preview={(body) => (
-              <ChartView
-                cacheKey=""
-                body={body}
-                source={written ?? parseKey('C')!}
-                target={target.key ?? written ?? parseKey('C')!}
-                capo={capo}
-                display={display}
-              />
-            )}
-          />
+            <ArrangementSettings
+              arrangement={arrangement}
+              onChange={(changes) => void changeArrangement(arrangement.id, changes)}
+              onMakeDefault={() => void makeDefault(arrangement.id)}
+            />
+            <ChartEditor
+              body={arrangement.body}
+              onSave={(input) => void save(input)}
+              preview={(body) => (
+                <ChartView
+                  cacheKey=""
+                  body={body}
+                  source={written ?? parseKey('C')!}
+                  target={target.key ?? written ?? parseKey('C')!}
+                  capo={capo}
+                  display={display}
+                />
+              )}
+            />
           </>
         ) : (
           <ChartBody
@@ -206,11 +230,13 @@ export function SongPage(props: SongPageProps) {
         )}
       </div>
 
-      {props.canEdit && arrangements.length > 0 && ! editing && (
+      {canEdit && arrangements.length > 0 && ! editing && (
         <button className="mt-6 text-sm underline" onClick={() => void createArrangement()}>
           Add another arrangement
         </button>
       )}
+
+      {drawer && <SongMetadataDrawer song={song} onClose={() => setDrawer(false)} />}
     </div>
   );
 }
@@ -270,7 +296,7 @@ function ChartBody(props: {
   written: Key | null;
   target: Key | null;
   capo: number;
-  display: ReturnType<typeof loadDisplay>;
+  display: DisplayPrefs;
   onRespelled: (value: boolean) => void;
 }) {
   if (props.arrangement.body.trim() === '') {
@@ -331,3 +357,5 @@ function NoKeyYet({ canEdit, onPick }: { canEdit: boolean; onPick: (key: Key) =>
     </div>
   );
 }
+
+export type { Song };

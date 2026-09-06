@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { DEFAULT_DISPLAY, type DisplayPrefs } from '../chart/ChartView';
 
 /**
@@ -24,4 +25,16 @@ export function saveDisplay(display: DisplayPrefs): void {
   } catch {
     // ignored — see above
   }
+}
+
+/** Display preferences as state, written through to storage on every change. */
+export function useDisplay(): [DisplayPrefs, (next: DisplayPrefs) => void] {
+  const [display, setDisplay] = useState(loadDisplay);
+
+  const update = useCallback((next: DisplayPrefs) => {
+    setDisplay(next);
+    saveDisplay(next);
+  }, []);
+
+  return [display, update];
 }
