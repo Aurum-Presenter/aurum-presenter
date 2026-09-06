@@ -78,6 +78,11 @@ export async function claimLocalWorkspace(): Promise<Workspace | null> {
     const { workspace } = await workspaceApi.create(mode.name, mode.workspaceId);
     endLocalMode();
 
+    // Select it, too. Everything this person has made is in here, and the account they have
+    // just created also has an empty personal workspace that would otherwise win by being
+    // first in the list.
+    localStorage.setItem('aurum.workspace', workspace.id);
+
     return workspace;
   } catch {
     // Already claimed, or no connection. Either way the local data stays where it is and the

@@ -33,7 +33,9 @@ export function SongPage({ edit = false }: { edit?: boolean }) {
   const [prefsVersion, setPrefsVersion] = useState(0);
   const [display, setDisplay] = useDisplay();
 
-  const song = useLiveQuery(() => db.songs.get(songId!), [db, songId]);
+  // `undefined` means the query has not answered yet; `null` means it answered and there is no
+  // such song here. Collapsing the two leaves the page saying "Loading…" forever.
+  const song = useLiveQuery(async () => (await db.songs.get(songId!)) ?? null, [db, songId]);
 
   const arrangements = useLiveQuery(
     async () => (await db.arrangements
@@ -69,7 +71,19 @@ export function SongPage({ edit = false }: { edit?: boolean }) {
     return <p className="p-6 text-sm text-slate-500">Loading…</p>;
   }
 
-  if (song === null || song.deleted_at !== null) {
+  if (song === null) {
+    return (
+      <div className="p-6 text-sm">
+        <p className="text-slate-500">
+          That song is not in this workspace. It may belong to another one, or it may have been
+          deleted.
+        </p>
+        <Link className="underline" to="/library">Back to the library</Link>
+      </div>
+    );
+  }
+
+  if (song.deleted_at !== null) {
     return (
       <div className="p-6 text-sm">
         <p className="text-slate-500">This song has been deleted.</p>
