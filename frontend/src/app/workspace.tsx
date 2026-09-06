@@ -1,7 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Account, Workspace } from '../api/client';
+import { BlobQueue } from '../blobs/queue';
+import { BlobStore } from '../blobs/store';
+import { computeWanted } from '../blobs/wanted';
 import { WorkspaceDb } from '../db/schema';
 import { Library } from '../library/repository';
+import { readUserPrefs } from '../prefs/userPrefs';
+import { SheetsRepository } from '../sheets/repository';
 import { SyncEngine } from '../sync/engine';
 
 /**
@@ -17,6 +22,9 @@ export interface WorkspaceContextValue {
   db: WorkspaceDb;
   engine: SyncEngine;
   library: Library;
+  sheets: SheetsRepository;
+  blobs: BlobQueue;
+  files: BlobStore;
   canEdit: boolean;
   online: boolean;
   pending: number;
@@ -50,6 +58,9 @@ export function WorkspaceProvider({ me, children }: { me: Account; children: Rea
   const db = useMemo(() => new WorkspaceDb(workspace.id), [workspace.id]);
   const engine = useMemo(() => new SyncEngine(db, workspace.id), [db, workspace.id]);
   const library = useMemo(() => new Library(db, engine), [db, engine]);
+  const files = useMemo(() => new BlobStore(db, workspace.id), [db, workspace.id]);
+  const blobs = useMemo(() => new BlobQueue(db, files, workspace.id), [db, files, workspace.id]);
+  const sheets = useMemo(() => new SheetsRepository(db, engine, files), [db, engine, files]);
 
   useEffect(() => () => db.close(), [db]);
 
@@ -66,15 +77,21 @@ export function WorkspaceProvider({ me, children }: { me: Account; children: Rea
   }, []);
 
   useEffect(() => {
-    const tick = (): void => {
-      void engine.sync().catch(() => undefined).then(() => engine.pendingCount().then(setPending));
+    const tick = async (): Promise<void> => {
+      await engine.sync().catch(() => undefined);
+      setPending(await engine.pendingCount());
+
+      // Files move after the metadata, and never in front of it: a large sheet must not delay a
+      // key change reaching the rest of the band.
+      const part = (await readUserPrefs(db, me.id)).part;
+      await blobs.run(await computeWanted(db, me.id, part)).catch(() => undefined);
     };
 
-    tick();
-    const timer = setInterval(tick, 30_000);
+    void tick();
+    const timer = setInterval(() => void tick(), 30_000);
 
     return () => clearInterval(timer);
-  }, [engine]);
+  }, [engine, blobs, db, me.id]);
 
   const value: WorkspaceContextValue = {
     me,
@@ -82,6 +99,9 @@ export function WorkspaceProvider({ me, children }: { me: Account; children: Rea
     db,
     engine,
     library,
+    sheets,
+    blobs,
+    files,
     canEdit: workspace.role !== 'viewer',
     online,
     pending,

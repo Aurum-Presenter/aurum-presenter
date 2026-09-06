@@ -12,6 +12,8 @@ import { uuidv7 } from '../db/uuid';
 import { listOf } from '../library/repository';
 import { useDisplay } from '../prefs/display';
 import { NO_PREFS, readSongPrefs, writeSongPrefs, type SongPrefs } from '../prefs/songPrefs';
+import { NO_USER_PREFS, readUserPrefs, writeUserPrefs } from '../prefs/userPrefs';
+import { SheetsPanel } from '../sheets/SheetsPanel';
 import { SongMetadataDrawer } from './SongMetadataDrawer';
 
 /**
@@ -47,6 +49,12 @@ export function SongPage({ edit = false }: { edit?: boolean }) {
     () => readSongPrefs(db, me.id, songId!),
     [db, me.id, songId, prefsVersion],
     NO_PREFS,
+  );
+
+  const userPrefs = useLiveQuery(
+    () => readUserPrefs(db, me.id),
+    [db, me.id, prefsVersion],
+    NO_USER_PREFS,
   );
 
   const arrangement = useMemo(() => {
@@ -235,6 +243,15 @@ export function SongPage({ edit = false }: { edit?: boolean }) {
           Add another arrangement
         </button>
       )}
+
+      <SheetsPanel
+        songId={song.id}
+        songKey={target.key}
+        part={userPrefs.part}
+        onPart={(part) => { void writeUserPrefs(db, engine, me.id, { ...userPrefs, part }); setPrefsVersion((value) => value + 1); }}
+        pinned={prefs.pinned === true}
+        onPinned={(pinned) => void update({ pinned })}
+      />
 
       {drawer && <SongMetadataDrawer song={song} onClose={() => setDrawer(false)} />}
     </div>

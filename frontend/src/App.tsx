@@ -9,6 +9,7 @@ import { PrintPage } from './sets/PrintPage';
 import { ReaderPage } from './sets/ReaderPage';
 import { SetPage } from './sets/SetPage';
 import { SetsPage } from './sets/SetsPage';
+import { SheetViewerPage } from './sheets/SheetViewerPage';
 import { SongPage } from './song/SongPage';
 
 type Phase = 'loading' | 'signed-out' | 'totp' | 'ready';
@@ -85,6 +86,7 @@ export function App() {
             <Route path="/library/trash" element={<TrashPage />} />
             <Route path="/song/:songId" element={<SongPage />} />
             <Route path="/song/:songId/edit" element={<SongPage edit />} />
+            <Route path="/song/:songId/sheet/:sheetId" element={<SheetViewerPage />} />
             <Route path="/sets" element={<SetsPage />} />
             <Route path="/sets/:setId" element={<SetPage />} />
             <Route path="/sets/:setId/read/:index" element={<ReaderPage />} />

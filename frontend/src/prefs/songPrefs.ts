@@ -13,9 +13,11 @@ export interface SongPrefs {
   /** Null means "not chosen", which is not the same as 0 — the arranger's capo hint fills it. */
   capo: number | null;
   arrangement_id: string | null;
+  /** Kept offline on purpose: this song's sheets are downloaded and never evicted. */
+  pinned?: boolean;
 }
 
-export const NO_PREFS: SongPrefs = { preferred_key: null, capo: null, arrangement_id: null };
+export const NO_PREFS: SongPrefs = { preferred_key: null, capo: null, arrangement_id: null, pinned: false };
 
 const NAME = 'chart';
 

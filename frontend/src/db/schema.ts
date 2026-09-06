@@ -73,9 +73,14 @@ export interface Arrangement extends SyncColumns {
 export interface Sheet extends SyncColumns {
   id: string;
   song_id: string;
+  /** One of the twelve keys, or null for a sheet that suits any key. */
   sheet_key: string | null;
   part: string | null;
   position: number;
+  /** Null means the sheet applies to every arrangement of the song. */
+  arrangement_id: string | null;
+  label: string | null;
+  filename: string | null;
   /** Null until the file has been uploaded. That is the "not downloaded" state, not an error. */
   sha256: string | null;
   size: number | null;
@@ -184,6 +189,27 @@ export interface BlobRecord {
   cached_at: string;
 }
 
+/**
+ * The bytes themselves, but only where the origin private file system is missing. Everywhere
+ * else this table stays empty and the files live in OPFS.
+ */
+export interface FileRecord {
+  sheet_id: string;
+  bytes: Blob;
+}
+
+/** A file waiting to be uploaded. It is kept until the server has it, so nothing is lost. */
+export interface UploadRecord {
+  sheet_id: string;
+  sha256: string;
+  size: number;
+  filename: string;
+  page_count: number | null;
+  attempts: number;
+  last_error: string | null;
+  queued_at: string;
+}
+
 export class WorkspaceDb extends Dexie {
   folders!: EntityTable<Folder, 'id'>;
   songs!: EntityTable<Song, 'id'>;
@@ -196,6 +222,8 @@ export class WorkspaceDb extends Dexie {
   preferences!: EntityTable<Preference, 'id'>;
 
   outbox!: EntityTable<OutboxOp, 'seq'>;
+  files!: EntityTable<FileRecord, 'sheet_id'>;
+  uploads!: EntityTable<UploadRecord, 'sheet_id'>;
   sync_state!: EntityTable<SyncState, 'key'>;
   conflicts!: EntityTable<ConflictRecord, 'id'>;
   blobs!: EntityTable<BlobRecord, 'sheet_id'>;
@@ -231,6 +259,13 @@ export class WorkspaceDb extends Dexie {
     // list is read by.
     this.version(3).stores({
       set_items: 'id, set_id, song_id, rank, change_seq',
+    });
+
+    // Sheet files: the bytes (where OPFS is missing) and the queue of files the server has not
+    // been given yet.
+    this.version(4).stores({
+      files: 'sheet_id',
+      uploads: 'sheet_id, queued_at',
     });
   }
 }

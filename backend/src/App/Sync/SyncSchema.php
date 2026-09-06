@@ -31,7 +31,10 @@ final class SyncSchema
             'source_notation', 'source_text', 'capo_hint',
         ],
         'song_placements' => ['song_id', 'folder_id'],
-        'sheets' => ['song_id', 'sheet_key', 'part', 'position', 'page_count', 'mime_type'],
+        'sheets' => [
+            'song_id', 'sheet_key', 'part', 'position', 'page_count', 'mime_type',
+            'arrangement_id', 'label', 'filename',
+        ],
         'annotations' => ['sheet_id', 'page', 'strokes', 'scope', 'author_id'],
         'sets' => ['name', 'scheduled_for', 'notes', 'venue', 'assigned_members', 'pinned'],
         'set_items' => [
