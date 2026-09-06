@@ -19,7 +19,13 @@ final class TotpService
 {
     public const int PERIOD = 30;
     public const int DIGITS = 6;
-    public const int LEEWAY = self::PERIOD;
+    /**
+     * Seconds of clock drift accepted either side, which otphp requires to be *inside* the
+     * period — a leeway of a whole period would mean a code was valid in every window, and it
+     * refuses that outright. One second short of the period is the widest it allows, and the
+     * step-matching loop below still only accepts the three steps around now.
+     */
+    public const int LEEWAY = self::PERIOD - 1;
 
     public function __construct(
         private readonly SecretCipher $cipher,
