@@ -216,7 +216,7 @@ final class SyncServiceTest extends WorkspaceTestCase
 
         $row = $this->db->fetchAssociative('SELECT * FROM songs WHERE id = ?', [$songId]);
 
-        self::assertSame(1, (int) $row['change_seq']);
+        self::assertSame((int) $this->db->fetchOne('SELECT seq FROM sync_counter'), (int) $row['change_seq']);
         self::assertSame($this->userId, $row['updated_by']);
         self::assertNull($row['deleted_at']);
     }

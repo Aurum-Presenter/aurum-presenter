@@ -37,12 +37,19 @@ final class TotpServiceTest extends TestCase
         self::assertSame(intdiv($now, TotpService::PERIOD), $this->totp->verify($encrypted, $code, null, $now));
     }
 
-    /** Clock drift of a step either side is accepted; three steps out is not. */
+    /**
+     * Clock drift of a step either side is accepted; three steps out is not.
+     *
+     * The instant is fixed at the middle of a window rather than taken from the clock. The
+     * leeway is a second short of a full period — otphp will not accept a leeway equal to the
+     * period — so a code exactly one step away is forgiven from anywhere but the last second of
+     * a window, and a test that used the real clock would fail on those seconds alone.
+     */
     public function testOneStepOfDriftIsForgiven(): void
     {
         $secret = $this->totp->generateSecret();
         $encrypted = $this->totp->encryptSecret($secret);
-        $now = time();
+        $now = intdiv(time(), TotpService::PERIOD) * TotpService::PERIOD + intdiv(TotpService::PERIOD, 2);
         $authenticator = TOTP::createFromSecret($secret);
 
         self::assertNotNull($this->totp->verify($encrypted, $authenticator->at($now - TotpService::PERIOD), null, $now));

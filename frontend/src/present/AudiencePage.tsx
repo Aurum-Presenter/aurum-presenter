@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { backgroundUrl } from './background';
 import { audienceSlide, DEFAULT_THEME, type SessionState } from './session';
 import { goFullscreen } from './displays';
 import { AudienceSlide } from './SlideView';
+import { OutputBoundary } from './OutputBoundary';
 import { OutputTransport } from './transport';
 import { useWakeLock } from '../pwa/wakeLock';
 
@@ -22,12 +23,14 @@ export function AudiencePage() {
   const [params] = useSearchParams();
   const sessionId = params.get('session') ?? '';
   const [state, setState] = useState<SessionState | null>(null);
+  const transport = useRef<OutputTransport | null>(null);
 
   // A projector screen that sleeps mid-service is the same failure as a lost slide.
   useWakeLock();
 
   useEffect(() => {
-    const transport = new OutputTransport(sessionId, 'audience', screenLabel(), setState);
+    const output = new OutputTransport(sessionId, 'audience', screenLabel(), setState);
+    transport.current = output;
 
     // The first paint comes from the local mirror, so a window reopened mid-service shows the
     // current slide before the control surface has said anything.
@@ -49,7 +52,10 @@ export function AudiencePage() {
       db.close();
     })();
 
-    return () => transport.close();
+    return () => {
+      output.close();
+      transport.current = null;
+    };
   }, [sessionId, params]);
 
   useEffect(() => {
@@ -88,7 +94,9 @@ export function AudiencePage() {
       }}
     >
       {state !== null && ! state.ended && (
-        <AudienceSlide slide={slide} theme={theme} workspaceId={state.workspace_id} />
+        <OutputBoundary background={colourOf(theme)} onRetry={() => transport.current?.requestState()}>
+          <AudienceSlide slide={slide} theme={theme} workspaceId={state.workspace_id} />
+        </OutputBoundary>
       )}
 
       {state !== null && ! state.ended && state.message != null && (

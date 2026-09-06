@@ -207,6 +207,12 @@ export class OutputTransport {
     this.ack();
   }
 
+  /** Ask the control surface to send the current state again — after a failed render, say. */
+  requestState(): void {
+    this.revision = -1;
+    this.channel.postMessage({ type: 'request-state', output_id: this.outputId } satisfies SessionMessage);
+  }
+
   requestAdvance(delta: number): void {
     this.channel.postMessage({ type: 'advance', output_id: this.outputId, delta } satisfies SessionMessage);
   }

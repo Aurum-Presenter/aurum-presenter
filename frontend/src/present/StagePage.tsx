@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { parseKey } from '../chart/notes';
 import { nextSlide, stageSlide, type SessionMessage, type SessionState } from './session';
 import { StageSlide } from './SlideView';
+import { OutputBoundary } from './OutputBoundary';
 import { OutputTransport } from './transport';
 import { useWakeLock } from '../pwa/wakeLock';
 
@@ -127,7 +128,9 @@ export function StagePage({ external }: { external?: { state: SessionState | nul
 
       <main className="grid flex-1 gap-4 overflow-hidden p-4 md:grid-cols-[3fr_2fr]">
         <section className="overflow-auto">
-          <StageSlide slide={current} targetKey={key} showChords={prefs.chords} scale={prefs.fontVh} />
+          <OutputBoundary background="#000000" onRetry={() => transport?.requestState()}>
+            <StageSlide slide={current} targetKey={key} showChords={prefs.chords} scale={prefs.fontVh} />
+          </OutputBoundary>
         </section>
 
         {prefs.preview && (
