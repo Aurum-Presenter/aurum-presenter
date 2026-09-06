@@ -25,6 +25,7 @@ class ConfigProvider
                     'migrate'           => Command\MigrateCommand::class,
                     'workspace:list'    => Command\ListWorkspacesCommand::class,
                     'maintenance:purge' => Command\PurgeCommand::class,
+                    'signal:serve'      => Command\SignalCommand::class,
                 ],
             ],
         ];
@@ -60,6 +61,7 @@ class ConfigProvider
                 Auth\AccountService::class        => Factory\AccountServiceFactory::class,
 
                 'ObjectStore'                     => Factory\ObjectStoreFactory::class,
+                Signal\SignalServer::class        => Factory\SignalServerFactory::class,
 
                 Middleware\ApiErrorHandlerMiddleware::class => Factory\ApiErrorHandlerMiddlewareFactory::class,
                 Middleware\CorsMiddleware::class            => Factory\CorsMiddlewareFactory::class,

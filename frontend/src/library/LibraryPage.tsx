@@ -5,6 +5,7 @@ import { useWorkspace } from '../app/workspace';
 import type { Folder, Song } from '../db/schema';
 import { FolderTree, SONG_DRAG_TYPE } from './FolderTree';
 import { ImportDialog } from './ImportDialog';
+import { lastPlayed } from '../present/store';
 import { listOf, songsInFolder } from './repository';
 import { lyricsOf, type IndexedSong } from './search';
 import { useSearch } from './useSearch';
@@ -16,7 +17,7 @@ import { useSearch } from './useSearch';
  * device already has, because there is no request to wait for.
  */
 
-type Sort = 'title' | 'recent' | 'tempo' | 'key';
+type Sort = 'title' | 'recent' | 'tempo' | 'key' | 'played';
 
 export function LibraryPage() {
   const { db, library, canEdit } = useWorkspace();
@@ -47,6 +48,9 @@ export function LibraryPage() {
   );
 
   const placements = useLiveQuery(() => db.song_placements.toArray(), [db], []);
+
+  // When each song was last played, from this device's own session log.
+  const played = useLiveQuery(() => lastPlayed(db), [db], new Map<string, string>());
   const arrangements = useLiveQuery(() => db.arrangements.toArray(), [db], []);
 
   // The search index wants the words a person would type: titles, artist, tags and the lyrics
@@ -135,11 +139,13 @@ export function LibraryPage() {
           return (a.tempo ?? 999) - (b.tempo ?? 999);
         case 'key':
           return (a.original_key ?? 'zz').localeCompare(b.original_key ?? 'zz');
+        case 'played':
+          return (played.get(b.id) ?? '').localeCompare(played.get(a.id) ?? '');
         default:
           return a.title.localeCompare(b.title);
       }
     });
-  }, [hits, songs, placements, folderId, showArchived, tag, key, sort]);
+  }, [hits, songs, placements, folderId, showArchived, tag, key, sort, played]);
 
   const duplicates = useMemo(() => {
     const seen = new Map<string, number>();
@@ -215,6 +221,7 @@ export function LibraryPage() {
             <option value="recent">Recently edited</option>
             <option value="tempo">Tempo</option>
             <option value="key">Key</option>
+            <option value="played">Last played</option>
           </select>
 
           {tags.length > 0 && (
@@ -272,6 +279,9 @@ export function LibraryPage() {
                   {song.original_key !== null && <span className="text-sm text-slate-500">· {song.original_key}</span>}
                   {song.tempo !== null && <span className="text-sm text-slate-500">· {song.tempo} bpm</span>}
                   {song.archived === 1 && <span className="text-xs text-amber-600">archived</span>}
+                  {sort === 'played' && played.get(song.id) !== undefined && (
+                    <span className="text-xs text-slate-400">played {played.get(song.id)!.slice(0, 10)}</span>
+                  )}
                   {(duplicates.get(song.title.trim().toLowerCase()) ?? 0) > 1 && (
                     <span className="text-xs text-slate-400" title="Another song has this title">possible duplicate</span>
                   )}

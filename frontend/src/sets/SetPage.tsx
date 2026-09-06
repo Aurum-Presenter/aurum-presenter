@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useWorkspace } from '../app/workspace';
 import { formatKey, parseKey, transposeKey } from '../chart/notes';
+import { DEFAULT_THEME, type Theme } from '../present/session';
+import { createSession, takeSnapshot } from '../present/store';
 import { AddItemsDialog } from './AddItemsDialog';
 import { isAutoPinned, parseList, Sets } from './repository';
 import { useResolvedSet, type ResolvedItem } from './useResolvedSet';
@@ -15,12 +17,32 @@ import { useResolvedSet, type ResolvedItem } from './useResolvedSet';
  */
 export function SetPage() {
   const { setId } = useParams();
-  const { db, engine, me, canEdit } = useWorkspace();
+  const { db, engine, me, canEdit, workspace } = useWorkspace();
+
+  /** The workspace's default theme, or the built-in one before a band has made its own. */
+  const workspaceTheme = async (): Promise<Theme> => {
+    const rows = await db.presenter_themes.filter((row) => row.deleted_at === null).toArray();
+    const found = rows.find((row) => row.is_default === 1) ?? rows[0];
+
+    return found === undefined ? DEFAULT_THEME : {
+      id: found.id,
+      name: found.name,
+      font_family: found.font_family,
+      font_size_vh: found.font_size_vh,
+      text_color: found.text_color,
+      background_kind: found.background_kind,
+      background_value: found.background_value,
+      align: found.align,
+      safe_area_pct: found.safe_area_pct,
+      show_section_labels: found.show_section_labels === 1,
+    };
+  };
   const navigate = useNavigate();
   const sets = new Sets(db, engine);
   const { set, items } = useResolvedSet(setId);
 
   const [adding, setAdding] = useState(false);
+  const [presenting, setPresenting] = useState(false);
   const [dragging, setDragging] = useState<number | null>(null);
 
   if (set === null) {
@@ -77,9 +99,25 @@ export function SetPage() {
           <span className="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-900">kept offline — it is coming up</span>
         )}
 
-        <span className="ml-auto flex gap-3 text-sm">
+        <span className="ml-auto flex items-center gap-3 text-sm">
           {items.length > 0 && <Link className="underline" to={`/sets/${set.id}/read/0`}>Read</Link>}
           {items.length > 0 && <Link className="underline" to={`/sets/${set.id}/print`}>Print</Link>}
+          {items.length > 0 && (
+            <button
+              className="rounded bg-slate-900 px-3 py-1 text-white dark:bg-slate-100 dark:text-slate-900"
+              disabled={presenting}
+              onClick={async () => {
+                // The snapshot is taken here, once: from this moment the session is immune to
+                // anything anyone edits anywhere.
+                setPresenting(true);
+                const theme = await workspaceTheme();
+                const session = await createSession(db, workspace.id, takeSnapshot(set.id, set.name, items), theme);
+                navigate(`/present/${session.session_id}`);
+              }}
+            >
+              Present
+            </button>
+          )}
         </span>
       </div>
 

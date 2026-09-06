@@ -43,6 +43,10 @@ final class SyncSchema
             'sections', 'note',
         ],
         'preferences' => ['user_id', 'scope_type', 'scope_id', 'name', 'value'],
+        'presenter_themes' => [
+            'name', 'is_default', 'font_family', 'font_size_vh', 'text_color',
+            'background_kind', 'background_value', 'align', 'safe_area_pct', 'show_section_labels',
+        ],
     ];
 
     /**

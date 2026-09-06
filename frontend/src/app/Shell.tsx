@@ -1,4 +1,7 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { resumable } from '../present/store';
+import type { SessionState } from '../present/session';
 import { useWorkspace } from './workspace';
 
 /**
@@ -8,7 +11,14 @@ import { useWorkspace } from './workspace';
  * for it, so nothing else needs to talk about it.
  */
 export function Shell({ onSignOut }: { onSignOut: () => void }) {
-  const { me, workspace, online, pending, syncNow, setWorkspace } = useWorkspace();
+  const { me, workspace, db, online, pending, syncNow, setWorkspace } = useWorkspace();
+  const navigate = useNavigate();
+  const [resume, setResume] = useState<SessionState | null>(null);
+
+  // A control window closed by accident is offered back for a minute (acceptance criterion 5).
+  useEffect(() => {
+    void resumable(db).then(setResume);
+  }, [db]);
 
   return (
     <div className="min-h-dvh bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -21,6 +31,9 @@ export function Shell({ onSignOut }: { onSignOut: () => void }) {
           </NavLink>
           <NavLink to="/sets" className={({ isActive }) => (isActive ? 'font-medium' : 'text-slate-500')}>
             Sets
+          </NavLink>
+          <NavLink to="/join" className={({ isActive }) => (isActive ? 'font-medium' : 'text-slate-500')}>
+            Join session
           </NavLink>
         </nav>
 
@@ -46,6 +59,21 @@ export function Shell({ onSignOut }: { onSignOut: () => void }) {
 
         <button className="text-sm underline" onClick={onSignOut}>Sign out</button>
       </header>
+
+      {resume !== null && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          <span>
+            A session of “{resume.set_snapshot.setName}” was running, at slide {resume.index + 1}.
+          </span>
+          <button
+            className="underline"
+            onClick={() => { setResume(null); navigate(`/present/${resume.session_id}`); }}
+          >
+            Resume it
+          </button>
+          <button className="underline" onClick={() => setResume(null)}>Dismiss</button>
+        </div>
+      )}
 
       <Outlet />
     </div>

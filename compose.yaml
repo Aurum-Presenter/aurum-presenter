@@ -42,6 +42,28 @@ services:
       retries: 5
       start_period: 20s
 
+  # The stage-pairing signalling relay: SDP and ICE between two devices on a LAN, and nothing
+  # else. A separate process because it holds sockets open, which the request lifecycle cannot,
+  # and because it must never be able to block an API request while it waits for a tablet.
+  signal:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    command: php bin/aurum signal:serve --port 8081
+    ports:
+      - "${SIGNAL_PORT:-8081}:8081"
+    volumes:
+      - ./backend:/app
+      - aurum-data:/app/var/data
+    environment:
+      APP_ENV: "${APP_ENV:-development}"
+      DATA_DIR: /app/var/data
+      APP_SIGNING_KEY: "${APP_SIGNING_KEY:?set APP_SIGNING_KEY in .env}"
+      APP_SECRET_KEY: "${APP_SECRET_KEY:?set APP_SECRET_KEY in .env}"
+    depends_on:
+      api:
+        condition: service_healthy
+
   # Sheet PDFs. Content-addressed keys under sheets/{workspace}/{sha256}.pdf.
   minio:
     image: minio/minio:latest

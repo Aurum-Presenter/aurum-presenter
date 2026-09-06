@@ -5,6 +5,10 @@ import { Shell } from './app/Shell';
 import { WorkspaceProvider } from './app/workspace';
 import { LibraryPage } from './library/LibraryPage';
 import { TrashPage } from './library/TrashPage';
+import { AudiencePage } from './present/AudiencePage';
+import { ControlPage } from './present/ControlPage';
+import { JoinPage } from './present/JoinPage';
+import { StagePage } from './present/StagePage';
 import { PrintPage } from './sets/PrintPage';
 import { ReaderPage } from './sets/ReaderPage';
 import { SetPage } from './sets/SetPage';
@@ -80,6 +84,10 @@ export function App() {
     <WorkspaceProvider me={me!}>
       <BrowserRouter>
         <Routes>
+          {/* Output windows carry no app chrome: they are screens, not pages. */}
+          <Route path="/output/audience" element={<AudiencePage />} />
+          <Route path="/output/stage" element={<StagePage />} />
+
           <Route element={<Shell onSignOut={() => auth.logout().then(() => setPhase('signed-out'))} />}>
             <Route path="/library" element={<LibraryPage />} />
             <Route path="/library/folder/:folderId" element={<LibraryPage />} />
@@ -91,6 +99,8 @@ export function App() {
             <Route path="/sets/:setId" element={<SetPage />} />
             <Route path="/sets/:setId/read/:index" element={<ReaderPage />} />
             <Route path="/sets/:setId/print" element={<PrintPage />} />
+            <Route path="/present/:sessionId" element={<ControlPage />} />
+            <Route path="/join" element={<JoinPage />} />
             <Route path="*" element={<Navigate to="/library" replace />} />
           </Route>
         </Routes>

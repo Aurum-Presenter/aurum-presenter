@@ -132,6 +132,21 @@ export interface SetItem extends SyncColumns {
   note: string | null;
 }
 
+/** How the audience screen looks. Shared by the workspace, like the songs are. */
+export interface PresenterTheme extends SyncColumns {
+  id: string;
+  name: string;
+  is_default: number;
+  font_family: string;
+  font_size_vh: number;
+  text_color: string;
+  background_kind: 'color' | 'gradient' | 'image';
+  background_value: string;
+  align: 'left' | 'center';
+  safe_area_pct: number;
+  show_section_labels: number;
+}
+
 export interface Preference extends SyncColumns {
   id: string;
   user_id: string;
@@ -143,7 +158,7 @@ export interface Preference extends SyncColumns {
 
 export type SyncedTable =
   | 'folders' | 'songs' | 'song_placements' | 'arrangements' | 'sheets'
-  | 'annotations' | 'sets' | 'set_items' | 'preferences';
+  | 'annotations' | 'sets' | 'set_items' | 'preferences' | 'presenter_themes';
 
 /** A durable local mutation, replayed to the server when connectivity returns. */
 export interface OutboxOp {
@@ -210,6 +225,27 @@ export interface UploadRecord {
   queued_at: string;
 }
 
+/**
+ * A running session, mirrored locally on every revision so a control window that crashes can
+ * offer to resume. It is never synced: a session is local and ephemeral by design.
+ */
+export interface LiveSessionRecord {
+  session_id: string;
+  state: unknown;
+  updated_at: string;
+}
+
+/** What was shown and when. The last twenty sessions, on this device only. */
+export interface SessionLogRecord {
+  session_id: string;
+  set_id: string | null;
+  set_name: string;
+  started_at: string;
+  ended_at: string | null;
+  song_ids: string[];
+  events: { at: string; index: number; title: string }[];
+}
+
 export class WorkspaceDb extends Dexie {
   folders!: EntityTable<Folder, 'id'>;
   songs!: EntityTable<Song, 'id'>;
@@ -220,10 +256,13 @@ export class WorkspaceDb extends Dexie {
   sets!: EntityTable<SetRecord, 'id'>;
   set_items!: EntityTable<SetItem, 'id'>;
   preferences!: EntityTable<Preference, 'id'>;
+  presenter_themes!: EntityTable<PresenterTheme, 'id'>;
 
   outbox!: EntityTable<OutboxOp, 'seq'>;
   files!: EntityTable<FileRecord, 'sheet_id'>;
   uploads!: EntityTable<UploadRecord, 'sheet_id'>;
+  live_sessions!: EntityTable<LiveSessionRecord, 'session_id'>;
+  session_log!: EntityTable<SessionLogRecord, 'session_id'>;
   sync_state!: EntityTable<SyncState, 'key'>;
   conflicts!: EntityTable<ConflictRecord, 'id'>;
   blobs!: EntityTable<BlobRecord, 'sheet_id'>;
@@ -267,10 +306,21 @@ export class WorkspaceDb extends Dexie {
       files: 'sheet_id',
       uploads: 'sheet_id, queued_at',
     });
+
+    // Live sessions and their log. Local only, never synced — a session has no meaning after
+    // it ends, and none at all on another device.
+    this.version(5).stores({
+      live_sessions: 'session_id, updated_at',
+      session_log: 'session_id, started_at',
+    });
+
+    this.version(6).stores({
+      presenter_themes: 'id, change_seq',
+    });
   }
 }
 
 export const SYNCED_TABLES: SyncedTable[] = [
   'folders', 'songs', 'song_placements', 'arrangements', 'sheets',
-  'annotations', 'sets', 'set_items', 'preferences',
+  'annotations', 'sets', 'set_items', 'preferences', 'presenter_themes',
 ];

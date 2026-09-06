@@ -1,4 +1,4 @@
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8080';
+export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8080';
 
 export class ApiError extends Error {
   constructor(
@@ -31,6 +31,15 @@ export function setAccessToken(token: string | null): void {
 
 export function hasAccessToken(): boolean {
   return accessToken !== null;
+}
+
+/**
+ * The current token, for the one caller that cannot use `api()`: a WebSocket handshake, which
+ * a browser will not let us add headers to, so the token goes in the query string instead. It
+ * lives fifteen minutes and the socket lives two, which is the trade that makes that acceptable.
+ */
+export function currentAccessToken(): string | null {
+  return accessToken;
 }
 
 async function refresh(): Promise<boolean> {
