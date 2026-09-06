@@ -56,7 +56,12 @@ export class PairingHost {
     private readonly code: string,
     private readonly workspaceId: string,
     private readonly onPeer: (peer: Peer) => void,
-    private readonly onMessage: (message: SessionMessage) => void,
+    /**
+     * Messages arrive tagged with the id the *control* gave this peer, not with whatever the
+     * device claims to be. A device cannot borrow another output's identity, which matters
+     * because that identity is what carries the right to advance the session.
+     */
+    private readonly onMessage: (outputId: string, message: SessionMessage) => void,
     private readonly onStatus: (status: 'waiting' | 'connected' | 'failed') => void,
   ) {}
 
@@ -95,7 +100,7 @@ export class PairingHost {
         const outputId = crypto.randomUUID();
 
         channel.onmessage = (message: MessageEvent<string>) =>
-          this.onMessage(JSON.parse(message.data) as SessionMessage);
+          this.onMessage(outputId, JSON.parse(message.data) as SessionMessage);
 
         channel.onopen = () => {
           this.onStatus('connected');

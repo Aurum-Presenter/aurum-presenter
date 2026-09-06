@@ -146,7 +146,11 @@ export function ControlPage() {
           label: 'Paired device',
         });
       },
-      (incoming) => transport.current?.receive(incoming),
+      (outputId, incoming) => transport.current?.receive(
+        // A state message can only travel outwards; anything else is stamped with the id this
+        // control gave the peer, so a device cannot answer as another output.
+        incoming.type === 'state' ? incoming : { ...incoming, output_id: outputId },
+      ),
       setPairing,
     );
 

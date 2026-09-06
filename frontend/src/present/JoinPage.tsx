@@ -24,6 +24,31 @@ export function JoinPage() {
   const since = useRef(0);
   const revision = useRef(-1);
 
+  /**
+   * The control surface counts an output as responding by its acks, so a paired device says so
+   * on every state and once a second in between — the same heartbeat a window on the control
+   * device sends.
+   */
+  const ack = useCallback((): void => {
+    send.current?.({
+      type: 'ack',
+      output_id: 'paired',
+      kind: 'paired-stage',
+      label: 'Paired device',
+      revision: revision.current,
+    });
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (send.current !== null) {
+        ack();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [ack]);
+
   const attempt = useCallback(async (value: string): Promise<void> => {
     setStatus('joining');
     setProblem(null);
@@ -37,6 +62,7 @@ export function JoinPage() {
             revision.current = message.state.revision;
             setState(message.state);
             setStatus('joined');
+            ack();
           }
         },
         () => setStatus('stale'),
