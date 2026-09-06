@@ -20,11 +20,33 @@ const SHARE_CACHE = 'aurum-shared-files';
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
-// The document itself is network-first with a short timeout, so a new build is picked up
-// quickly when there is a connection and instantly from cache when there is not.
+/**
+ * Navigation: the freshest document when there is a connection, the precached shell when there
+ * is not.
+ *
+ * The fallback has to be the *precached* document, not a runtime cache keyed by URL. Every route
+ * in this app is client-side — /sets, /song/x, /present/y — so a per-URL cache only ever holds
+ * the pages that happened to be visited online, and the first offline navigation to anything
+ * else fails. The shell is one file that answers for all of them.
+ */
+const shell = createHandlerBoundToURL('/index.html');
+const freshest = new NetworkFirst({ cacheName: 'aurum-shell', networkTimeoutSeconds: 2 });
+
 registerRoute(
   new NavigationRoute(
-    new NetworkFirst({ cacheName: 'aurum-shell', networkTimeoutSeconds: 2 }),
+    async (options) => {
+      try {
+        const response = await freshest.handle(options);
+
+        if (response !== undefined) {
+          return response;
+        }
+      } catch {
+        // Offline, or slower than the timeout. Either way the shell is already here.
+      }
+
+      return shell(options);
+    },
     { denylist: [/^\/api\//] },
   ),
 );
@@ -70,7 +92,3 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     void self.skipWaiting();
   }
 });
-
-// Kept for the app shell's own reference; `createHandlerBoundToURL` is what NavigationRoute
-// uses when the precached document is the right answer.
-void createHandlerBoundToURL;

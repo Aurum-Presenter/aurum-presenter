@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { account, auth, type Account } from './api/client';
+import { account, auth, cachedAccount, forgetCachedAccount, type Account } from './api/client';
 import { AuthScreen } from './auth/AuthScreen';
 import { claimLocalWorkspace, localAccount, localMode } from './auth/local';
 import { Shell } from './app/Shell';
@@ -61,16 +61,34 @@ export function App() {
     }
 
     // The refresh cookie is httpOnly, so the only way to know whether a session survives a
-    // reload is to ask. This is also the one network call the app makes before it will render
-    // offline content — and it is allowed to fail.
-    // A local-mode device stays where it is if there is no session: it has songs on it, and a
-    // sign-in screen in front of them would be a wall, not a door.
+    // reload is to ask. This is the one network call the app makes before it will render, and
+    // it is allowed to fail: a launch with no connection must reach the library, not a wall.
     const noSession = (): void => setPhase(started === null ? 'signed-out' : 'ready');
 
-    auth
-      .restore()
-      .then((ok) => (ok ? loadAccount() : noSession()))
-      .catch(noSession);
+    void auth.restore().then(async (result) => {
+      if (result === 'ok') {
+        await loadAccount();
+        return;
+      }
+
+      if (result === 'offline') {
+        const remembered = cachedAccount();
+
+        if (remembered !== null) {
+          // The session has not ended — the server simply could not be asked. Everything this
+          // device holds is still readable, and the outbox drains when a connection returns.
+          setMe(remembered);
+          setPhase('ready');
+          return;
+        }
+      }
+
+      if (result === 'signed-out') {
+        forgetCachedAccount();
+      }
+
+      noSession();
+    }).catch(noSession);
   }, [loadAccount]);
 
   if (phase === 'loading') {

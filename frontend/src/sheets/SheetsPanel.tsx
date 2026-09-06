@@ -121,13 +121,15 @@ function SheetRow(props: {
       </Link>
 
       {sheet.label !== null && <span className="text-slate-500">{sheet.label}</span>}
-      {sheet.page_count !== null && <span className="text-slate-400">{sheet.page_count} pages</span>}
+      {sheet.page_count !== null && (
+        <span className="text-slate-400">{sheet.page_count} page{sheet.page_count === 1 ? '' : 's'}</span>
+      )}
       {props.chosen && <span className="rounded-full bg-sky-100 px-2 text-xs text-sky-900">shown for this key</span>}
 
       {! uploaded && <span className="text-xs text-amber-700 dark:text-amber-400">waiting to upload</span>}
       {uploaded && ! props.cached && (
         <span className="text-xs text-slate-500" title="The row synced, the file has not been downloaded">
-          not downloaded{sheet.size === null ? '' : ` · ${Math.round(sheet.size / 1024 / 1024 * 10) / 10} MB`}
+          not downloaded{sheet.size === null ? '' : ` · ${fileSize(sheet.size)}`}
         </span>
       )}
 
@@ -244,4 +246,11 @@ function AttachDialog(props: {
       </div>
     </div>
   );
+}
+
+/** Sizes a musician can act on: a 40 MB score is a decision, 17 KB is not. */
+function fileSize(bytes: number): string {
+  return bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${Math.round(bytes / 1024 / 1024 * 10) / 10} MB`;
 }

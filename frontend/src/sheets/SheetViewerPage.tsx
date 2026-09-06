@@ -191,12 +191,16 @@ export function SheetViewerPage() {
 }
 
 function NotDownloaded({ sheet, reason }: { sheet: { size: number | null } | null; reason: string | null }) {
-  const megabytes = sheet?.size === null || sheet === null ? null : Math.round(sheet.size / 1024 / 1024 * 10) / 10;
+  const size = sheet?.size == null
+    ? null
+    : sheet.size < 1024 * 1024
+      ? `${Math.max(1, Math.round(sheet.size / 1024))} KB`
+      : `${Math.round(sheet.size / 1024 / 1024 * 10) / 10} MB`;
 
   return (
     <div className="py-16 text-center">
       <p className="text-sm text-slate-500">
-        This sheet has not been downloaded to this device{megabytes === null ? '' : ` (${megabytes} MB)`}.
+        This sheet has not been downloaded to this device{size === null ? '' : ` (${size})`}.
       </p>
       <p className="mt-2 text-sm text-slate-500">
         Pin the song, or the set it is in, and it will be here the next time you have a connection.

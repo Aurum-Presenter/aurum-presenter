@@ -42,6 +42,13 @@ export function currentAccessToken(): string | null {
   return accessToken;
 }
 
+/**
+ * Why a session could not be restored. "Offline" and "signed out" look the same to a fetch that
+ * fails, and they must not look the same to the app: one is a reason to show a sign-in screen,
+ * the other is a reason to show the library that is already on the device.
+ */
+export type RestoreResult = 'ok' | 'signed-out' | 'offline';
+
 async function refresh(): Promise<boolean> {
   // A single in-flight refresh, shared by every caller. Without this, a burst of parallel
   // requests hitting a just-expired token would each rotate the refresh cookie — and rotation
@@ -67,6 +74,16 @@ async function refresh(): Promise<boolean> {
   })();
 
   return refreshInFlight;
+}
+
+/** The same call, but saying which of the two failures happened. */
+async function restore(): Promise<RestoreResult> {
+  try {
+    return await refresh() ? 'ok' : 'signed-out';
+  } catch {
+    // The request never reached the server. That says nothing about the session.
+    return 'offline';
+  }
 }
 
 export async function api<T>(
@@ -103,7 +120,9 @@ export async function api<T>(
   if (!response.ok) {
     const error = body?.error;
 
-    if (response.status === 401 && error?.code === 'token_expired' && retryOnExpiry) {
+    // A token that expired, or a device that started offline and has none at all: both are
+    // fixed by asking for a new one, and both must not surface as an error to the caller.
+    if (response.status === 401 && retryOnExpiry && (error?.code === 'token_expired' || accessToken === null)) {
       if (await refresh()) {
         return api<T>(path, { ...init, retryOnExpiry: false });
       }
@@ -178,7 +197,7 @@ export const auth = {
     api<{ reset: boolean }>('/auth/password/reset', { method: 'POST', body: JSON.stringify({ token, password }) }),
 
   /** Restores a session on app start from the httpOnly refresh cookie. */
-  restore: refresh,
+  restore,
 
   async logout() {
     await api('/auth/logout', { method: 'POST' });
@@ -186,8 +205,44 @@ export const auth = {
   },
 };
 
+const ACCOUNT_KEY = 'aurum.account';
+
+/**
+ * The last account this device saw.
+ *
+ * Kept so that a launch with no connection reaches the library rather than a sign-in screen:
+ * the session is still valid, the songs are still here, and there is nothing to sign in to.
+ */
+export function cachedAccount(): Account | null {
+  try {
+    const stored = localStorage.getItem(ACCOUNT_KEY);
+
+    return stored === null ? null : (JSON.parse(stored) as Account);
+  } catch {
+    return null;
+  }
+}
+
+export function forgetCachedAccount(): void {
+  try {
+    localStorage.removeItem(ACCOUNT_KEY);
+  } catch {
+    // Storage blocked; there was nothing cached to forget.
+  }
+}
+
 export const account = {
-  me: () => api<Account>('/account'),
+  async me(): Promise<Account> {
+    const me = await api<Account>('/account');
+
+    try {
+      localStorage.setItem(ACCOUNT_KEY, JSON.stringify(me));
+    } catch {
+      // Without storage the app works online only, which the About page explains.
+    }
+
+    return me;
+  },
 
   totp: {
     enrol: () => api<{ secret: string; provisioning_uri: string; digits: number; period: number }>(
