@@ -59,3 +59,7 @@ stan: ## Static analysis
 .PHONY: web
 web: ## Run the PWA dev server
 	cd frontend && npm run dev
+
+.PHONY: web-test
+web-test: ## Run the PWA test suite (chart parsing, transposition, conversion)
+	cd frontend && npm test

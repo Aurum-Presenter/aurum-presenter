@@ -47,6 +47,12 @@ export interface Arrangement extends SyncColumns {
   default_key: string | null;
   is_default: number;
   position: number;
+  /** What was pasted, before conversion. `over_lyrics` charts were converted on entry. */
+  source_notation: 'chordpro' | 'over_lyrics';
+  /** The pre-conversion text, kept for one undo and for debugging a bad conversion. */
+  source_text: string | null;
+  /** The arranger's suggested capo, 0–11. A reader's own capo lives in their preferences. */
+  capo_hint: number | null;
 }
 
 export interface Sheet extends SyncColumns {

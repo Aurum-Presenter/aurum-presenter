@@ -50,7 +50,7 @@ final class SyncServiceTest extends WorkspaceTestCase
 
         self::assertSame('applied', $push['results'][0]['status']);
 
-        $pull = $this->sync->pull($this->db, 0);
+        $pull = $this->sync->pull($this->db, 0, $this->userId);
 
         self::assertCount(1, $pull['tables']['songs']);
         self::assertSame('Be Thou My Vision', $pull['tables']['songs'][0]['title']);
@@ -77,12 +77,12 @@ final class SyncServiceTest extends WorkspaceTestCase
         $first = Uuid::generate();
         $this->sync->push($this->db, [$this->op('songs', $first, ['title' => 'First'])], $this->userId, WorkspaceRole::Editor);
 
-        $watermark = $this->sync->pull($this->db, 0)['change_seq'];
+        $watermark = $this->sync->pull($this->db, 0, $this->userId)['change_seq'];
 
         $second = Uuid::generate();
         $this->sync->push($this->db, [$this->op('songs', $second, ['title' => 'Second'])], $this->userId, WorkspaceRole::Editor);
 
-        $delta = $this->sync->pull($this->db, $watermark);
+        $delta = $this->sync->pull($this->db, $watermark, $this->userId);
 
         self::assertCount(1, $delta['tables']['songs']);
         self::assertSame('Second', $delta['tables']['songs'][0]['title']);

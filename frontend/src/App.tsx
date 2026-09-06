@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { account, auth, ApiError, type Account, type Workspace } from './api/client';
 import { WorkspaceDb, type Song } from './db/schema';
 import { uuidv7 } from './db/uuid';
+import { SongPage } from './song/SongPage';
 import { SyncEngine } from './sync/engine';
 
 type Phase = 'loading' | 'signed-out' | 'totp' | 'ready';
@@ -77,9 +78,11 @@ function Library({ me, onSignOut }: { me: Account; onSignOut: () => void }) {
   const [pending, setPending] = useState(0);
   const [online, setOnline] = useState(navigator.onLine);
   const [title, setTitle] = useState('');
+  const [openSongId, setOpenSongId] = useState<string | null>(null);
 
   const db = useMemo(() => new WorkspaceDb(workspace.id), [workspace.id]);
   const engine = useMemo(() => new SyncEngine(db, workspace.id), [db, workspace.id]);
+  const canEdit = workspace.role !== 'viewer';
 
   const refresh = useCallback(async () => {
     const rows = await db.songs.filter((s) => s.deleted_at === null).toArray();
@@ -93,6 +96,7 @@ function Library({ me, onSignOut }: { me: Account; onSignOut: () => void }) {
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
 
+    setOpenSongId(null);
     void engine.sync().catch(() => undefined).then(refresh);
     const timer = setInterval(() => void engine.sync().catch(() => undefined).then(refresh), 30_000);
 
@@ -103,6 +107,8 @@ function Library({ me, onSignOut }: { me: Account; onSignOut: () => void }) {
       db.close();
     };
   }, [db, engine, refresh]);
+
+  const openSong = songs.find((song) => song.id === openSongId);
 
   const addSong = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -142,40 +148,56 @@ function Library({ me, onSignOut }: { me: Account; onSignOut: () => void }) {
         <button className="text-sm underline" onClick={onSignOut}>Sign out</button>
       </header>
 
-      <main className="mx-auto max-w-2xl p-4">
-        {me.totp.required && !me.totp.enrolled && (
-          <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-            You own a band workspace, so two-factor authentication is required on this account.
-          </p>
-        )}
+      {openSong !== undefined ? (
+        <SongPage
+          db={db}
+          engine={engine}
+          song={openSong}
+          userId={me.id}
+          canEdit={canEdit}
+          onBack={() => setOpenSongId(null)}
+          onChanged={() => { void refresh(); void engine.sync().catch(() => undefined).then(refresh); }}
+        />
+      ) : (
+        <main className="mx-auto max-w-2xl p-4">
+          {me.totp.required && !me.totp.enrolled && (
+            <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              You own a band workspace, so two-factor authentication is required on this account.
+            </p>
+          )}
 
-        <form onSubmit={addSong} className="mb-6 flex gap-2">
-          <input
-            className="flex-1 rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
-            placeholder="Add a song…"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <button className="rounded bg-slate-900 px-4 py-2 text-white dark:bg-slate-100 dark:text-slate-900">
-            Add
-          </button>
-        </form>
+          {canEdit && (
+            <form onSubmit={addSong} className="mb-6 flex gap-2">
+              <input
+                className="flex-1 rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                placeholder="Add a song…"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <button className="rounded bg-slate-900 px-4 py-2 text-white dark:bg-slate-100 dark:text-slate-900">
+                Add
+              </button>
+            </form>
+          )}
 
-        {songs.length === 0 ? (
-          <p className="text-sm text-slate-500">No songs yet. Add one — it works offline.</p>
-        ) : (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-800">
-            {songs.map((song) => (
-              <li key={song.id} className="py-2">
-                <span className="font-medium">{song.title}</span>
-                {song.original_key && (
-                  <span className="ml-2 text-sm text-slate-500">key of {song.original_key}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+          {songs.length === 0 ? (
+            <p className="text-sm text-slate-500">No songs yet. Add one — it works offline.</p>
+          ) : (
+            <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+              {songs.map((song) => (
+                <li key={song.id}>
+                  <button className="w-full py-2 text-left" onClick={() => setOpenSongId(song.id)}>
+                    <span className="font-medium">{song.title}</span>
+                    {song.original_key && (
+                      <span className="ml-2 text-sm text-slate-500">key of {song.original_key}</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </main>
+      )}
     </div>
   );
 }

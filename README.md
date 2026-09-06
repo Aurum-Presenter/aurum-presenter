@@ -56,5 +56,11 @@ Other targets: `make migrate`, `make purge`, `make workspaces`, `make logs`, `ma
 ## Status
 
 Specification **approved**. Implementation in progress: the API skeleton, the two-tier SQLite
-layer, authentication with TOTP, the sync push/pull engine and the sheet-storage endpoints are
-in place; the presentation, stage-view and chord-rendering features are not yet built.
+layer, authentication with TOTP, the sync push/pull engine, the sheet-storage endpoints and the
+chord-chart feature — ChordPro parsing, chords-over-lyrics import, key-signature-aware
+transposition, capo and Nashville numbers — are in place; the presentation and stage-view
+features are not yet built.
+
+Charts are parsed and transposed entirely on the device (`frontend/src/chart/`): the server
+stores the ChordPro text and replicates it, and never re-letters a chord. That is what lets two
+members read the same chart in two different keys, offline, from one byte-identical body.

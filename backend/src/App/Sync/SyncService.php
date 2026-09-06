@@ -238,7 +238,7 @@ final class SyncService
      * @param string[]|null $tables
      * @return array{change_seq: int, tables: array<string, list<array<string, mixed>>>, has_more: bool}
      */
-    public function pull(Connection $db, int $since, ?array $tables = null, int $limit = 1000): array
+    public function pull(Connection $db, int $since, string $userId, ?array $tables = null, int $limit = 1000): array
     {
         $requested = $tables === null || $tables === []
             ? SyncSchema::tables()
@@ -248,12 +248,17 @@ final class SyncService
         $hasMore = false;
 
         foreach ($requested as $table) {
+            // Preferences are personal — a preferred key, a capo, a font size. Every member has
+            // their own row for the same song, and no member is ever handed anyone else's.
+            $mine = $table === 'preferences' ? ' AND user_id = ?' : '';
+
             $rows = $db->fetchAllAssociative(
                 sprintf(
-                    'SELECT * FROM %s WHERE change_seq > ? ORDER BY change_seq LIMIT ?',
-                    $table
+                    'SELECT * FROM %s WHERE change_seq > ?%s ORDER BY change_seq LIMIT ?',
+                    $table,
+                    $mine
                 ),
-                [$since, $limit + 1]
+                $mine === '' ? [$since, $limit + 1] : [$since, $userId, $limit + 1]
             );
 
             if (count($rows) > $limit) {
@@ -279,6 +284,14 @@ final class SyncService
      */
     private function assertMayWrite(string $table, WorkspaceRole $role, array $op, string $userId): void
     {
+        $payload = is_array($op['payload'] ?? null) ? $op['payload'] : [];
+
+        // Not a role question: an owner has no more business writing another member's preferred
+        // key than a viewer does.
+        if ($table === 'preferences' && ($payload['user_id'] ?? $userId) !== $userId) {
+            throw ApiException::forbidden('Preferences can only be written for yourself.', 'not_your_row');
+        }
+
         if ($role !== WorkspaceRole::Viewer) {
             return;
         }
@@ -288,12 +301,6 @@ final class SyncService
                 sprintf('Your role (viewer) cannot change %s.', $table),
                 'insufficient_role'
             );
-        }
-
-        $payload = is_array($op['payload'] ?? null) ? $op['payload'] : [];
-
-        if ($table === 'preferences' && ($payload['user_id'] ?? $userId) !== $userId) {
-            throw ApiException::forbidden('Preferences can only be written for yourself.', 'not_your_row');
         }
 
         if ($table === 'annotations') {
