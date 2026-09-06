@@ -9,6 +9,11 @@ import { AudiencePage } from './present/AudiencePage';
 import { ControlPage } from './present/ControlPage';
 import { JoinPage } from './present/JoinPage';
 import { StagePage } from './present/StagePage';
+import { SharePage } from './pwa/SharePage';
+import { UpdateToast } from './pwa/update';
+import { AboutPage } from './settings/AboutPage';
+import { ConflictsPage } from './settings/ConflictsPage';
+import { StoragePage } from './settings/StoragePage';
 import { PrintPage } from './sets/PrintPage';
 import { ReaderPage } from './sets/ReaderPage';
 import { SetPage } from './sets/SetPage';
@@ -101,9 +106,15 @@ export function App() {
             <Route path="/sets/:setId/print" element={<PrintPage />} />
             <Route path="/present/:sessionId" element={<ControlPage />} />
             <Route path="/join" element={<JoinPage />} />
+            <Route path="/settings/sync/conflicts" element={<ConflictsPage />} />
+            <Route path="/settings/storage" element={<StoragePage />} />
+            <Route path="/settings/trash" element={<TrashPage />} />
+            <Route path="/settings/about" element={<AboutPage />} />
+            <Route path="/share" element={<SharePage />} />
             <Route path="*" element={<Navigate to="/library" replace />} />
           </Route>
         </Routes>
+        <UpdateToast />
       </BrowserRouter>
     </WorkspaceProvider>
   );

@@ -85,6 +85,32 @@ export class SyncEngine {
     return this.db.outbox.where('status').equals('pending').count();
   }
 
+  /** Operations the server refused. They wait for a person, not for a timer. */
+  async parked(): Promise<OutboxOp[]> {
+    return this.db.outbox.where('status').equals('parked').sortBy('seq');
+  }
+
+  /** Puts a parked operation back in the queue, after whatever blocked it has been fixed. */
+  async retry(seq: number): Promise<void> {
+    await this.db.outbox.update(seq, { status: 'pending', last_error: null });
+  }
+
+  /** Throws an operation away. The local record keeps whatever it has; only the push is lost. */
+  async discard(seq: number): Promise<void> {
+    await this.db.outbox.delete(seq);
+  }
+
+  async status(): Promise<{ pending: number; parked: number; lastPull: string | null; lastPush: string | null }> {
+    const state = await this.db.sync_state.get('watermark');
+
+    return {
+      pending: await this.db.outbox.where('status').equals('pending').count(),
+      parked: await this.db.outbox.where('status').equals('parked').count(),
+      lastPull: state?.last_pull_at ?? null,
+      lastPush: state?.last_push_at ?? null,
+    };
+  }
+
   async sync(): Promise<{ pushed: number; pulled: number }> {
     if (this.running || !navigator.onLine) {
       return { pushed: 0, pulled: 0 };
@@ -177,6 +203,17 @@ export class SyncEngine {
 
       await this.db.outbox.delete(op.seq!);
       applied++;
+    }
+
+    if (applied > 0) {
+      const state = await this.db.sync_state.get('watermark');
+
+      await this.db.sync_state.put({
+        key: 'watermark',
+        change_seq: state?.change_seq ?? 0,
+        last_pull_at: state?.last_pull_at ?? null,
+        last_push_at: new Date().toISOString(),
+      });
     }
 
     return applied;

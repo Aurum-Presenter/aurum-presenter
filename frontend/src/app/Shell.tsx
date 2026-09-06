@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { InstallBanner } from '../pwa/install';
+import { SyncPanel } from '../settings/SyncPanel';
 import { resumable } from '../present/store';
 import type { SessionState } from '../present/session';
 import { useWorkspace } from './workspace';
@@ -11,9 +13,10 @@ import { useWorkspace } from './workspace';
  * for it, so nothing else needs to talk about it.
  */
 export function Shell({ onSignOut }: { onSignOut: () => void }) {
-  const { me, workspace, db, online, pending, syncNow, setWorkspace } = useWorkspace();
+  const { me, workspace, db, online, pending, setWorkspace } = useWorkspace();
   const navigate = useNavigate();
   const [resume, setResume] = useState<SessionState | null>(null);
+  const [syncOpen, setSyncOpen] = useState(false);
 
   // A control window closed by accident is offered back for a minute (acceptance criterion 5).
   useEffect(() => {
@@ -52,11 +55,12 @@ export function Shell({ onSignOut }: { onSignOut: () => void }) {
             online ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
           }`}
           title="Nothing is blocked while offline; the outbox drains when a connection returns."
-          onClick={syncNow}
+          onClick={() => setSyncOpen(true)}
         >
           {online ? 'synced' : 'offline'}{pending > 0 ? ` · ${pending} pending` : ''}
         </button>
 
+        <Link to="/settings/about" className="text-sm underline">About</Link>
         <button className="text-sm underline" onClick={onSignOut}>Sign out</button>
       </header>
 
@@ -74,6 +78,10 @@ export function Shell({ onSignOut }: { onSignOut: () => void }) {
           <button className="underline" onClick={() => setResume(null)}>Dismiss</button>
         </div>
       )}
+
+      <InstallBanner />
+
+      {syncOpen && <SyncPanel onClose={() => setSyncOpen(false)} />}
 
       <Outlet />
     </div>

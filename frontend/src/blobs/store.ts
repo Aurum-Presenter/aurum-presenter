@@ -103,8 +103,45 @@ export class BlobStore {
     await this.db.blobs.update(sheetId, { pin_reason: pin });
   }
 
-  /** Drops the least recently used opportunistic files until the cache is inside its budget. */
+  /**
+   * Business rule 11: ask the browser to keep this origin once the user has pinned something.
+   * On iOS an origin that is not persisted can be cleared after a week of not being opened,
+   * which would take a pinned set with it.
+   */
+  static async requestPersistence(): Promise<boolean> {
+    try {
+      if (navigator.storage?.persisted === undefined) {
+        return false;
+      }
+
+      return await navigator.storage.persisted() || await navigator.storage.persist();
+    } catch {
+      return false;
+    }
+  }
+
+  static async estimate(): Promise<{ usage: number; quota: number } | null> {
+    try {
+      const estimate = await navigator.storage?.estimate?.();
+
+      return estimate === undefined ? null : { usage: estimate.usage ?? 0, quota: estimate.quota ?? 0 };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Drops the least recently used opportunistic files, either to stay inside the app's own
+   * budget or because the origin is near the browser's quota (business rule 10). Pinned files
+   * are never touched: if a pinned download will not fit, the user is told which pin to release.
+   */
   async evict(budget = OPPORTUNISTIC_BUDGET): Promise<number> {
+    const estimate = await BlobStore.estimate();
+
+    if (estimate !== null && estimate.quota > 0 && estimate.usage / estimate.quota > 0.85) {
+      budget = Math.min(budget, Math.floor(estimate.quota * 0.5));
+    }
+
     const opportunistic = (await this.db.blobs.toArray())
       .filter((record) => record.pin_reason === 'opportunistic')
       .sort((a, b) => a.cached_at.localeCompare(b.cached_at));

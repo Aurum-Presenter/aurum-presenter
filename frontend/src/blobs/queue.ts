@@ -45,6 +45,12 @@ export class BlobQueue {
     this.running = true;
 
     try {
+      // Business rule 11: once this device is keeping something deliberately, ask the browser
+      // not to clear the origin under pressure.
+      if (wanted.size > 0) {
+        await BlobStore.requestPersistence();
+      }
+
       await this.drainUploads();
       await this.fetchWanted(wanted);
       await this.store.evict();

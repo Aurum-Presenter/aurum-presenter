@@ -8,6 +8,7 @@ import {
   withMessage, withStageMessage, type BlankMode, type OutputStatus, type SessionState,
 } from './session';
 import { AudienceSlide, StageSlide } from './SlideView';
+import { holdUpdates } from '../pwa/update';
 import { endSession, load, logAdvance, save } from './store';
 import { ThemeDrawer } from './ThemeDrawer';
 import { ControlTransport } from './transport';
@@ -153,6 +154,14 @@ export function ControlPage() {
   };
 
   useEffect(() => () => host.current?.close(), []);
+
+  // A reload mid-song is the worst thing the app could do, so a downloaded update waits for the
+  // session to end (PWA business rule 3).
+  useEffect(() => {
+    holdUpdates(true);
+
+    return () => holdUpdates(false);
+  }, []);
 
   const finish = async (): Promise<void> => {
     if (state !== null) {
