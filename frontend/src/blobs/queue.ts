@@ -1,6 +1,7 @@
 import { api } from '../api/client';
 import type { WorkspaceDb } from '../db/schema';
 import { BlobStore } from './store';
+import { asSoleWorker } from '../sync/lock';
 
 /**
  * The blob queue: sheet files moving between the device and the object store.
@@ -58,6 +59,11 @@ export class BlobQueue {
       return this.state();
     }
 
+    // One window moves files for the device; the others read the same local result.
+    return asSoleWorker(`aurum-files-${this.workspaceId}`, () => this.pass(wanted), await this.state());
+  }
+
+  private async pass(wanted: Set<string>): Promise<QueueState> {
     this.running = true;
 
     try {

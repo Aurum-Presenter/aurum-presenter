@@ -2,6 +2,7 @@ import type { Table } from 'dexie';
 import { api, ApiError } from '../api/client';
 import { SYNCED_TABLES, type OutboxOp, type SyncedTable, type WorkspaceDb } from '../db/schema';
 import { uuidv7 } from '../db/uuid';
+import { asSoleWorker } from './lock';
 
 export interface PushResult {
   op_id: string;
@@ -116,14 +117,18 @@ export class SyncEngine {
       return { pushed: 0, pulled: 0 };
     }
 
-    this.running = true;
-    try {
-      const pushed = await this.drain();
-      const pulled = await this.pull();
-      return { pushed, pulled };
-    } finally {
-      this.running = false;
-    }
+    // One window at a time across the whole device, not just one pass at a time in this one.
+    return asSoleWorker(`aurum-sync-${this.workspaceId}`, async () => {
+      this.running = true;
+
+      try {
+        const pushed = await this.drain();
+        const pulled = await this.pull();
+        return { pushed, pulled };
+      } finally {
+        this.running = false;
+      }
+    }, { pushed: 0, pulled: 0 });
   }
 
   private async drain(): Promise<number> {
