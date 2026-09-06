@@ -87,6 +87,12 @@ export interface Sheet extends SyncColumns {
   page_count: number | null;
   mime_type: string;
   uploaded_at: string | null;
+  /**
+   * When this sheet's file was last replaced by one with a different number of pages. Marks made
+   * before that instant are kept and flagged — normalised coordinates survive a zoom and a
+   * rotate, but not pages moving underneath them.
+   */
+  pages_changed_at: string | null;
 }
 
 export interface Annotation extends SyncColumns {

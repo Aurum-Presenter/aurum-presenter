@@ -48,6 +48,7 @@ export class SheetsRepository {
   async attach(songId: string, file: File, input: SheetInput): Promise<string> {
     const id = uuidv7();
     const existing = await this.db.sheets.where('song_id').equals(songId).count();
+    const pages = await pageCount(file);
 
     await this.engine.record('sheets', id, 'upsert', {
       song_id: songId,
@@ -58,9 +59,13 @@ export class SheetsRepository {
       filename: file.name,
       mime_type: file.type,
       position: existing,
+      // Read from the file here, not waited for from the server: the device that attached it
+      // knows how many pages it has, and the row is read on this device long before it is
+      // pushed anywhere.
+      page_count: pages,
     });
 
-    await this.storeAndQueue(id, file);
+    await this.storeAndQueue(id, file, undefined, pages);
 
     return id;
   }
@@ -74,12 +79,19 @@ export class SheetsRepository {
       return;
     }
 
+    // Business rule 7: marks are normalised to a page, so they survive anything but the pages
+    // themselves moving. When the count changes they are kept and flagged, never deleted.
+    const pages = await pageCount(file);
+    const moved = sheet?.page_count != null && pages !== null && pages !== sheet.page_count;
+
     await this.engine.record('sheets', sheetId, 'upsert', {
       filename: file.name,
       mime_type: file.type,
+      page_count: pages,
+      ...(moved ? { pages_changed_at: new Date().toISOString() } : {}),
     });
 
-    await this.storeAndQueue(sheetId, file, sha256);
+    await this.storeAndQueue(sheetId, file, sha256, pages);
   }
 
   async update(sheetId: string, changes: Partial<Record<keyof Sheet, unknown>>): Promise<void> {
@@ -92,7 +104,7 @@ export class SheetsRepository {
     await this.db.uploads.delete(sheetId);
   }
 
-  private async storeAndQueue(sheetId: string, file: File, hash?: string): Promise<void> {
+  private async storeAndQueue(sheetId: string, file: File, hash?: string, pages?: number | null): Promise<void> {
     const sha256 = hash ?? await hashOf(file);
 
     // Pinned, not opportunistic: the device that made the file is the only one that has it
@@ -104,7 +116,7 @@ export class SheetsRepository {
       sha256,
       size: file.size,
       filename: file.name,
-      page_count: await pageCount(file),
+      page_count: pages === undefined ? await pageCount(file) : pages,
       attempts: 0,
       last_error: null,
       queued_at: new Date().toISOString(),
@@ -120,6 +132,12 @@ async function pageCount(file: File): Promise<number | null> {
 
   try {
     const pdfjs = await import('pdfjs-dist');
+
+    // The same worker the viewer uses. Without it pdf.js falls back to the main thread in a way
+    // that fails outright in a bundled build, and a sheet would be attached with no page count
+    // — which is the number the "may not line up" rule is decided on.
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+
     const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
     const pages = document.numPages;
     await document.destroy();

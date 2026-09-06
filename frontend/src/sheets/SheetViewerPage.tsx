@@ -83,6 +83,15 @@ export function SheetViewerPage() {
     });
   }, [db, engine, me.id, scope, sheetId]);
 
+  /**
+   * Marks made before the file's pages moved. Business rule 7: they are kept and flagged, never
+   * deleted — a mark 20mm out of place is still a mark its author can read, and nobody gets to
+   * throw away somebody's notes on a score.
+   */
+  const stale = sheet?.pages_changed_at == null
+    ? []
+    : annotations.filter((row) => row.updated_at < sheet.pages_changed_at!);
+
   const strokesFor = (pageNumber: number): { strokes: Stroke[]; mine: Stroke[] } => {
     const all: Stroke[] = [];
     let mine: Stroke[] = [];
@@ -151,6 +160,14 @@ export function SheetViewerPage() {
           )}
         </span>
       </div>
+
+      {stale.length > 0 && (
+        <p className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {stale.length === 1 ? 'A mark on this sheet was' : `${stale.length} marks on this sheet were`} made
+          before the file was replaced with a different number of pages, and may not line up. Nothing
+          has been deleted.
+        </p>
+      )}
 
       <div ref={frame} className="rounded border border-slate-200 p-2 dark:border-slate-800">
         {failure !== null || (file === null && ! online) ? (

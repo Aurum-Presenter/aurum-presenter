@@ -47,7 +47,7 @@ export class SyncEngine {
         await this.store(table).update(recordId, { deleted_at: now });
       } else {
         await this.store(table).put({
-          ...(existing ?? {}),
+          ...(existing === undefined ? blankColumns(table) : existing),
           ...payload,
           id: recordId,
           updated_at: now,
@@ -266,4 +266,26 @@ export class SyncEngine {
 
     return applied;
   }
+}
+
+/**
+ * Server-owned columns, present as null from the moment a row is created on a device.
+ *
+ * They are filled in by the server and arrive on a later pull, so on the device that made the
+ * row they would otherwise be *undefined* rather than null — and `sheet.sha256 !== null` is
+ * true for undefined. That is how the device holding the only copy of a file came to be told
+ * the file had not been downloaded.
+ */
+const SERVER_OWNED: Partial<Record<SyncedTable, string[]>> = {
+  sheets: ['sha256', 'size', 'uploaded_at', 'page_count', 'pages_changed_at'],
+};
+
+function blankColumns(table: SyncedTable): Record<string, unknown> {
+  const blank: Record<string, unknown> = { change_seq: 0, updated_by: null };
+
+  for (const column of SERVER_OWNED[table] ?? []) {
+    blank[column] = null;
+  }
+
+  return blank;
 }

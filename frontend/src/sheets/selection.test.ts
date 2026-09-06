@@ -9,7 +9,7 @@ function sheet(id: string, sheetKey: string | null, part: string | null, positio
   return {
     id, song_id: 'song', sheet_key: sheetKey, part, position,
     sha256: null, size: null, page_count: null, mime_type: 'application/pdf', uploaded_at: null,
-    arrangement_id: null, label: null, filename: null,
+    arrangement_id: null, label: null, filename: null, pages_changed_at: null,
     updated_at: '2026-09-06T00:00:00Z', change_seq: 1, deleted_at: null, updated_by: null,
   };
 }

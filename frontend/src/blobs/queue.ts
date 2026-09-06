@@ -211,14 +211,23 @@ export class BlobQueue {
   async fetchNow(sheetId: string): Promise<Blob | null> {
     const sheet = await this.db.sheets.get(sheetId);
 
-    if (sheet === undefined || sheet.sha256 === null) {
+    if (sheet === undefined) {
       return null;
     }
 
+    // The local copy first, and before the hash is even considered: the device that attached
+    // the file holds it while `sha256` is still null — the server sets that on completion and
+    // it arrives on a later pull. Reading "not downloaded" on the one device with the only copy
+    // is exactly the failure acceptance criterion 4 is about.
     const cached = await this.store.get(sheetId);
 
     if (cached !== null && await this.store.has(sheetId, sheet.sha256)) {
       return cached;
+    }
+
+    if (sheet.sha256 === null) {
+      // Nothing here, and nothing to ask the server for yet: the upload has not finished.
+      return null;
     }
 
     const { url } = await api<{ url: string }>(`/workspaces/${this.workspaceId}/sheets/${sheetId}/url`);

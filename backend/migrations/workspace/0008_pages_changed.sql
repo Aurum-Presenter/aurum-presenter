@@ -1,0 +1,12 @@
+-- A replaced file with a different number of pages.
+--
+-- Annotations are stored at coordinates normalised to a page, so they survive a zoom, a rotate
+-- and a re-render at any resolution — but not a file whose pages have moved underneath them.
+-- The sheet-attachments spec says those marks are kept and flagged rather than deleted: nobody
+-- gets to throw away somebody's notes on a score, and a mark that is 20mm out is still a mark
+-- its author can read.
+--
+-- The moment is recorded on the sheet, not on each annotation: the person replacing the file
+-- can write to the sheet row, and cannot write to another member's personal annotations. Any
+-- annotation older than this instant is the one that may not line up.
+ALTER TABLE sheets ADD COLUMN pages_changed_at TEXT;
