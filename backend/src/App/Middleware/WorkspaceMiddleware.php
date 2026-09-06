@@ -26,7 +26,12 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 final class WorkspaceMiddleware implements MiddlewareInterface
 {
-    public const string WORKSPACE_ATTRIBUTE = 'workspace';
+    /**
+     * Deliberately NOT 'workspace': that is the route parameter's own attribute name, and
+     * writing the workspace row over it left every handler downstream reading an array where it
+     * expected an id — which is how sheet objects ended up under a key called "Array".
+     */
+    public const string WORKSPACE_ATTRIBUTE = 'workspace.record';
     public const string ROLE_ATTRIBUTE = 'workspace.role';
     public const string CONNECTION_ATTRIBUTE = 'workspace.connection';
 
