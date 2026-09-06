@@ -1,9 +1,20 @@
+# Dependencies
 node_modules/
+/backend/vendor/
+
+# Build output
 dist/
-.DS_Store
-*.local
-.env
-.env.*
-!.env.example
 .vite/
 coverage/
+
+# The databases. control.sqlite plus one file per workspace, with their WAL sidecars.
+/backend/var/data/
+/backend/data/cache/
+
+# Local environment
+.env
+.env.*
+!.env-dist
+*.local
+.DS_Store
+

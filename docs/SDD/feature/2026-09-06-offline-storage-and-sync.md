@@ -2,7 +2,7 @@
 id: offline-storage-and-sync
 title: Offline storage and sync engine
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:
@@ -11,6 +11,8 @@ related:
   - feature/2026-09-06-sheet-attachments.md
   - feature/2026-09-06-sets.md
   - feature/2026-09-06-pwa-installation.md
+  - change-request/2026-09-06-sqlite-backend.md
+  - change-request/2026-09-06-s3-sheet-storage.md
 ---
 
 # Offline storage and sync engine

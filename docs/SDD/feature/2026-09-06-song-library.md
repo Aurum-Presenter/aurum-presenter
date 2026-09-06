@@ -2,7 +2,7 @@
 id: song-library
 title: Song library — folders, songs and search
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:
@@ -11,6 +11,7 @@ related:
   - feature/2026-09-06-sheet-attachments.md
   - feature/2026-09-06-sets.md
   - feature/2026-09-06-offline-storage-and-sync.md
+  - change-request/2026-09-06-sqlite-backend.md
 ---
 
 # Song library — folders, songs and search

@@ -2,13 +2,15 @@
 id: sheet-attachments
 title: Sheet attachments — PDFs per key
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:
   - feature/2026-09-06-song-library.md
   - feature/2026-09-06-chord-charts-and-transposition.md
   - feature/2026-09-06-offline-storage-and-sync.md
+  - change-request/2026-09-06-sqlite-backend.md
+  - change-request/2026-09-06-s3-sheet-storage.md
 ---
 
 # Sheet attachments — PDFs per key

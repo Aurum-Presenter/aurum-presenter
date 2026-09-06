@@ -2,7 +2,7 @@
 id: presentation
 title: Presentation — live sessions (parent)
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:

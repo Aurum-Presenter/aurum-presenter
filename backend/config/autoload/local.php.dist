@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Copy to local.php for machine-specific overrides. Everything here is normally supplied by
+ * environment variables instead (see .env-dist); this file exists for the cases where that is
+ * inconvenient, such as pointing at a database outside the container.
+ *
+ * Tracked as .dist only — local.php is gitignored.
+ */
+
+return [
+    // 'database' => [
+    //     'control_path'  => '/absolute/path/to/control.sqlite',
+    //     'workspace_dir' => '/absolute/path/to/workspaces',
+    // ],
+];

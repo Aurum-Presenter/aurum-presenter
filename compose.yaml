@@ -1,0 +1,96 @@
+# Backend stack. Note what is NOT here: no database service.
+#
+# SQLite lives in a volume next to the application, so "the database" is a directory of files —
+# control.sqlite plus one file per workspace — and development runs the exact same engine as
+# production. That is the whole point of the SQLite change request: there is no Postgres to
+# keep in sync with a hosted project, and no Supabase emulator to install.
+
+name: aurum-presenter
+
+services:
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:80"
+    volumes:
+      # Bind-mounted for development so edits are live; APP_ENV=development disables both the
+      # config cache and the discovery cache, so a new #[Route] appears without a cache clear.
+      - ./backend:/app
+      - aurum-data:/app/var/data
+    environment:
+      APP_ENV: "${APP_ENV:-development}"
+      DATA_DIR: /app/var/data
+      APP_SIGNING_KEY: "${APP_SIGNING_KEY:?set APP_SIGNING_KEY in .env}"
+      APP_SECRET_KEY: "${APP_SECRET_KEY:?set APP_SECRET_KEY in .env}"
+      AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-false}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:5173}"
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: "${S3_BUCKET:-aurum-sheets}"
+      S3_KEY: "${MINIO_ROOT_USER:-aurum}"
+      S3_SECRET: "${MINIO_ROOT_PASSWORD:-aurum-dev-secret}"
+      S3_PATH_STYLE: "true"
+      MAIL_DSN: "smtp://mail:1025"
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/api/v1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  # Sheet PDFs. Content-addressed keys under sheets/{workspace}/{sha256}.pdf.
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:-aurum}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:-aurum-dev-secret}"
+    volumes:
+      - aurum-sheets:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Creates the bucket and locks it down: private, and CORS limited to the app origin, because
+  # the browser PUTs parts directly to the store rather than proxying through PHP.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:-aurum}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:-aurum-dev-secret}"
+      S3_BUCKET: "${S3_BUCKET:-aurum-sheets}"
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 \"$${MINIO_ROOT_USER}\" \"$${MINIO_ROOT_PASSWORD}\";
+      mc mb --ignore-existing local/$${S3_BUCKET};
+      mc anonymous set none local/$${S3_BUCKET};
+      echo 'bucket ready';
+      "
+
+  # Invite and password-reset mail. Web UI on :8025.
+  mail:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAIL_UI_PORT:-8025}:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+
+volumes:
+  # The database. A backup of this volume is a backup of every workspace.
+  aurum-data:
+  aurum-sheets:

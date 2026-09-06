@@ -26,7 +26,8 @@ presentation — audience output plus a stage view — from the same set.
 | Musician | Reads charts, transposes to their key, plays from a set. Default role. | Human |
 | Librarian | Owner or editor of a workspace: adds songs, uploads sheets, curates folders and sets. | Human |
 | Operator | Runs a live session: drives the audience screen and stage view during a service or gig. | Human |
-| Sync service | Supabase Postgres + Storage + Auth. Authoritative copy; delta sync with each device. | External system |
+| Sync service | The Aurum API: PHP/Mezzio over SQLite, one database file per workspace. Authoritative copy; delta sync with each device. | Own system |
+| Object store | S3-compatible storage holding sheet PDFs, keyed by content hash. Reached only through presigned URLs. | External system |
 | Service worker | Caches the app shell and pinned files; serves the app with no network. | Background |
 | Stage device | A phone or tablet paired to a live session over the local network, showing stage view. | External device |
 
@@ -50,10 +51,14 @@ flowchart LR
         STG[Stage window]
         PAIR[Paired stage device]
     end
-    subgraph Cloud["Supabase"]
-        API[(Postgres + RLS)]
-        AUTH[Auth]
-        BLOB[Storage — sheet PDFs]
+    subgraph Server["Aurum API — self-hosted"]
+        CTRL[(control.sqlite — accounts, workspaces, memberships)]
+        WSDB[(workspace/uuid.sqlite — one file per workspace)]
+        AUTH[Email + password, TOTP]
+        SIG[WebSocket SDP relay]
+    end
+    subgraph Blobs["S3-compatible object store"]
+        BLOB[sheets/workspace/sha256.pdf]
     end
 
     M --> UI
@@ -65,9 +70,12 @@ flowchart LR
     UI --> AUD
     UI --> STG
     UI --> PAIR
-    IDB -->|"delta sync when online"| API
-    OPFS -->|"blob sync when online"| BLOB
+    IDB -->|"delta sync when online"| WSDB
+    OPFS -->|"presigned upload/download"| BLOB
     UI --> AUTH
+    AUTH --> CTRL
+    CTRL -->|"membership grants the right to open"| WSDB
+    PAIR -.->|"SDP only, last resort"| SIG
 ```
 
 ## Core domain
@@ -102,13 +110,21 @@ workspace; there are no cross-workspace records. Three roles:
 | `viewer` | Read everything in the workspace, transpose and print for themselves, run live sessions; no writes that other members see |
 
 Personal preferences — preferred key, capo, font size, pinned-for-offline — are per user and
-per device where noted, never shared. Postgres row-level security is the enforcement point;
-the client mirrors the same rules to hide controls, but never as the only check.
+per device where noted, never shared.
+
+Authorization is enforced in two layers, and the first is structural rather than logical. Each
+workspace is its own SQLite file, and `WorkspaceMiddleware` opens that file only after finding a
+matching membership row in `control.sqlite` — so a handler that was not granted the workspace is
+never handed a connection to it. On top of that, the permission a route declares is resolved
+against the caller's role before dispatch. Role is read from the membership row, never from a
+client claim. The client mirrors the same rules to hide controls, but never as the only check.
 
 ## Constraints
 
-- **Stack** — React 19 + TypeScript + Vite, Tailwind, Dexie over IndexedDB, Workbox service
-  worker, `pdf.js` for sheet rendering. Supabase (Postgres 16, Auth, Storage) for sync.
+- **Stack** — *Client:* React 19 + TypeScript + Vite, Tailwind, Dexie over IndexedDB, Workbox
+  service worker, `pdf.js` for sheet rendering. *Server:* PHP 8.4 + Mezzio 3, API-only, over
+  SQLite — `control.sqlite` for identity plus one file per workspace — with S3-compatible object
+  storage for sheet PDFs. No ORM; plain SQL over DBAL.
 - **Platforms** — installable PWA on Chrome/Edge desktop, Android (Chrome), iOS/iPadOS 17+
   (Safari, Add to Home Screen). Desktop is the only platform that gets multi-window
   presentation; mobile gets single-screen presenter and stage view.
@@ -117,8 +133,9 @@ the client mirrors the same rules to hide controls, but never as the only check.
 - **Compliance** — no personal data beyond account email and display name. Sheet PDFs may be
   copyrighted material owned by the user; the system stores and syncs them privately per
   workspace and never makes them public. No public sharing surface exists.
-- **Fixed decisions** — see the four decisions in the interview: React/Vite, IndexedDB +
-  Supabase, band workspaces with roles, ChordPro as canonical chart storage.
+- **Fixed decisions** — React/Vite, IndexedDB on the device, band workspaces with roles,
+  ChordPro as canonical chart storage. The backend runs on SQLite with one database file per
+  workspace, self-hosted; see the change requests in the [index](index.md).
 
 ## Out of scope
 

@@ -2,7 +2,7 @@
 id: chord-charts-and-transposition
 title: Chord charts, arrangements and transposition
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:
@@ -11,6 +11,7 @@ related:
   - feature/2026-09-06-sets.md
   - feature/2026-09-06-presentation.md
   - feature/2026-09-06-presenter-output.md
+  - change-request/2026-09-06-sqlite-backend.md
 ---
 
 # Chord charts, arrangements and transposition

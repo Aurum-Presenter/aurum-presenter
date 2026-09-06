@@ -2,13 +2,14 @@
 id: pwa-installation
 title: PWA installation and offline app shell
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:
   - feature/2026-09-06-offline-storage-and-sync.md
   - feature/2026-09-06-presentation.md
   - feature/2026-09-06-presenter-output.md
+  - change-request/2026-09-06-sqlite-backend.md
 ---
 
 # PWA installation and offline app shell

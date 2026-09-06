@@ -2,12 +2,14 @@
 id: workspaces-and-access
 title: Accounts, workspaces and access control
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:
   - feature/2026-09-06-offline-storage-and-sync.md
   - feature/2026-09-06-song-library.md
+  - change-request/2026-09-06-sqlite-backend.md
+  - change-request/2026-09-06-self-hosted-auth-totp.md
 ---
 
 # Accounts, workspaces and access control

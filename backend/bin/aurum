@@ -1,0 +1,23 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Console entry point. Mirrors vendor/bin/laminas but binds this application's container
+ * directly, so commands run without a --container argument.
+ */
+
+use Laminas\Cli\ApplicationFactory;
+use Laminas\Cli\ApplicationProvisioner;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
+chdir(dirname(__DIR__));
+require 'vendor/autoload.php';
+
+$application = (new ApplicationProvisioner())(
+    (new ApplicationFactory())(),
+    require 'config/container.php',
+);
+
+exit($application->run(null, new ConsoleOutput()));

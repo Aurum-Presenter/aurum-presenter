@@ -2,13 +2,14 @@
 id: stage-view
 title: Stage view — local window and paired device
 type: feature
-status: Draft
+status: Approved
 created: 2026-09-06
 updated: 2026-09-06
 related:
   - feature/2026-09-06-presentation.md
   - feature/2026-09-06-presenter-output.md
   - feature/2026-09-06-sets.md
+  - change-request/2026-09-06-lan-websocket-signalling.md
 ---
 
 # Stage view — local window and paired device

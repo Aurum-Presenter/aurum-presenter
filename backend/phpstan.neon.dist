@@ -1,0 +1,8 @@
+parameters:
+    level: 6
+    paths:
+        - src
+    excludePaths:
+        - src/App/Discovery
+        - src/App/PostProcessor
+    treatPhpDocTypesAsCertain: false

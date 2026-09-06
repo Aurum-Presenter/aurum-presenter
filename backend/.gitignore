@@ -1,0 +1,6 @@
+/vendor/
+/var/data/
+/data/cache/
+/config/autoload/*.local.php
+!/config/autoload/*.local.php.dist
+.phpunit.result.cache
