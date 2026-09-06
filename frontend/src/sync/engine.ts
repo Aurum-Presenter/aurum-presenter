@@ -160,7 +160,10 @@ export class SyncEngine {
         }),
       });
     } catch (error) {
-      if (error instanceof ApiError && !error.isRetryable) {
+      // Business rule 12: an expired session pauses the queue, it does not park it. Parking
+      // asks a person to decide something, and "sign in again" is not a decision about their
+      // work — the same batch goes out on the first pass after they do.
+      if (error instanceof ApiError && !error.isRetryable && error.status !== 401) {
         // A permanent error parks the batch rather than retrying it forever. Nothing is
         // discarded: a parked op waits for an explicit user decision.
         await this.db.outbox.bulkUpdate(

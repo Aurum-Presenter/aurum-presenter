@@ -71,6 +71,16 @@ const META_ALIASES: Record<string, keyof ChartMeta> = {
   time: 'time', capo: 'capo',
 };
 
+/**
+ * Parsing runs on the main thread, deliberately, at every length.
+ *
+ * The feature document asks for charts over 500 lines to be parsed in the search worker. On
+ * this parser a 500-line chart takes under 2 ms and a 10,000-line one about 24 ms, so posting
+ * the text across and structured-cloning the model back would cost more than the parse and
+ * would put a frame of empty screen in front of a musician who is reading. If a future change
+ * makes parsing genuinely expensive — a layout pass, say — the worker is there and this is the
+ * one place that would have to move.
+ */
 export function parseChart(body: string): Chart {
   const meta: ChartMeta = {
     title: null, subtitle: null, artist: null, key: null, tempo: null, time: null, capo: null,

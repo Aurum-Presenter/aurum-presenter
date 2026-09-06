@@ -152,6 +152,7 @@ final class SyncService
         ];
 
         if ($existing === null) {
+            $this->keepOneDefaultArrangement($db, $table, $recordId, $payload, $seq, $now, $userId);
             $db->insert($table, ['id' => $recordId] + $payload + $sync);
 
             return [];
@@ -165,9 +166,54 @@ final class SyncService
 
         $conflicts = $this->recordConflicts($db, $table, $recordId, $existing, $payload, $op, $now, $userId);
 
+        $this->keepOneDefaultArrangement($db, $table, $recordId, $payload, $seq, $now, $userId);
         $db->update($table, $payload + $sync, ['id' => $recordId]);
 
         return $conflicts;
+    }
+
+    /**
+     * Exactly one default arrangement per song.
+     *
+     * Two people offline can each make a different arrangement the default, and both are
+     * legitimate edits — so the later one demotes the others rather than being refused. A
+     * rejected push would be a change a musician made and lost, which is the one thing sync is
+     * not allowed to do. The demotion carries this operation's sequence number, so every device
+     * pulls it as part of the same change.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function keepOneDefaultArrangement(
+        Connection $db,
+        string $table,
+        string $recordId,
+        array $payload,
+        int $seq,
+        string $now,
+        string $userId,
+    ): void {
+        if ($table !== 'arrangements' || (int) ($payload['is_default'] ?? 0) !== 1) {
+            return;
+        }
+
+        // From the payload when the row is being created, from the stored row when it is being
+        // updated: a push that only flips the flag does not carry the song.
+        $songId = is_string($payload['song_id'] ?? null)
+            ? $payload['song_id']
+            : $db->fetchOne('SELECT song_id FROM arrangements WHERE id = ?', [$recordId]);
+
+        if (! is_string($songId) || $songId === '') {
+            return;
+        }
+
+        $db->executeStatement(
+            'UPDATE arrangements
+                SET is_default = 0, updated_at = ?, change_seq = ?, updated_by = ?
+              WHERE song_id = ?
+                AND id <> ?
+                AND is_default = 1',
+            [$now, $seq, $userId, $songId, $recordId],
+        );
     }
 
     /**
