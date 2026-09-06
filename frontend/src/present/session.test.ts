@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  advance, audienceSlide, isValidCode, jump, nextSlide, normaliseCode, pairingCode,
+  advance, audienceSlide, codeLife, CODE_TTL_MS, isValidCode, jump, nextSlide, normaliseCode, pairingCode,
   setBlank, stageSlide, withMessage, withStageMessage, DEFAULT_THEME, type SessionState,
 } from './session';
 import type { Slide } from './slides';
@@ -76,6 +76,18 @@ describe('pairing codes', () => {
       expect(code).not.toMatch(/[01OI]/);
       expect(isValidCode(code)).toBe(true);
     }
+  });
+
+  it('runs out after half an hour, and says how long is left until it does', () => {
+    const issued = Date.parse('2026-09-06T10:00:00Z');
+    const expires = issued + CODE_TTL_MS;
+
+    expect(codeLife(expires, issued).expired).toBe(false);
+    expect(codeLife(expires, issued).minutesLeft).toBe(30);
+    expect(codeLife(expires, issued + 29.5 * 60_000).minutesLeft).toBe(1);
+    expect(codeLife(expires, expires - 1).expired).toBe(false);
+    expect(codeLife(expires, expires).expired).toBe(true);
+    expect(codeLife(expires, expires + 60_000).expired).toBe(true);
   });
 
   it('accepts what a person types, in any case, with spaces', () => {

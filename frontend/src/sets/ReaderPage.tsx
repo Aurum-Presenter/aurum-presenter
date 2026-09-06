@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChartView } from '../chart/ChartView';
 import { formatKey, parseKey } from '../chart/notes';
 import { useDisplay } from '../prefs/display';
+import { useWakeLock } from '../pwa/wakeLock';
 import { useResolvedSet, type ResolvedItem } from './useResolvedSet';
 
 /**
@@ -149,42 +150,4 @@ export function ReaderItem({ resolved, display }: { resolved: ResolvedItem; disp
       )}
     </article>
   );
-}
-
-/**
- * Keeps the screen awake while a set is open, and lets it sleep again on the way out. Re-asks
- * after the tab has been hidden, because the lock is dropped when it is.
- */
-function useWakeLock(): void {
-  useEffect(() => {
-    let lock: { release: () => Promise<void> } | null = null;
-    let cancelled = false;
-
-    const request = async (): Promise<void> => {
-      try {
-        const api = (navigator as { wakeLock?: { request: (kind: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock;
-
-        if (api === undefined || cancelled) {
-          return;
-        }
-
-        lock = await api.request('screen');
-      } catch {
-        // Denied, unsupported, or the tab was not visible. The set still reads.
-      }
-    };
-
-    const onVisible = (): void => {
-      if (document.visibilityState === 'visible') void request();
-    };
-
-    void request();
-    document.addEventListener('visibilitychange', onVisible);
-
-    return () => {
-      cancelled = true;
-      document.removeEventListener('visibilitychange', onVisible);
-      void lock?.release().catch(() => undefined);
-    };
-  }, []);
 }

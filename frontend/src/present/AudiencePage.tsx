@@ -5,6 +5,7 @@ import { audienceSlide, DEFAULT_THEME, type SessionState } from './session';
 import { goFullscreen } from './displays';
 import { AudienceSlide } from './SlideView';
 import { OutputTransport } from './transport';
+import { useWakeLock } from '../pwa/wakeLock';
 
 /**
  * The audience screen.
@@ -21,6 +22,9 @@ export function AudiencePage() {
   const [params] = useSearchParams();
   const sessionId = params.get('session') ?? '';
   const [state, setState] = useState<SessionState | null>(null);
+
+  // A projector screen that sleeps mid-service is the same failure as a lost slide.
+  useWakeLock();
 
   useEffect(() => {
     const transport = new OutputTransport(sessionId, 'audience', screenLabel(), setState);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { StorageFullDialog } from '../blobs/StorageFullDialog';
 import { InstallBanner } from '../pwa/install';
 import { SyncPanel } from '../settings/SyncPanel';
 import { resumable } from '../present/store';
@@ -13,11 +14,13 @@ import { useWorkspace } from './workspace';
  * for it, so nothing else needs to talk about it.
  */
 export function Shell({ onSignOut }: { onSignOut: () => void }) {
-  const { me, workspace, db, online, pending, local, setWorkspace } = useWorkspace();
+  const { me, workspace, db, online, pending, local, storageFull, setWorkspace } = useWorkspace();
   const navigate = useNavigate();
   const [resume, setResume] = useState<SessionState | null>(null);
   const [syncOpen, setSyncOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  // Dismissal is per file: a different pinned file that will not fit is worth saying again.
+  const [dismissedSheet, setDismissedSheet] = useState<string | null>(null);
 
   // A control window closed by accident is offered back for a minute (acceptance criterion 5).
   useEffect(() => {
@@ -111,6 +114,10 @@ export function Shell({ onSignOut }: { onSignOut: () => void }) {
       )}
 
       {syncOpen && <SyncPanel onClose={() => setSyncOpen(false)} />}
+
+      {storageFull !== null && dismissedSheet !== storageFull.sheetId && (
+        <StorageFullDialog full={storageFull} onClose={() => setDismissedSheet(storageFull.sheetId)} />
+      )}
 
       <Outlet />
     </div>

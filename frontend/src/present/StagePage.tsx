@@ -4,6 +4,7 @@ import { parseKey } from '../chart/notes';
 import { nextSlide, stageSlide, type SessionMessage, type SessionState } from './session';
 import { StageSlide } from './SlideView';
 import { OutputTransport } from './transport';
+import { useWakeLock } from '../pwa/wakeLock';
 
 /**
  * The stage view.
@@ -41,6 +42,9 @@ export function StagePage({ external }: { external?: { state: SessionState | nul
   });
   const [settings, setSettings] = useState(false);
   const [now, setNow] = useState(Date.now());
+
+  // A tablet on a music stand must stay lit through a long song.
+  useWakeLock();
 
   // A paired device is handed its state from outside; a window on the control device subscribes
   // to the same BroadcastChannel as every other output.

@@ -4,11 +4,12 @@ import { useWorkspace } from '../app/workspace';
 import { openAudience, type OpenedOutput } from './displays';
 import { PairingHost, type Peer } from './pairing';
 import {
-  advance, audienceSlide, CODE_TTL_MS, jump, nextSlide, pairingCode, setBlank, stageSlide,
+  advance, audienceSlide, codeLife, CODE_TTL_MS, jump, nextSlide, pairingCode, setBlank,
   withMessage, withStageMessage, type BlankMode, type OutputStatus, type SessionState,
 } from './session';
 import { AudienceSlide, StageSlide } from './SlideView';
 import { holdUpdates } from '../pwa/update';
+import { useWakeLock } from '../pwa/wakeLock';
 import { endSession, load, logAdvance, save } from './store';
 import { ThemeDrawer } from './ThemeDrawer';
 import { ControlTransport } from './transport';
@@ -29,10 +30,15 @@ export function ControlPage() {
   const [audience, setAudience] = useState<OpenedOutput | null>(null);
   const [code, setCode] = useState<{ value: string; expires: number } | null>(null);
   const [pairing, setPairing] = useState<'waiting' | 'connected' | 'failed' | null>(null);
+  const [codeExpired, setCodeExpired] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const [message, setMessage] = useState('');
   const [stageMessage, setStageMessage] = useState('');
   const [themeOpen, setThemeOpen] = useState(false);
   const [ending, setEnding] = useState(false);
+
+  // The operator's laptop must not dim between songs any more than a musician's phone does.
+  useWakeLock();
 
   const transport = useRef<ControlTransport | null>(null);
   const host = useRef<PairingHost | null>(null);
@@ -132,6 +138,8 @@ export function ControlPage() {
     const value = pairingCode();
     setCode({ value, expires: Date.now() + CODE_TTL_MS });
     setPairing('waiting');
+    setCodeExpired(false);
+    setNow(Date.now());
 
     host.current?.close();
     host.current = new PairingHost(
@@ -156,6 +164,36 @@ export function ControlPage() {
 
     host.current.listen();
   };
+
+  /**
+   * A code that has run out stops working (stage-view acceptance criterion 8). The control
+   * surface stops listening rather than merely saying the code is old — a code written on a
+   * whiteboard an hour ago must not still be a way into a session.
+   */
+  useEffect(() => {
+    if (code === null || pairing === 'connected') {
+      return;
+    }
+
+    const tick = setInterval(() => {
+      const at = Date.now();
+
+      if (codeLife(code.expires, at).expired) {
+        host.current?.close();
+        host.current = null;
+        setPairing(null);
+        setCode(null);
+        setCodeExpired(true);
+        return;
+      }
+
+      // Only when the displayed figure would change: the control surface must not re-render
+      // behind an operator every few seconds for a countdown measured in minutes.
+      setNow((last) => (codeLife(code.expires, at).minutesLeft === codeLife(code.expires, last).minutesLeft ? last : at));
+    }, 5000);
+
+    return () => clearInterval(tick);
+  }, [code, pairing]);
 
   useEffect(() => () => host.current?.close(), []);
 
@@ -274,6 +312,12 @@ export function ControlPage() {
 
           {audience?.hint != null && <p className="mb-2 text-xs text-slate-500">{audience.hint}</p>}
 
+          {codeExpired && (
+            <p className="mb-2 text-xs text-amber-700 dark:text-amber-400">
+              That code has expired. Issue a new one to pair a device.
+            </p>
+          )}
+
           {code !== null && (
             <div className="mb-2 rounded border border-slate-200 p-2 dark:border-slate-800">
               <p className="text-xs text-slate-500">
@@ -285,7 +329,7 @@ export function ControlPage() {
                   ? 'The signalling relay could not be reached; a device on this network can still not be paired.'
                   : pairing === 'connected'
                     ? 'A device is connected.'
-                    : `Waiting for a device. The code works for ${Math.max(0, Math.round((code.expires - Date.now()) / 60000))} more minutes.`}
+                    : `Waiting for a device. The code works for ${codeLife(code.expires, now).minutesLeft} more minutes.`}
               </p>
             </div>
           )}
@@ -402,5 +446,3 @@ function groupByItem(slides: SessionState['slides']): { itemId: string; title: s
 
   return groups;
 }
-
-export { stageSlide };

@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Account, Workspace } from '../api/client';
-import { BlobQueue } from '../blobs/queue';
+import { BlobQueue, type StorageFull } from '../blobs/queue';
 import { BlobStore } from '../blobs/store';
 import { computeWanted } from '../blobs/wanted';
+import { released } from '../blobs/released';
 import { WorkspaceDb } from '../db/schema';
 import { Library } from '../library/repository';
 import { readUserPrefs } from '../prefs/userPrefs';
@@ -30,6 +31,9 @@ export interface WorkspaceContextValue {
   canEdit: boolean;
   online: boolean;
   pending: number;
+  /** A pinned file that would not fit. The app never chooses what to throw away for it. */
+  storageFull: StorageFull | null;
+  releasedSpace: () => void;
   syncNow: () => void;
   setWorkspace: (id: string) => void;
 }
@@ -56,6 +60,7 @@ export function WorkspaceProvider({ me, local = false, children }: { me: Account
   const workspace = me.workspaces.find((w) => w.id === workspaceId) ?? me.workspaces[0]!;
   const [online, setOnline] = useState(navigator.onLine);
   const [pending, setPending] = useState(0);
+  const [storageFull, setStorageFull] = useState<StorageFull | null>(null);
 
   const db = useMemo(() => new WorkspaceDb(workspace.id), [workspace.id]);
   const engine = useMemo(() => new SyncEngine(db, workspace.id), [db, workspace.id]);
@@ -92,14 +97,16 @@ export function WorkspaceProvider({ me, local = false, children }: { me: Account
       // Files move after the metadata, and never in front of it: a large sheet must not delay a
       // key change reaching the rest of the band.
       const part = (await readUserPrefs(db, me.id)).part;
-      await blobs.run(await computeWanted(db, me.id, part)).catch(() => undefined);
+      const queue = await blobs.run(await computeWanted(db, me.id, part, released(workspace.id))).catch(() => null);
+
+      setStorageFull(queue?.full ?? null);
     };
 
     void tick();
     const timer = setInterval(() => void tick(), 30_000);
 
     return () => clearInterval(timer);
-  }, [engine, blobs, db, me.id, local]);
+  }, [engine, blobs, db, me.id, local, workspace.id]);
 
   const value: WorkspaceContextValue = {
     me,
@@ -114,6 +121,11 @@ export function WorkspaceProvider({ me, local = false, children }: { me: Account
     canEdit: workspace.role !== 'viewer',
     online,
     pending,
+    storageFull,
+    releasedSpace: () => {
+      blobs.clearFull();
+      setStorageFull(null);
+    },
     syncNow: () => void engine.sync().catch(() => undefined).then(() => engine.pendingCount().then(setPending)),
     setWorkspace: (id) => {
       localStorage.setItem('aurum.workspace', id);

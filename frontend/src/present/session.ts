@@ -140,6 +140,14 @@ export function normaliseCode(input: string): string {
   return input.trim().toUpperCase().replace(/[^A-Z2-9]/g, '');
 }
 
+/**
+ * What is left of a pairing code. A code is a shared secret for one session, so the control
+ * surface stops listening when it runs out rather than only saying that it is old.
+ */
+export function codeLife(expires: number, at: number): { expired: boolean; minutesLeft: number } {
+  return { expired: at >= expires, minutesLeft: Math.max(1, Math.ceil((expires - at) / 60000)) };
+}
+
 export function isValidCode(input: string): boolean {
   const code = normaliseCode(input);
 

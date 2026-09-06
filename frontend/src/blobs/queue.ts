@@ -22,10 +22,26 @@ export interface QueueState {
   uploading: number;
   downloading: number;
   failed: number;
+  /** Set when a pinned download would not fit. Nothing pinned is ever thrown away for it. */
+  full: StorageFull | null;
+}
+
+/**
+ * A pinned file that will not fit on this device.
+ *
+ * The device is out of room and the app will not choose for the user: a pinned file is
+ * something somebody asked for, so the app names what could not be kept and lets them decide
+ * which pin to release (business rule 10).
+ */
+export interface StorageFull {
+  sheetId: string;
+  songTitle: string;
+  size: number;
 }
 
 export class BlobQueue {
   private running = false;
+  private full: StorageFull | null = null;
 
   constructor(
     private readonly db: WorkspaceDb,
@@ -68,7 +84,13 @@ export class BlobQueue {
       uploading: uploads.filter((upload) => upload.last_error === null).length,
       downloading: 0,
       failed: uploads.filter((upload) => upload.last_error !== null).length,
+      full: this.full,
     };
+  }
+
+  /** Called once the user has released a pin, so the next pass is allowed to try again. */
+  clearFull(): void {
+    this.full = null;
   }
 
   private async drainUploads(): Promise<void> {
@@ -130,6 +152,9 @@ export class BlobQueue {
   }
 
   private async fetchWanted(wanted: Set<string>): Promise<void> {
+    // Each pass decides for itself: a pin released since the last one may have made room.
+    this.full = null;
+
     for (const sheetId of wanted) {
       const sheet = await this.db.sheets.get(sheetId);
 
@@ -150,7 +175,25 @@ export class BlobQueue {
           continue;
         }
 
-        await this.store.put(sheetId, sheet.sha256, await response.blob(), 'pinned');
+        const bytes = await response.blob();
+
+        try {
+          await this.store.put(sheetId, sheet.sha256, bytes, 'pinned');
+        } catch (error) {
+          if (! isOutOfSpace(error)) {
+            throw error;
+          }
+
+          // Out of room. Stop — every file after this one would fail the same way — and say
+          // which file it was, so the user can decide what to release.
+          this.full = {
+            sheetId,
+            songTitle: (await this.db.songs.get(sheet.song_id))?.title ?? 'A sheet',
+            size: bytes.size,
+          };
+
+          return;
+        }
       } catch {
         // Offline, or the object is not there yet. The sheet shows as not downloaded and the
         // next pass will try again.
@@ -184,4 +227,18 @@ export class BlobQueue {
 
     return bytes;
   }
+}
+
+/**
+ * Whether a failed write means the device is full. Browsers disagree on the shape of it: a
+ * DOMException on IndexedDB, a plain error out of the file system on some Safari builds.
+ */
+export function isOutOfSpace(error: unknown): boolean {
+  const name = (error as { name?: string } | null)?.name ?? '';
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+
+  return name === 'QuotaExceededError'
+    || name === 'NS_ERROR_FILE_NO_DEVICE_SPACE'
+    || message.includes('quota')
+    || message.includes('no space');
 }

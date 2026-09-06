@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useWorkspace } from '../app/workspace';
 import { BlobStore } from '../blobs/store';
 import { computeWanted } from '../blobs/wanted';
+import { keepAgain, released } from '../blobs/released';
 import { isAutoPinned } from '../sets/repository';
 import { readUserPrefs } from '../prefs/userPrefs';
 
@@ -19,16 +20,32 @@ export function StoragePage() {
 
   const [estimate, setEstimate] = useState<{ usage: number; quota: number } | null>(null);
   const [persisted, setPersisted] = useState<boolean | null>(null);
+  const [offlineReady, setOfflineReady] = useState<boolean | null>(null);
+  const [letGo, setLetGo] = useState(() => released(workspace.id));
   const [fetching, setFetching] = useState(false);
 
   const cached = useLiveQuery(() => db.blobs.toArray(), [db], []);
   const sets = useLiveQuery(() => db.sets.filter((row) => row.deleted_at === null).toArray(), [db], []);
   const sheets = useLiveQuery(() => db.sheets.filter((row) => row.deleted_at === null).toArray(), [db], []);
+  const songs = useLiveQuery(() => db.songs.filter((row) => row.deleted_at === null).toArray(), [db], []);
 
   useEffect(() => {
     void BlobStore.estimate().then(setEstimate);
     void navigator.storage?.persisted?.().then(setPersisted).catch(() => setPersisted(null));
   }, [cached]);
+
+  // A private window will not register a service worker, and the app has to say so here rather
+  // than let somebody find out on a stage with no signal (PWA acceptance criterion 8).
+  useEffect(() => {
+    if (! ('serviceWorker' in navigator)) {
+      setOfflineReady(false);
+      return;
+    }
+
+    void navigator.serviceWorker.getRegistration()
+      .then((registration) => setOfflineReady(registration !== undefined))
+      .catch(() => setOfflineReady(false));
+  }, []);
 
   const pinnedBytes = cached.filter((row) => row.pin_reason === 'pinned').reduce((total, row) => total + row.size, 0);
   const opportunisticBytes = cached.filter((row) => row.pin_reason === 'opportunistic').reduce((total, row) => total + row.size, 0);
@@ -50,7 +67,7 @@ export function StoragePage() {
   const refreshPins = async (): Promise<void> => {
     const part = (await readUserPrefs(db, me.id)).part;
     await BlobStore.requestPersistence().then(setPersisted);
-    await blobs.run(await computeWanted(db, me.id, part));
+    await blobs.run(await computeWanted(db, me.id, part, released(workspace.id)));
   };
 
   return (
@@ -70,6 +87,14 @@ export function StoragePage() {
         {estimate !== null && (
           <Row label="Browser storage" value={`${megabytes(estimate.usage)} of ${megabytes(estimate.quota)} used`} />
         )}
+        <Row
+          label="Offline use"
+          value={offlineReady === false
+            ? 'unavailable in this window — a private window cannot keep the app itself offline'
+            : offlineReady === true
+              ? 'ready — this device can open the app with no network'
+              : 'checking…'}
+        />
         <Row
           label="Kept under pressure"
           value={persisted === true
@@ -96,7 +121,7 @@ export function StoragePage() {
 
       <h3 className="mb-2 font-semibold">Sets kept offline</h3>
       <ul className="space-y-1 text-sm">
-        {sets.filter((set) => isAutoPinned(set)).map((set) => (
+        {sets.filter((set) => isAutoPinned(set) && ! letGo.sets.includes(set.id)).map((set) => (
           <li key={set.id} className="flex gap-2">
             <Link className="underline" to={`/sets/${set.id}`}>{set.name}</Link>
             <span className="text-slate-500">
@@ -104,10 +129,40 @@ export function StoragePage() {
             </span>
           </li>
         ))}
-        {sets.filter((set) => isAutoPinned(set)).length === 0 && (
+        {sets.filter((set) => isAutoPinned(set) && ! letGo.sets.includes(set.id)).length === 0 && (
           <li className="text-slate-500">Nothing is pinned and no set is within the next fortnight.</li>
         )}
       </ul>
+
+      {letGo.sets.length + letGo.songs.length > 0 && (
+        <>
+          <h3 className="mb-2 mt-6 font-semibold">Released on this device</h3>
+          <p className="mb-2 text-sm text-slate-500">
+            Still pinned for everybody else — this device was simply out of room.
+          </p>
+          <ul className="space-y-1 text-sm">
+            {[
+              ...letGo.sets.map((id) => ({ kind: 'set' as const, id, name: sets.find((set) => set.id === id)?.name ?? 'A set' })),
+              ...letGo.songs.map((id) => ({ kind: 'song' as const, id, name: songs.find((song) => song.id === id)?.title ?? 'A song' })),
+            ].map((item) => (
+              <li key={`${item.kind}-${item.id}`} className="flex gap-2">
+                <span>{item.name}</span>
+                <span className="text-xs text-slate-500">{item.kind}</span>
+                <button
+                  className="underline"
+                  onClick={() => {
+                    keepAgain(workspace.id, item.kind, item.id);
+                    setLetGo(released(workspace.id));
+                    void refreshPins();
+                  }}
+                >
+                  Keep it again
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

@@ -4,14 +4,21 @@ import type { SongPrefs } from '../prefs/songPrefs';
 import type { Part } from '../sheets/selection';
 import { isAutoPinned } from '../sets/repository';
 import { wantedSheets, type SheetWant } from './policy';
+import type { Released } from './released';
 
 /**
  * The sheets this device should be holding, read out of the local database.
  *
  * Two sources: the sets that are coming up (or pinned), each in the key it will be played in,
- * and the songs the user has pinned by hand.
+ * and the songs the user has pinned by hand — less anything this device has been told to let
+ * go of, which beats both.
  */
-export async function computeWanted(db: WorkspaceDb, userId: string, part: Part | null): Promise<Set<string>> {
+export async function computeWanted(
+  db: WorkspaceDb,
+  userId: string,
+  part: Part | null,
+  released: Released = { sets: [], songs: [] },
+): Promise<Set<string>> {
   const [sets, items, sheets, songs, arrangements, preferences] = await Promise.all([
     db.sets.filter((row) => row.deleted_at === null).toArray(),
     db.set_items.filter((row) => row.deleted_at === null).toArray(),
@@ -53,16 +60,19 @@ export async function computeWanted(db: WorkspaceDb, userId: string, part: Part 
   };
 
   const wants: SheetWant[] = [];
-  const pinnedSets = new Set(sets.filter((set) => isAutoPinned(set)).map((set) => set.id));
+  const letGo = { sets: new Set(released.sets), songs: new Set(released.songs) };
+  const pinnedSets = new Set(
+    sets.filter((set) => isAutoPinned(set) && ! letGo.sets.has(set.id)).map((set) => set.id),
+  );
 
   for (const item of items) {
-    if (item.song_id !== null && pinnedSets.has(item.set_id)) {
+    if (item.song_id !== null && pinnedSets.has(item.set_id) && ! letGo.songs.has(item.song_id)) {
       wants.push(keyFor(item.song_id, item.key_override));
     }
   }
 
   for (const [songId, preference] of prefs) {
-    if (preference.pinned === true) {
+    if (preference.pinned === true && ! letGo.songs.has(songId)) {
       wants.push(keyFor(songId, null));
     }
   }
