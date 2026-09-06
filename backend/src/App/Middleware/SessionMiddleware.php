@@ -62,7 +62,7 @@ final class SessionMiddleware implements MiddlewareInterface
 
         $session = $this->sessions->findById($claims['sid']);
 
-        if ($session === null || ! $this->sessions->isUsable($session)) {
+        if ($session === null || ! $this->sessions->carriesAccessTokens($session)) {
             if ($isPublic) {
                 return $handler->handle($request);
             }

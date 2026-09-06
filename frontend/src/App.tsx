@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { account, auth, cachedAccount, forgetCachedAccount, type Account } from './api/client';
+import { account, auth, cachedAccount, forgetCachedAccount, onSignedOut, type Account } from './api/client';
 import { AuthScreen } from './auth/AuthScreen';
 import { claimLocalWorkspace, localAccount, localMode } from './auth/local';
 import { Shell } from './app/Shell';
@@ -12,7 +12,7 @@ import { ControlPage } from './present/ControlPage';
 import { JoinPage } from './present/JoinPage';
 import { StagePage } from './present/StagePage';
 import { SharePage } from './pwa/SharePage';
-import { UpdateToast } from './pwa/update';
+import { updatesHeld, UpdateToast } from './pwa/update';
 import { PrintPage } from './sets/PrintPage';
 import { ReaderPage } from './sets/ReaderPage';
 import { SetPage } from './sets/SetPage';
@@ -90,6 +90,38 @@ export function App() {
       noSession();
     }).catch(noSession);
   }, [loadAccount]);
+
+  /**
+   * The session ended while the app was open — revoked, or a password changed elsewhere. The
+   * app says so rather than sitting behind a chip that reads "synced" while nothing syncs.
+   *
+   * Never mid-service, though: replacing a running control surface with a sign-in screen in
+   * front of a congregation is worse than any amount of unsynced work. It waits for the session
+   * to end, which is the same flag that holds back updates.
+   */
+  useEffect(() => onSignedOut(() => {
+    if (localMode() !== null) {
+      return;
+    }
+
+    const leave = (): void => {
+      forgetCachedAccount();
+      setPhase('signed-out');
+      setMe(null);
+    };
+
+    if (! updatesHeld()) {
+      leave();
+      return;
+    }
+
+    const waiting = setInterval(() => {
+      if (! updatesHeld()) {
+        clearInterval(waiting);
+        leave();
+      }
+    }, 5000);
+  }), []);
 
   if (phase === 'loading') {
     return <div className="flex min-h-dvh items-center justify-center bg-white p-6 text-slate-900">Starting…</div>;

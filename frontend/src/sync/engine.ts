@@ -2,7 +2,7 @@ import type { Table } from 'dexie';
 import { api, ApiError } from '../api/client';
 import { SYNCED_TABLES, type OutboxOp, type SyncedTable, type WorkspaceDb } from '../db/schema';
 import { uuidv7 } from '../db/uuid';
-import { asSoleWorker } from './lock';
+import { asSoleWorker } from '../app/locks';
 
 export interface PushResult {
   op_id: string;

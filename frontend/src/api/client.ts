@@ -1,3 +1,5 @@
+import { inTurn } from '../app/locks';
+
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8080';
 
 export class ApiError extends Error {
@@ -53,15 +55,26 @@ async function refresh(): Promise<boolean> {
   // A single in-flight refresh, shared by every caller. Without this, a burst of parallel
   // requests hitting a just-expired token would each rotate the refresh cookie — and rotation
   // treats a second use of the same token as theft, which would revoke the whole family.
+  //
+  // The same is true across windows, which is why the request takes a turn on a device-wide
+  // lock: opening the library, the control surface and a stage window together would otherwise
+  // present one cookie three times and sign the user out of everything, mid-service.
   refreshInFlight ??= (async () => {
     try {
-      const response = await fetch(`${API_URL}/api/v1/auth/refresh`, {
+      const response = await inTurn('aurum-refresh', () => fetch(`${API_URL}/api/v1/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
-      });
+      }));
 
       if (!response.ok) {
         accessToken = null;
+
+        // 401 is the server saying this session is over. Anything else — a 500, a proxy page —
+        // is a broken connection, and the app must not throw somebody out of a service for it.
+        if (response.status === 401) {
+          announceSignedOut();
+        }
+
         return false;
       }
 
@@ -220,6 +233,30 @@ export function cachedAccount(): Account | null {
     return stored === null ? null : (JSON.parse(stored) as Account);
   } catch {
     return null;
+  }
+}
+
+/**
+ * Told when the session is definitively gone — a refresh the server refused, which is a
+ * revoked family or a password change, not a flat tyre on the network.
+ *
+ * The app listens so it can show the sign-in screen instead of sitting there with a chip that
+ * says "synced" while nothing syncs. Local data is untouched: signing back in resumes the
+ * outbox where it stopped.
+ */
+type SignedOutListener = () => void;
+
+const signedOutListeners = new Set<SignedOutListener>();
+
+export function onSignedOut(listener: SignedOutListener): () => void {
+  signedOutListeners.add(listener);
+
+  return () => signedOutListeners.delete(listener);
+}
+
+function announceSignedOut(): void {
+  for (const listener of signedOutListeners) {
+    listener();
   }
 }
 

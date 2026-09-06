@@ -1,5 +1,5 @@
 /**
- * One syncing window per device.
+ * Locks that hold across every window of the app on one device.
  *
  * The app is routinely open three times at once — library, control surface, stage — and each
  * one runs the same thirty-second tick. Without this they would all drain the same outbox and
@@ -30,4 +30,23 @@ export async function asSoleWorker<T>(name: string, pass: () => Promise<T>, skip
   });
 
   return result;
+}
+
+/**
+ * Waits its turn rather than skipping: for work every caller must do, but only one at a time.
+ *
+ * The refresh cookie is the case that matters. Three windows opening at once each ask for a new
+ * access token, and rotation means the second use of the same refresh token is theft as far as
+ * the server is concerned — it revokes the whole family and signs the musician out everywhere,
+ * mid-service, for the crime of having the control surface and the stage view open. Taking
+ * turns means each window presents the cookie the last one left behind.
+ */
+export async function inTurn<T>(name: string, work: () => Promise<T>): Promise<T> {
+  const locks = navigator.locks as LockManager | undefined;
+
+  if (locks === undefined) {
+    return work();
+  }
+
+  return await locks.request(name, work);
 }

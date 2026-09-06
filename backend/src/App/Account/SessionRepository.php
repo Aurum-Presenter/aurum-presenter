@@ -73,11 +73,15 @@ final class SessionRepository
      * Reuse detection. A refresh token is single-use; seeing one again means a copy exists, and
      * there is no way to tell the thief from the victim — so the entire rotation chain dies and
      * both are made to sign in again.
+     *
+     * `replaced_by` is cleared as well as `revoked_at` set: a link in a rotation chain is
+     * ordinarily still good enough to carry an access token to its expiry (see
+     * `carriesAccessTokens`), and a chain that has been stolen must not be.
      */
     public function revokeFamily(string $familyId): void
     {
         $this->db()->executeStatement(
-            'UPDATE sessions SET revoked_at = ? WHERE family_id = ? AND revoked_at IS NULL',
+            'UPDATE sessions SET revoked_at = COALESCE(revoked_at, ?), replaced_by = NULL WHERE family_id = ?',
             [$this->clock->now(), $familyId]
         );
     }
@@ -85,7 +89,7 @@ final class SessionRepository
     public function revoke(string $sessionId): void
     {
         $this->db()->executeStatement(
-            'UPDATE sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL',
+            'UPDATE sessions SET revoked_at = ?, replaced_by = NULL WHERE id = ? AND revoked_at IS NULL',
             [$this->clock->now(), $sessionId]
         );
     }
@@ -93,15 +97,38 @@ final class SessionRepository
     public function revokeAllForUser(string $userId): void
     {
         $this->db()->executeStatement(
-            'UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL',
+            'UPDATE sessions SET revoked_at = ?, replaced_by = NULL WHERE user_id = ? AND revoked_at IS NULL',
             [$this->clock->now(), $userId]
         );
     }
 
+    /** Whether this session may still be *refreshed*: single-use, so a replaced one may not. */
     /** @param array<string, mixed> $session */
     public function isUsable(array $session): bool
     {
         return $session['revoked_at'] === null && ! $this->clock->isPast($session['expires_at']);
+    }
+
+    /**
+     * Whether an access token already issued against this session is still honoured.
+     *
+     * Rotation replaces a session every time any window refreshes, and the app is routinely
+     * open three times at once — library, control surface, stage. If a replaced session stopped
+     * carrying its access token immediately, opening a stage window would knock the control
+     * surface offline mid-service, which is precisely the moment it must not happen. A session
+     * that was superseded keeps working until the token it issued expires, fifteen minutes at
+     * most; one that was *revoked* — a sign-out, or a stolen chain — stops at once, because
+     * revoking clears `replaced_by`.
+     *
+     * @param array<string, mixed> $session
+     */
+    public function carriesAccessTokens(array $session): bool
+    {
+        if ($this->clock->isPast($session['expires_at'])) {
+            return false;
+        }
+
+        return $session['revoked_at'] === null || $session['replaced_by'] !== null;
     }
 
     public function purgeExpired(): int

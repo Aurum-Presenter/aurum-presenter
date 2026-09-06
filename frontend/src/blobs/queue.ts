@@ -1,7 +1,7 @@
 import { api } from '../api/client';
 import type { WorkspaceDb } from '../db/schema';
 import { BlobStore } from './store';
-import { asSoleWorker } from '../sync/lock';
+import { asSoleWorker } from '../app/locks';
 
 /**
  * The blob queue: sheet files moving between the device and the object store.
