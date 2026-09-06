@@ -102,7 +102,7 @@ final class S3ObjectStore implements ObjectStore
 
     public function listPrefix(string $prefix): array
     {
-        $keys = [];
+        $objects = [];
         $paginator = $this->client->getPaginator('ListObjectsV2', [
             'Bucket' => $this->bucket,
             'Prefix' => $prefix,
@@ -110,10 +110,16 @@ final class S3ObjectStore implements ObjectStore
 
         foreach ($paginator as $page) {
             foreach ($page['Contents'] ?? [] as $object) {
-                $keys[] = (string) $object['Key'];
+                $objects[] = [
+                    'key'      => (string) $object['Key'],
+                    'size'     => (int) ($object['Size'] ?? 0),
+                    'modified' => $object['LastModified'] instanceof \DateTimeInterface
+                        ? $object['LastModified']->getTimestamp()
+                        : 0,
+                ];
             }
         }
 
-        return $keys;
+        return $objects;
     }
 }

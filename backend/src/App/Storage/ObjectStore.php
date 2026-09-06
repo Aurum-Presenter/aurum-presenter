@@ -29,6 +29,11 @@ interface ObjectStore
 
     public function delete(string $key): void;
 
-    /** @return list<string> */
+    /**
+     * Everything stored under a prefix, with what the purge needs to decide: an object nothing
+     * refers to but that was written minutes ago belongs to an upload still in flight.
+     *
+     * @return list<array{key: string, size: int, modified: int}>
+     */
     public function listPrefix(string $prefix): array;
 }
