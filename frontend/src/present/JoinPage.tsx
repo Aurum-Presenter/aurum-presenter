@@ -106,6 +106,15 @@ export function JoinPage() {
     }
   }, [state]);
 
+  // When the session ends this device goes back to the join screen rather than holding the last
+  // slide: the service is over, and the tablet is a tablet again.
+  useEffect(() => {
+    if (state?.ended === true) {
+      localStorage.removeItem('aurum.stage.last');
+      setStatus('idle');
+    }
+  }, [state?.ended]);
+
   if (status === 'joined' || status === 'stale') {
     return (
       <StagePage

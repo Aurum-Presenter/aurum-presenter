@@ -70,27 +70,49 @@ export async function openAudience(url: string): Promise<OpenedOutput> {
   };
 }
 
-/** The screen that is not the one the operator is sitting in front of. */
+/**
+ * The screen that is not the one the operator is sitting in front of.
+ *
+ * `isExtended` is readable without any permission, so a laptop with one screen is never asked
+ * for one: the prompt only appears when there is actually a second screen to put the audience
+ * window on. The call is raced with a timer because a prompt nobody answers must not hold up
+ * the start of a service — the plain window is one keystroke from full screen anyway.
+ */
 async function externalScreen(): Promise<ScreenDetail | null> {
   const api = (window as unknown as { getScreenDetails?: () => Promise<ScreenDetails> }).getScreenDetails;
 
-  if (api === undefined) {
+  if (api === undefined || (screen as Screen & { isExtended?: boolean }).isExtended !== true) {
     return null;
   }
 
   try {
-    const details = await api.call(window);
+    const details = await Promise.race([
+      api.call(window),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000)),
+    ]);
 
-    return details.screens.find((screen) => ! screen.isPrimary) ?? null;
+    return details?.screens.find((each) => ! each.isPrimary) ?? null;
   } catch {
     // Permission refused, or no second screen. Both fall through to the next mechanism.
     return null;
   }
 }
 
+/**
+ * Casting, but only when there is something to cast to.
+ *
+ * `start()` opens the browser's device picker and waits for a person, so it must never be
+ * called speculatively: an operator with no Chromecast on the network would get a dialog in
+ * front of them at the moment a service starts, and the audience window would wait behind it.
+ * Availability is asked first, and briefly — discovery that has not answered in a second and a
+ * half is treated as "no receiver", because a plain window now beats a cast screen later.
+ */
 async function castTo(url: string): Promise<{ terminate: () => void } | null> {
   const Request = (window as unknown as {
-    PresentationRequest?: new (urls: string[]) => { start: () => Promise<{ terminate: () => void }> };
+    PresentationRequest?: new (urls: string[]) => {
+      start: () => Promise<{ terminate: () => void }>;
+      getAvailability?: () => Promise<{ value: boolean }>;
+    };
   }).PresentationRequest;
 
   if (Request === undefined) {
@@ -98,9 +120,20 @@ async function castTo(url: string): Promise<{ terminate: () => void } | null> {
   }
 
   try {
-    return await new Request([url]).start();
+    const request = new Request([url]);
+
+    if (request.getAvailability === undefined) {
+      return null;
+    }
+
+    const available = await Promise.race([
+      request.getAvailability().then((availability) => availability.value).catch(() => false),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1500)),
+    ]);
+
+    return available ? await request.start() : null;
   } catch {
-    // The user cancelled the picker, or there is no receiver on the network.
+    // The user cancelled the picker, or discovery is not supported here.
     return null;
   }
 }

@@ -64,8 +64,17 @@ export function AudiencePage() {
     return () => window.removeEventListener('keydown', key);
   }, []);
 
+  // The control surface opened this window, so it may close it. If the browser refuses — a tab
+  // somebody opened by hand — the screen goes to the theme's background rather than a stale
+  // slide in front of a room.
+  useEffect(() => {
+    if (state?.ended === true) {
+      window.close();
+    }
+  }, [state?.ended]);
+
   const theme = state?.theme ?? DEFAULT_THEME;
-  const slide = state === null ? null : audienceSlide(state);
+  const slide = state === null || state.ended ? null : audienceSlide(state);
   const image = useBackground(state);
 
   return (
@@ -78,11 +87,11 @@ export function AudiencePage() {
         color: theme.text_color,
       }}
     >
-      {state !== null && (
+      {state !== null && ! state.ended && (
         <AudienceSlide slide={slide} theme={theme} workspaceId={state.workspace_id} />
       )}
 
-      {state?.message != null && (
+      {state !== null && ! state.ended && state.message != null && (
         <div className="absolute inset-x-0 bottom-0 bg-black/70 p-6 text-center" style={{ fontSize: '5vh' }}>
           {state.message}
         </div>

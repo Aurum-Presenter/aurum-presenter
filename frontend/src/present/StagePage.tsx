@@ -67,6 +67,17 @@ export function StagePage({ external }: { external?: { state: SessionState | nul
 
   const state = external?.state ?? local;
   const stale = external?.stale ?? false;
+  const ended = state?.ended === true;
+
+  /**
+   * The session is over: a window the control surface opened closes itself, and a device that
+   * joined says so instead of holding a stale slide on a music stand.
+   */
+  useEffect(() => {
+    if (ended && external === undefined) {
+      window.close();
+    }
+  }, [ended, external]);
 
   const update = (changes: Partial<StagePrefs>): void => {
     const next = { ...prefs, ...changes };
@@ -79,6 +90,14 @@ export function StagePage({ external }: { external?: { state: SessionState | nul
 
     return preferred === null ? null : parseKey(preferred);
   }, []);
+
+  if (ended) {
+    return (
+      <div className="flex h-dvh w-dvw items-center justify-center bg-black text-slate-400">
+        <p>The session has ended.</p>
+      </div>
+    );
+  }
 
   const current = state === null ? null : stageSlide(state);
   const next = state === null ? null : nextSlide(state);
