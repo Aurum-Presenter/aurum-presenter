@@ -5,6 +5,8 @@ import { BlobStore } from '../blobs/store';
 import { computeWanted } from '../blobs/wanted';
 import { released } from '../blobs/released';
 import { WorkspaceDb } from '../db/schema';
+import { forgetWorkspacesExcept } from '../db/forget';
+import { localMode } from '../auth/local';
 import { Library } from '../library/repository';
 import { readUserPrefs } from '../prefs/userPrefs';
 import { SheetsRepository } from '../sheets/repository';
@@ -70,6 +72,24 @@ export function WorkspaceProvider({ me, local = false, children }: { me: Account
   const sheets = useMemo(() => new SheetsRepository(db, engine, files), [db, engine, files]);
 
   useEffect(() => () => db.close(), [db]);
+
+  /**
+   * A workspace this account no longer belongs to is removed from the device, files and all.
+   * Never in local mode: there the account is a stand-in with one workspace, and the real ones
+   * are exactly the data the user is about to sign in and keep.
+   */
+  useEffect(() => {
+    // An empty list is not a removal — it is an account that has not loaded — and a local
+    // workspace waiting to be claimed is not one either. Both are kept.
+    if (local || me.workspaces.length === 0) {
+      return;
+    }
+
+    const unclaimed = localMode()?.workspaceId;
+    const keep = me.workspaces.map((each) => each.id);
+
+    void forgetWorkspacesExcept(unclaimed === undefined ? keep : [...keep, unclaimed]);
+  }, [local, me.workspaces]);
 
   useEffect(() => {
     const goOnline = (): void => setOnline(true);
