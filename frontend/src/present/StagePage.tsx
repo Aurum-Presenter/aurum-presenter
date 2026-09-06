@@ -110,7 +110,13 @@ export function StagePage({ external }: { external?: { state: SessionState | nul
         {prefs.preview && (
           <section className="overflow-auto border-l border-slate-800 pl-4 opacity-60">
             <p className="mb-2 text-xs uppercase tracking-widest">Next</p>
-            <StageSlide slide={next} targetKey={key} showChords={prefs.chords} scale={prefs.fontVh * 0.7} />
+            <StageSlide
+              slide={next}
+              targetKey={key}
+              showChords={prefs.chords}
+              scale={prefs.fontVh * 0.7}
+              empty="End of the set."
+            />
           </section>
         )}
       </main>

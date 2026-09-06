@@ -14,6 +14,11 @@ import { textOf, type Slide } from './slides';
  * state they were handed.
  */
 
+/**
+ * Sizes are in container units, not viewport units, so the same component fills a projector and
+ * fits the little preview on the control surface — at the same proportions, which is the whole
+ * point of a preview.
+ */
 export function AudienceSlide({ slide, theme, workspaceId }: { slide: Slide | null; theme: Theme; workspaceId: string }) {
   const lines = slide === null ? [] : slide.kind === 'text' ? (slide.text ?? '').split('\n') : slide.lines.map(textOf);
   const fitted = useFittedSize(theme.font_size_vh, lines);
@@ -25,17 +30,20 @@ export function AudienceSlide({ slide, theme, workspaceId }: { slide: Slide | nu
   return (
     <div
       className="flex h-full w-full flex-col items-center justify-center"
-      style={{ padding: `${theme.safe_area_pct}vh ${theme.safe_area_pct}vw` }}
+      style={{
+        containerType: 'size',
+        padding: `${theme.safe_area_pct}cqh ${theme.safe_area_pct}cqw`,
+      }}
     >
       {theme.show_section_labels && slide?.label != null && (
-        <p className="mb-4 uppercase tracking-widest opacity-60" style={{ fontSize: `${fitted / 3}vh` }}>
+        <p className="mb-4 uppercase tracking-widest opacity-60" style={{ fontSize: `${fitted / 3}cqh` }}>
           {slide.label}
         </p>
       )}
 
       <div
         className={`w-full ${theme.align === 'center' ? 'text-center' : 'text-left'}`}
-        style={{ fontSize: `${fitted}vh`, lineHeight: 1.25, fontFamily: theme.font_family }}
+        style={{ fontSize: `${fitted}cqh`, lineHeight: 1.25, fontFamily: theme.font_family }}
       >
         {lines.map((line, index) => (
           <p key={index} className="whitespace-pre-wrap">{line === '' ? ' ' : line}</p>
@@ -54,14 +62,16 @@ export function StageSlide({
   targetKey,
   showChords,
   scale,
+  empty = 'Waiting for the first slide…',
 }: {
   slide: Slide | null;
   targetKey: Key | null;
   showChords: boolean;
   scale: number;
+  empty?: string;
 }) {
   if (slide === null) {
-    return <p className="opacity-60">Waiting for the first slide…</p>;
+    return <p className="opacity-60">{empty}</p>;
   }
 
   if (slide.kind === 'text') {

@@ -216,7 +216,7 @@ export function ControlPage() {
           <figure className="flex min-h-0 flex-col">
             <figcaption className="mb-1 text-xs uppercase tracking-widest text-slate-500">Next</figcaption>
             <div className="aspect-video overflow-hidden rounded border border-slate-200 bg-black p-3 text-slate-100 dark:border-slate-800">
-              <StageSlide slide={nextSlide(state)} targetKey={null} showChords scale={2} />
+              <StageSlide slide={nextSlide(state)} targetKey={null} showChords scale={2} empty="End of the set." />
             </div>
           </figure>
         </div>
