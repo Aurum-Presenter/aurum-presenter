@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { backgroundUrl } from './background';
 import { audienceSlide, DEFAULT_THEME, type SessionState } from './session';
 import { goFullscreen } from './displays';
 import { AudienceSlide } from './SlideView';
@@ -61,14 +62,15 @@ export function AudiencePage() {
 
   const theme = state?.theme ?? DEFAULT_THEME;
   const slide = state === null ? null : audienceSlide(state);
+  const image = useBackground(state);
 
   return (
     <div
       className="h-dvh w-dvw overflow-hidden"
       style={{
-        background: theme.background_kind === 'image'
-          ? `#000 center / contain no-repeat url(${theme.background_value})`
-          : theme.background_value,
+        // Business rule 2: a background that is not on this device falls back to the theme's
+        // colour. A congregation should never be shown a broken image or a white rectangle.
+        background: image === null ? colourOf(theme) : `${colourOf(theme)} center / cover no-repeat url(${image})`,
         color: theme.text_color,
       }}
     >
@@ -83,6 +85,55 @@ export function AudiencePage() {
       )}
     </div>
   );
+}
+
+/**
+ * The background image, read from this device's copy and only fetched if it is missing. It is
+ * loaded here rather than passed in state so that every output resolves it for itself.
+ */
+function useBackground(state: SessionState | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (state === null || state.theme.background_kind !== 'image') {
+      setUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    void (async () => {
+      const { WorkspaceDb } = await import('../db/schema');
+      const db = new WorkspaceDb(state.workspace_id);
+      const found = await backgroundUrl(db, state.workspace_id, state.theme.background_value);
+      db.close();
+
+      if (cancelled) {
+        return;
+      }
+
+      objectUrl = found;
+      setUrl(found);
+    })();
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl !== null) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [state?.theme.background_kind, state?.theme.background_value, state?.workspace_id]);
+
+  return url;
+}
+
+/** The colour behind everything, whatever the theme's background kind is. */
+function colourOf(theme: SessionState['theme']): string {
+  return theme.background_kind === 'color' || theme.background_kind === 'gradient'
+    ? theme.background_value
+    : '#000000';
 }
 
 function screenLabel(): string {

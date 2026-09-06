@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useWorkspace } from '../app/workspace';
+import { useState } from 'react';
 import { uuidv7 } from '../db/uuid';
+import { uploadBackground } from './background';
 import type { Theme } from './session';
 
 /**
@@ -19,7 +21,8 @@ export function ThemeDrawer({
   onChange: (theme: Theme) => void;
   onClose: () => void;
 }) {
-  const { db, engine, canEdit } = useWorkspace();
+  const { db, engine, workspace, canEdit } = useWorkspace();
+  const [uploading, setUploading] = useState<string | null>(null);
 
   const saved = useLiveQuery(
     () => db.presenter_themes.filter((row) => row.deleted_at === null).toArray(),
@@ -91,7 +94,43 @@ export function ThemeDrawer({
         </Field>
 
         <Field label="Background">
-          <input type="color" value={theme.background_kind === 'color' ? theme.background_value : '#000000'} onChange={(event) => { set('background_kind', 'color'); set('background_value', event.target.value); }} />
+          <input
+            type="color"
+            value={theme.background_kind === 'color' ? theme.background_value : '#000000'}
+            onChange={(event) => onChange({ ...theme, background_kind: 'color', background_value: event.target.value })}
+          />
+        </Field>
+
+        <Field label="Background image" hint="Optional; the colour shows through if it is not on this device">
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/avif"
+            className="w-full text-xs"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+
+              if (file === undefined) {
+                return;
+              }
+
+              setUploading('Uploading…');
+              void uploadBackground(db, workspace.id, file)
+                .then((asset) => {
+                  onChange({ ...theme, background_kind: 'image', background_value: asset.sha256 });
+                  setUploading(null);
+                })
+                .catch((error: Error) => setUploading(error.message));
+            }}
+          />
+          {uploading !== null && <p className="text-xs text-slate-500">{uploading}</p>}
+          {theme.background_kind === 'image' && (
+            <button
+              className="mt-1 text-xs underline"
+              onClick={() => onChange({ ...theme, background_kind: 'color', background_value: '#000000' })}
+            >
+              Remove the image
+            </button>
+          )}
         </Field>
 
         <Field label={`Maximum size — ${theme.font_size_vh}vh`}>
@@ -132,10 +171,11 @@ export function ThemeDrawer({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="mb-3 block">
       <span className="text-slate-500">{label}</span>
+      {hint !== undefined && <span className="ml-2 text-xs text-slate-400">{hint}</span>}
       <div>{children}</div>
     </label>
   );
