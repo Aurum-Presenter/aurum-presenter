@@ -19,3 +19,6 @@ coverage/
 *.local
 .DS_Store
 
+# Rust and Trunk build output
+/target
+.trunk/

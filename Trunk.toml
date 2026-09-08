@@ -1,0 +1,19 @@
+# Trunk builds the client: the crate to WebAssembly, the loader, and hashed assets.
+#
+# There is no server-side rendering to configure. The app has to start from a precached shell
+# with the radio off, so it is rendered entirely in the browser.
+[build]
+target = "crates/web/index.html"
+dist = "crates/web/dist"
+
+[watch]
+watch = ["crates/web/src", "crates/core/src", "crates/web/index.html"]
+
+[serve]
+port = 4174
+open = false
+
+# In development the API is a separate process; proxying keeps the client on one origin, which is
+# what it will be in production.
+[[proxy]]
+backend = "http://127.0.0.1:8080/api/v1"

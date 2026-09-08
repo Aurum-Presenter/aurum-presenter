@@ -1,0 +1,30 @@
+# One workspace for both halves of the app. `core` holds the rules; `api` and `web` are the two
+# shells that run them — natively on the server, as WebAssembly in the browser.
+[workspace]
+resolver = "3"
+members = ["crates/core", "crates/api", "crates/web"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.90"
+license = "MIT"
+
+[workspace.dependencies]
+aurum-core = { path = "crates/core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+# Debug builds are for tests, and the tests are the specification: keep them quick.
+[profile.dev]
+opt-level = 1
+
+# The client is downloaded over a phone connection and precached on the device, so size is a
+# feature. The server binary is built the same way for want of a reason not to.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
