@@ -31,7 +31,7 @@ totp-rs = { version = "5", features = ["otpauth"] }
 aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
 aws-config = "1"
 aws-credential-types = "1"
-lettre = { version = "0.11", default-features = false, features = ["smtp-transport", "builder", "tokio1"] }
+lettre = { version = "0.11", default-features = false, features = ["smtp-transport", "builder", "tokio1", "tokio1-rustls", "rustls-native-certs", "ring"] }
 aes-gcm = "0.10"
 uuid = { version = "1", features = ["v7"] }
 tokio-tungstenite = "0.28"
