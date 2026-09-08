@@ -179,10 +179,6 @@ const RULES = {
     };
   },
 
-  // Three rules only ever existed on the server. `differential/php.php` compares those.
-  sync_schema: () => ({ skipped: true }),
-  object_keys: () => ({ skipped: true }),
-  merge: () => ({ skipped: true }),
 
   time({ text, epoch_ms }) {
     const parsed = Date.parse(text ?? '');

@@ -1,26 +1,26 @@
-# Backend stack. Note what is NOT here: no database service.
+# The stack. Note what is NOT here: no database service, and since the rewrite, no PHP.
 #
 # SQLite lives in a volume next to the application, so "the database" is a directory of files —
 # control.sqlite plus one file per workspace — and development runs the exact same engine as
-# production. That is the whole point of the SQLite change request: there is no Postgres to
-# keep in sync with a hosted project, and no Supabase emulator to install.
+# production. That is the whole point of the SQLite change request: there is no Postgres to keep
+# in sync with a hosted project, and no emulator to install.
+#
+# The signalling relay used to be a second service because PHP-FPM could not hold a socket open.
+# It is a task inside the same binary now, on its own port.
 
 name: aurum-presenter
 
 services:
   api:
     build:
-      context: ./backend
+      context: .
     restart: unless-stopped
     ports:
-      - "${API_PORT:-8080}:80"
+      - "${API_PORT:-8080}:8080"
+      - "${SIGNAL_PORT:-8081}:8081"
     volumes:
-      # Bind-mounted for development so edits are live; APP_ENV=development disables both the
-      # config cache and the discovery cache, so a new #[Route] appears without a cache clear.
-      - ./backend:/app
       - aurum-data:/app/var/data
     environment:
-      APP_ENV: "${APP_ENV:-development}"
       DATA_DIR: /app/var/data
       APP_SIGNING_KEY: "${APP_SIGNING_KEY:?set APP_SIGNING_KEY in .env}"
       APP_SECRET_KEY: "${APP_SECRET_KEY:?set APP_SECRET_KEY in .env}"
@@ -32,37 +32,16 @@ services:
       S3_SECRET: "${MINIO_ROOT_PASSWORD:-aurum-dev-secret}"
       S3_PATH_STYLE: "true"
       MAIL_DSN: "smtp://mail:1025"
+      RUST_LOG: "${RUST_LOG:-info}"
     depends_on:
       minio-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost/api/v1/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/v1/health"]
       interval: 10s
       timeout: 3s
       retries: 5
-      start_period: 20s
-
-  # The stage-pairing signalling relay: SDP and ICE between two devices on a LAN, and nothing
-  # else. A separate process because it holds sockets open, which the request lifecycle cannot,
-  # and because it must never be able to block an API request while it waits for a tablet.
-  signal:
-    build:
-      context: ./backend
-    restart: unless-stopped
-    command: php bin/aurum signal:serve --port 8081
-    ports:
-      - "${SIGNAL_PORT:-8081}:8081"
-    volumes:
-      - ./backend:/app
-      - aurum-data:/app/var/data
-    environment:
-      APP_ENV: "${APP_ENV:-development}"
-      DATA_DIR: /app/var/data
-      APP_SIGNING_KEY: "${APP_SIGNING_KEY:?set APP_SIGNING_KEY in .env}"
-      APP_SECRET_KEY: "${APP_SECRET_KEY:?set APP_SECRET_KEY in .env}"
-    depends_on:
-      api:
-        condition: service_healthy
+      start_period: 10s
 
   # Sheet PDFs. Content-addressed keys under sheets/{workspace}/{sha256}.pdf.
   minio:
@@ -83,8 +62,8 @@ services:
       timeout: 3s
       retries: 10
 
-  # Creates the bucket and locks it down: private, and CORS limited to the app origin, because
-  # the browser PUTs parts directly to the store rather than proxying through PHP.
+  # Creates the bucket and locks it down: private, because the browser PUTs parts directly to
+  # the store rather than proxying them through the API.
   minio-init:
     image: minio/mc:latest
     depends_on:

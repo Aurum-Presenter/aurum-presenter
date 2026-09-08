@@ -1,9 +1,0 @@
-/vendor/
-/var/data/
-/data/cache/
-/config/autoload/*.local.php
-!/config/autoload/*.local.php.dist
-# PHPUnit's cache. phpunit.xml.dist sets cacheDirectory=".phpunit.cache" (the PHPUnit 10+
-# convention); .phpunit.result.cache is the PHPUnit 9 name, kept so an older run is covered too.
-.phpunit.cache/
-.phpunit.result.cache

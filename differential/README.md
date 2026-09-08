@@ -9,14 +9,19 @@ through all three implementations at once:
 | Side | What it runs |
 |---|---|
 | `typescript.mjs` | the client's rules, bundled straight out of `frontend/src` |
-| `php.php` | the server's rules, driven through the real `SyncService` over a real SQLite workspace built from the real migrations |
 | `crates/core/examples/differential.rs` | the Rust |
 
-Each rule is checked against whichever of the two it was ported from; the rules that only ever
-existed on the server (`merge`, `sync_schema`, `object_keys`) go to the PHP, the rest to the
-TypeScript. What is compared is the *observable outcome* — the row a user would see afterwards,
-the chords on the screen — not the decision either implementation made along the way, because
-the two are allowed to arrive there differently.
+What is compared is the *observable outcome* — the chords on the screen, the slide list, the
+sheet that was chosen — not the decision either implementation made along the way, because the
+two are allowed to arrive there differently.
+
+A third arm used to run the server-only rules (`merge`, `sync_schema`, `object_keys`) through
+the real `SyncService`, over a real SQLite workspace built from the real migrations. It agreed
+with the Rust over 10,000 generated cases per rule, and it went when the PHP did. Those rules
+are now held by `crates/core`'s own tests and by the integration tests in `crates/api/tests`,
+which drive the same outcomes against a real server: a tombstone beating a stale edit, a
+displaced value kept for review, one default arrangement per song, a viewer's limits, and no
+synced table letting a client write a server-owned column.
 
 ## Running it
 
@@ -44,10 +49,5 @@ Four real defects, all of which had shipped:
 
 ## What it does not cover
 
-- Structured payload fields in `merge` are generated as scalars, because the client already
-  JSON-encodes its list fields to strings before pushing them. Comparing two languages'
-  `json_encode` would be comparing escaping conventions, not rules.
-- Column defaults: a seeded row carries every column of its table, so no comparison lands on a
-  value neither implementation wrote.
-- Constraint violations are the database's job, not this crate's. The generator respects the
-  schema so that every case reaches a rule rather than dying at the door.
+Anything with I/O. These are the pure rules; the API's behaviour is covered by
+`crates/api/tests`, and the whole system by `e2e/`.

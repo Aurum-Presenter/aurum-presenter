@@ -197,6 +197,29 @@ Three cutovers, each leaving the app working and the end-to-end suite green.
 
 ## Progress
 
+**`crates/api` is done, and `backend/` is gone.** The twelve end-to-end scripts pass against the
+Rust server with the *unchanged React client* — which is what makes them evidence of contract
+parity rather than of a matching rewrite on both sides. Alongside them, 44 integration tests
+drive the real router over a real SQLite database for the rules a browser cannot observe:
+session rotation and reuse detection, the last owner, single-use invitations, twenty concurrent
+writers taking twenty consecutive sequence values, and an abandoned batch giving its block back.
+
+Three things the port changed in kind rather than in language:
+
+- **Authorization is a type.** `#[Route(options: [PERMISSION => WorkspaceWrite])]`, resolved
+  reflectively in middleware, becomes `Workspace<Write>` in the handler's signature — and
+  `Workspace<P>` is the only thing that can open a workspace connection, so the property the
+  per-workspace split exists for is now held by the compiler.
+- **One process, one binary.** The relay is a task beside the API rather than a second service,
+  because the two reasons it was separate — PHP-FPM cannot hold a socket open, and the API must
+  not block on one — are both gone. The console commands are subcommands of the same executable.
+- **The migrations are embedded in the binary**, unedited, so a deployment is one file that can
+  still repair a workspace restored from an old backup.
+
+The differential harness lost its PHP arm with the PHP. What that arm established is recorded in
+`differential/README.md`; the rules it checked are now held by `crates/core`'s tests and by the
+integration tests above.
+
 **`crates/core` is done.** Every rule listed above is ported, with 157 native tests, and it
 compiles for the host and for `wasm32-unknown-unknown`.
 
@@ -219,7 +242,7 @@ Measured at the end of the phase, for the questions below:
 |---|---|
 | Client shell (WebAssembly) | 42.8 KB gzipped, 95.8 KB raw |
 | Client glue (JavaScript) | 5.5 KB gzipped |
-| Server binary | 1.18 MB |
+| Server binary | 1.18 MB, before the API landed |
 
 That shell is the rules plus Leptos plus a router-less page, not the app; the number is a floor,
 not an answer. It is recorded here so the growth is visible as the screens arrive.

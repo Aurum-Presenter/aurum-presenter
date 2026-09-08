@@ -2,9 +2,12 @@
 /**
  * Runs the same inputs through the TypeScript and the Rust and reports every divergence.
  *
- * This is the evidence the port is a port. Unit tests on the Rust side prove it does what its
- * author believed the rules were; this proves it does what the code that shipped actually does,
- * over a corpus neither author chose.
+ * This is the evidence the client-side port is a port. Unit tests on the Rust side prove it does
+ * what its author believed the rules were; this proves it does what the code that shipped
+ * actually does, over a corpus neither author chose.
+ *
+ * A third arm used to run the server rules through the real PHP SyncService. It went when the
+ * PHP did; what it established, and what carries those rules now, is in the README.
  *
  * Usage: node differential/run.mjs [cases-per-rule] [seed]
  */
@@ -42,9 +45,6 @@ writeFileSync(casesFile, JSON.stringify(cases));
 process.stderr.write(`running ${cases.length.toLocaleString()} cases through the TypeScript…\n`);
 const typescript = JSON.parse(run('node', [bundle], JSON.stringify(cases)));
 
-process.stderr.write('running the server-only rules through the PHP…\n');
-const php = JSON.parse(run('php', ['differential/php.php'], JSON.stringify(cases)));
-
 process.stderr.write('building the Rust example…\n');
 run('cargo', ['build', '--quiet', '--release', '-p', 'aurum-core', '--example', 'differential']);
 
@@ -76,8 +76,7 @@ cases.forEach((entry, index) => {
   const total = totals.get(entry.rule) ?? { checked: 0, skipped: 0, diverged: 0 };
   totals.set(entry.rule, total);
 
-  // Whichever of the two ports the rule actually came from is the one it is checked against.
-  const before = typescript[index]?.skipped === true ? php[index] : typescript[index];
+  const before = typescript[index];
 
   if (before?.skipped === true) {
     total.skipped++;

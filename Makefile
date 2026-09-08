@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 COMPOSE := docker compose
-EXEC := $(COMPOSE) exec -T api
+EXEC := $(COMPOSE) exec -T api aurum-api
 
 .PHONY: help
 help: ## Show this help
@@ -15,7 +15,7 @@ help: ## Show this help
 .PHONY: up
 up: .env ## Start the backend stack
 	$(COMPOSE) up -d --build
-	$(EXEC) php bin/aurum migrate
+	$(EXEC) migrate
 
 .PHONY: down
 down: ## Stop the stack
@@ -27,42 +27,36 @@ logs: ## Follow API logs
 
 .PHONY: shell
 shell: ## Shell into the API container
-	$(COMPOSE) exec api bash
+	$(COMPOSE) exec api sh
 
 .PHONY: migrate
 migrate: ## Apply migrations to control.sqlite and every workspace file
-	$(EXEC) php bin/aurum migrate
+	$(EXEC) migrate
 
 .PHONY: purge
 purge: ## Purge applied ops, expired sessions, tombstones and old conflicts
-	$(EXEC) php bin/aurum maintenance:purge
+	$(EXEC) maintenance:purge
 
 .PHONY: workspaces
 workspaces: ## List workspace database files
-	$(EXEC) php bin/aurum workspace:list
+	$(EXEC) workspace:list
 
 .PHONY: test
-test: ## Run the backend test suite
-	$(EXEC) vendor/bin/phpunit
+test: ## Run the Rust test suite: the rules, the API, and the files themselves
+	cargo test --workspace
 
-.PHONY: smoke
-smoke: ## End-to-end check against the running stack
-	API=http://localhost:$${API_PORT:-8080}/api/v1 \
-		EXEC="$(COMPOSE) exec -T api" \
-		DATA_DIR=/app/var/data \
-		./scripts/smoke.sh
-
-.PHONY: stan
-stan: ## Static analysis
-	$(EXEC) vendor/bin/phpstan analyse
+.PHONY: lint
+lint: ## Static analysis and formatting
+	cargo clippy --workspace --all-targets -- -D warnings
+	cargo fmt --check
 
 .PHONY: mail
 mail: ## Deliver queued email (invitations, password resets)
-	$(EXEC) php bin/aurum mail:send
+	$(EXEC) mail:send
 
 .PHONY: signal
-signal: ## Follow the stage-pairing signalling relay's log
-	$(COMPOSE) logs -f signal
+signal: ## Follow the stage-pairing relay, which shares the API's log
+	$(COMPOSE) logs -f api
 
 .PHONY: web
 web: ## Run the PWA dev server

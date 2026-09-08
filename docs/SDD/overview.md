@@ -26,7 +26,7 @@ presentation — audience output plus a stage view — from the same set.
 | Musician | Reads charts, transposes to their key, plays from a set. Default role. | Human |
 | Librarian | Owner or editor of a workspace: adds songs, uploads sheets, curates folders and sets. | Human |
 | Operator | Runs a live session: drives the audience screen and stage view during a service or gig. | Human |
-| Sync service | The Aurum API: PHP/Mezzio over SQLite, one database file per workspace. Authoritative copy; delta sync with each device. | Own system |
+| Sync service | The Aurum API: Rust and axum over SQLite, one database file per workspace. Authoritative copy; delta sync with each device. | Own system |
 | Object store | S3-compatible storage holding sheet PDFs, keyed by content hash. Reached only through presigned URLs. | External system |
 | Service worker | Caches the app shell and pinned files; serves the app with no network. | Background |
 | Stage device | A phone or tablet paired to a live session over the local network, showing stage view. | External device |
@@ -41,7 +41,7 @@ flowchart LR
         O[Operator]
     end
     subgraph Device["Device — installed PWA"]
-        UI[App shell React]
+        UI[App shell Leptos]
         SW[Service worker]
         IDB[(IndexedDB — source of truth offline)]
         OPFS[(Origin private file system — PDFs)]
@@ -121,10 +121,13 @@ client claim. The client mirrors the same rules to hide controls, but never as t
 
 ## Constraints
 
-- **Stack** — *Client:* React 19 + TypeScript + Vite, Tailwind, Dexie over IndexedDB, Workbox
-  service worker, `pdf.js` for sheet rendering. *Server:* PHP 8.4 + Mezzio 3, API-only, over
-  SQLite — `control.sqlite` for identity plus one file per workspace — with S3-compatible object
-  storage for sheet PDFs. No ORM; plain SQL over DBAL.
+- **Stack** — one language for both halves. *Shared:* `aurum-core`, the domain rules, compiled
+  natively for the server and to WebAssembly for the browser, so the two cannot disagree.
+  *Client:* Leptos compiled to WebAssembly, Tailwind, a typed IndexedDB layer, a Workbox service
+  worker, Pdfium for sheet rendering. *Server:* Rust with axum, API-only, over SQLite —
+  `control.sqlite` for identity plus one file per workspace — with S3-compatible object storage
+  for sheet PDFs. No ORM; plain SQL over `rusqlite`. See
+  [the rewrite change request](change-request/2026-09-08-rust-rewrite.md).
 - **Platforms** — installable PWA on Chrome/Edge desktop, Android (Chrome), iOS/iPadOS 17+
   (Safari, Add to Home Screen). Desktop is the only platform that gets multi-window
   presentation; mobile gets single-screen presenter and stage view.
@@ -133,9 +136,10 @@ client claim. The client mirrors the same rules to hide controls, but never as t
 - **Compliance** — no personal data beyond account email and display name. Sheet PDFs may be
   copyrighted material owned by the user; the system stores and syncs them privately per
   workspace and never makes them public. No public sharing surface exists.
-- **Fixed decisions** — React/Vite, IndexedDB on the device, band workspaces with roles,
-  ChordPro as canonical chart storage. The backend runs on SQLite with one database file per
-  workspace, self-hosted; see the change requests in the [index](index.md).
+- **Fixed decisions** — Rust on both sides with one shared crate of rules, IndexedDB on the
+  device, band workspaces with roles, ChordPro as canonical chart storage. The backend runs on
+  SQLite with one database file per workspace, self-hosted; see the change requests in the
+  [index](index.md).
 
 ## Out of scope
 

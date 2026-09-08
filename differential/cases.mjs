@@ -31,34 +31,6 @@ const LAYOUTS = ['inline', 'over', 'nashville'];
 const WORDS = ['amazing', 'grace', 'how', 'sweet', 'the', 'sound', 'that', 'saved', 'a', 'wretch', 'like', 'me', 'señor', 'grüßen', "don't"];
 const DIRECTIVES = ['{verse: 1}', '{chorus}', '{bridge}', '{comment: build}', '{title: A Song}', '{artist: Someone}', '{key: G}', '{tempo: 72}', '{x_unknown: 3}', '{eoc}'];
 const NOISE = ['[', ']', '[]', '[N.C.]', '[Hmm]', '#a comment', '', '   ', '[C', 'x]'];
-// Only tables whose rows stand on their own: the harness seeds existing rows directly, and a
-// foreign key to something it did not create would be rejected before any rule was reached.
-// `required` columns are NOT NULL, and `flag`/`number` columns carry CHECK constraints — the
-// generator respects the schema so that every case reaches the merge rules rather than dying at
-// the door. Those constraints are the database's job, not this crate's, and are not under test.
-const MERGE_TABLES = {
-  songs: { required: ['title'], text: ['subtitle', 'artist', 'original_key', 'notes'], number: ['tempo'], flag: ['archived'] },
-  sets: { required: ['name'], text: ['scheduled_for', 'notes', 'venue'], number: [], flag: ['pinned'] },
-  folders: { required: ['name'], text: [], number: ['position'], flag: [] },
-  presenter_themes: { required: ['name', 'font_family', 'text_color'], text: [], number: ['font_size_vh', 'safe_area_pct'], flag: [] },
-  arrangements: { required: ['name', 'body'], text: ['default_key'], number: ['position'], flag: ['is_default'] },
-};
-
-const HASHES = [
-  'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-  'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855',
-  'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-  'not a hash',
-  '',
-];
-
-const CONTENT_TYPES = ['image/png', 'image/jpeg', 'IMAGE/WEBP', 'image/avif', 'image/svg+xml', 'text/html', ''];
-
-// One song per arrangement case: `arrangements` carries a partial unique index on
-// (song_id) WHERE is_default = 1, so two cases sharing a song would collide in the seed rather
-// than in the rule.
-const songId = (number) => `01890000-0000-7000-8000-${String(700000 + number).padStart(12, '0')}`;
-
 const PARTS = ['lead', 'piano', 'vocal', 'guitar', 'bass', 'lyrics', 'other', null];
 
 const pick = (rng, list) => list[Math.floor(rng() * list.length)];
@@ -150,7 +122,7 @@ function rankPair(rng, between) {
 }
 
 function fixtures() {
-  const roots = ['e2e/fixtures', 'frontend/src/library/fixtures', 'backend/tests/fixtures'];
+  const roots = ['e2e/fixtures', 'frontend/src/library/fixtures'];
   const found = [];
 
   for (const root of roots) {
@@ -182,74 +154,6 @@ function scalar(rng) {
   if (roll < 0.5) return '';
 
   return pick(rng, WORDS);
-}
-
-function mergeCase(rng, number) {
-  const song = songId(number);
-  const table = pick(rng, Object.keys(MERGE_TABLES));
-  const shape = MERGE_TABLES[table];
-
-  // A seeded row carries every column, so that no comparison lands on a column default neither
-  // implementation wrote. The payload stays sparse — a partial write is the interesting case.
-  const fieldsFrom = (full) => {
-    const fields = {};
-    const wanted = () => full || rng() < 0.6;
-
-    for (const column of shape.required) {
-      fields[column] = pick(rng, WORDS);
-    }
-
-    for (const column of shape.text) {
-      if (wanted()) {
-        fields[column] = rng() < 0.2 ? null : pick(rng, WORDS);
-      }
-    }
-
-    for (const column of shape.number) {
-      if (wanted()) {
-        fields[column] = Math.floor(rng() * 300);
-      }
-    }
-
-    for (const column of shape.flag) {
-      if (wanted()) {
-        fields[column] = rng() < 0.5 ? 1 : 0;
-      }
-    }
-
-    return fields;
-  };
-
-  const payload = fieldsFrom(false);
-
-  if (table === 'arrangements') {
-    payload.song_id = song;
-  }
-
-  const present = rng() < 0.7;
-  const bases = [null, '2026-09-06T09:00:00.000Z', '2026-09-06T10:00:00.000Z', '2026-09-06T11:00:00.000Z'];
-  const existing = present ? fieldsFrom(true) : null;
-
-  if (existing !== null && table === 'arrangements') {
-    existing.song_id = song;
-    // The sibling holds the default in every seeded case; two defaults would be the index's
-    // problem, not the merge rule's.
-    existing.is_default = 0;
-  }
-
-  return {
-    table,
-    kind: rng() < 0.2 ? 'delete' : 'upsert',
-    payload,
-    base_updated_at: pick(rng, bases),
-    song_id: table === 'arrangements' ? song : undefined,
-    existing: existing === null ? null : {
-      fields: existing,
-      updated_at: '2026-09-06T10:00:00.000Z',
-      deleted_at: rng() < 0.2 ? '2026-09-06T10:00:00.000Z' : null,
-      updated_by: rng() < 0.5 ? 'ada' : null,
-    },
-  };
 }
 
 export function generate(seed, count, between) {
@@ -313,24 +217,6 @@ export function generate(seed, count, between) {
       text: pick(rng, ['2026-09-08', '2026-09-08T14:30:00.123Z', '2026-09-08T14:30:00Z', 'nonsense', '', '1999-12-31T23:59:59.999Z']),
       epoch_ms: Math.floor(rng() * 4_000_000_000_000),
     });
-    add('sync_schema', {
-      table: pick(rng, ['songs', 'sets', 'set_items', 'preferences', 'annotations', 'users', 'nope', '']),
-      payload: Object.fromEntries(
-        times(rng, 6, () => [pick(rng, ['title', 'name', 'rank', 'updated_at', 'change_seq', 'sha256', 'value', 'made_up']), scalar(rng)]),
-      ),
-    });
-    add('object_keys', {
-      workspace: `ws-${Math.floor(rng() * 5)}`,
-      sha256: pick(rng, HASHES),
-      content_type: pick(rng, CONTENT_TYPES),
-      objects: times(rng, 6, () => ({
-        key: `sheets/ws-1/${pick(rng, HASHES).slice(0, 12)}.pdf`,
-        modified: Math.floor(rng() * 2_000_000),
-      })),
-      referenced: times(rng, 3, () => pick(rng, HASHES).slice(0, 12)),
-      written_before: Math.floor(rng() * 2_000_000),
-    });
-    add('merge', mergeCase(rng, index));
     add('pins', {
       pinned: rng() < 0.3,
       scheduled_for: rng() < 0.9 ? `2026-0${1 + Math.floor(rng() * 9)}-${10 + Math.floor(rng() * 19)}` : null,
