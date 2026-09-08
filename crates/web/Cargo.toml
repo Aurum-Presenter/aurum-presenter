@@ -13,3 +13,50 @@ serde_json.workspace = true
 leptos = { version = "0.8", features = ["csr"] }
 console_error_panic_hook = "0.1"
 wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+leptos_router = "0.8"
+serde-wasm-bindgen = "0.6"
+gloo-timers = { version = "0.3", features = ["futures"] }
+thiserror.workspace = true
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+  "Headers",
+  "Request",
+  "RequestInit",
+  "RequestCredentials",
+  "Response",
+  "Window",
+  "Storage",
+  "Navigator",
+  "Location",
+  "AbortController",
+  "AbortSignal",
+  "IdbFactory",
+  "IdbOpenDbRequest",
+  "IdbRequest",
+  "IdbDatabase",
+  "IdbTransaction",
+  "IdbTransactionMode",
+  "IdbObjectStore",
+  "IdbObjectStoreParameters",
+  "IdbIndex",
+  "IdbIndexParameters",
+  "IdbCursorWithValue",
+  "IdbKeyRange",
+  "IdbVersionChangeEvent",
+  "DomStringList",
+  "DomException",
+  "Event",
+  "EventTarget",
+  "BroadcastChannel",
+  "MessageEvent",
+]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+any_spawner = { version = "0.3", features = ["wasm-bindgen"] }
+gloo-timers = { version = "0.3", features = ["futures"] }

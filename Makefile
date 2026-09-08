@@ -45,6 +45,10 @@ workspaces: ## List workspace database files
 test: ## Run the Rust test suite: the rules, the API, and the files themselves
 	cargo test --workspace
 
+.PHONY: web-browser-test
+web-browser-test: ## Run the client's browser tests (needs wasm-bindgen-cli and a matching chromedriver)
+	cargo test -p aurum-web --target wasm32-unknown-unknown
+
 .PHONY: lint
 lint: ## Static analysis and formatting
 	cargo clippy --workspace --all-targets -- -D warnings

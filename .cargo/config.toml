@@ -1,0 +1,8 @@
+# Browser tests. `cargo test --target wasm32-unknown-unknown` compiles a test binary that only a
+# browser can run, so it is handed to wasm-bindgen's runner, which drives headless Chromium over
+# WebDriver. The IndexedDB layer cannot be checked any other way without checking a stub instead.
+#
+# Needs `wasm-bindgen-cli` (matching the version in Cargo.lock) and a chromedriver on PATH, or
+# CHROMEDRIVER pointing at one.
+[target.wasm32-unknown-unknown]
+runner = "wasm-bindgen-test-runner"

@@ -1,7 +1,4 @@
-//! The client.
-//!
-//! Client-rendered, deliberately: the app has to start from a precached shell with the radio off,
-//! which rules out server-side rendering and hydration.
+//! The client's entry point. Everything it is made of lives in the library beside it.
 use aurum_core::chart::chordpro::Chart;
 use aurum_core::chart::notes::Key;
 use aurum_core::chart::render::{Layout, RenderOptions};
