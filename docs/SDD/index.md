@@ -1,6 +1,6 @@
 # Software Design Document — Aurum Presenter
 
-[System overview](overview.md) · Last updated: 2026-09-06
+[System overview](overview.md) · Last updated: 2026-09-08
 
 Specification lives here, one document per unit of work. Nothing is built before its document
 is `Approved`.
@@ -28,3 +28,4 @@ is `Approved`.
 | Self-hosted email + password sign-in with TOTP | 2026-09-06 | Approved | Workspaces and access | [→](change-request/2026-09-06-self-hosted-auth-totp.md) |
 | Sheet PDFs on S3-compatible object storage | 2026-09-06 | Approved | Sheet attachments, Sync engine | [→](change-request/2026-09-06-s3-sheet-storage.md) |
 | Self-hosted WebSocket signalling for stage pairing | 2026-09-06 | Approved | Stage view | [→](change-request/2026-09-06-lan-websocket-signalling.md) |
+| One language for both halves — Rust and WebAssembly | 2026-09-08 | Approved | Every feature (stack only; no behaviour changes) | [→](change-request/2026-09-08-rust-rewrite.md) |
