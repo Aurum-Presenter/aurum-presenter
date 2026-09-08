@@ -2,6 +2,7 @@
 
 pub mod idb;
 pub mod live;
+pub mod records;
 pub mod schema;
 
 use js_sys::Array;

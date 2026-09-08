@@ -6,8 +6,18 @@
 target = "crates/web/index.html"
 dist = "crates/web/dist"
 
+# Tailwind reads the Rust for the class names it has to emit, so it runs before the build that
+# would otherwise beat it to the stylesheet.
+[[hooks]]
+stage = "pre_build"
+command = "sh"
+command_arguments = [
+  "-c",
+  "cd web && node_modules/.bin/tailwindcss --input app.css --output build/app.css --minify",
+]
+
 [watch]
-watch = ["crates/web/src", "crates/core/src", "crates/web/index.html"]
+watch = ["crates/web/src", "crates/core/src", "crates/web/index.html", "web/app.css"]
 
 [serve]
 port = 4174

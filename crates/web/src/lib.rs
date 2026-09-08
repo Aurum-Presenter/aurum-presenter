@@ -9,3 +9,33 @@
 pub mod api;
 pub mod app;
 pub mod db;
+pub mod sync;
+
+/// The wall clock, in the one format every timestamp in this system uses.
+pub fn now() -> String {
+    aurum_core::time::format(now_ms())
+}
+
+pub fn now_ms() -> i64 {
+    js_sys::Date::now() as i64
+}
+
+/// A client-minted id. Every record this device creates gets one here, which is what lets it be
+/// created with the radio off and still reach the server without ever being remapped.
+pub fn new_id() -> String {
+    let mut random = [0_u8; 10];
+
+    for byte in &mut random {
+        *byte = (js_sys::Math::random() * 256.0) as u8;
+    }
+
+    aurum_core::ids::uuidv7(now_ms(), random)
+}
+
+/// Whether the device believes it has a connection. It is a hint, not a fact — a request that
+/// fails says more — but it is enough to keep a sync tick from starting on a plane.
+pub fn online() -> bool {
+    web_sys::window()
+        .map(|window| window.navigator().on_line())
+        .unwrap_or(true)
+}

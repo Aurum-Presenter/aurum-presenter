@@ -1,0 +1,14 @@
+/*
+ * The client's stylesheet.
+ *
+ * Tailwind 4 needs no config file: `@source` tells it where to look for class names, which for
+ * this app means the Rust that writes them.
+ */
+@import 'tailwindcss';
+
+@source '../crates/web/src';
+@source '../crates/web/index.html';
+
+:root {
+  color-scheme: light dark;
+}

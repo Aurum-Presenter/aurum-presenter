@@ -1,0 +1,12 @@
+{
+  "name": "aurum-web-assets",
+  "private": true,
+  "description": "The client's non-Rust assets: the stylesheet Tailwind builds, and the service worker.",
+  "scripts": {
+    "css": "tailwindcss --input app.css --output ../crates/web/dist-assets/app.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
