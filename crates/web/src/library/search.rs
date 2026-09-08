@@ -12,7 +12,7 @@ use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use wasm_bindgen::prelude::*;
-use web_sys::{MessageEvent, Worker, WorkerOptions, WorkerType};
+use web_sys::{MessageEvent, Worker};
 
 pub const DEBOUNCE_MS: u32 = 250;
 const LIMIT: usize = 50;
@@ -48,11 +48,10 @@ pub struct Search {
 
 impl Search {
     pub fn new() -> Search {
-        let options = WorkerOptions::new();
-        options.set_type(WorkerType::Module);
-
+        // Trunk's loader shim is a classic script that calls `importScripts`, which a module
+        // worker refuses — so this one is deliberately not a module.
         Search {
-            worker: Worker::new_with_options("/search-worker_loader.js", &options).ok(),
+            worker: Worker::new("/search-worker_loader.js").ok(),
             inline: Rc::new(RefCell::new(SearchIndex::default())),
             next_query: Rc::new(RefCell::new(0)),
         }
@@ -66,8 +65,8 @@ impl Search {
     pub fn rebuild(&self, songs: &[IndexedSong]) {
         match &self.worker {
             Some(worker) => {
-                if let Ok(message) =
-                    serde_wasm_bindgen::to_value(&json!({ "kind": "build", "songs": songs }))
+                if let Ok(message) = json!({ "kind": "build", "songs": songs })
+                    .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
                 {
                     let _ = worker.post_message(&message);
                 }
@@ -121,9 +120,9 @@ impl Search {
         worker.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
         on_message.forget();
 
-        if let Ok(message) = serde_wasm_bindgen::to_value(
-            &json!({ "kind": "query", "id": id, "text": text, "limit": LIMIT }),
-        ) {
+        if let Ok(message) = json!({ "kind": "query", "id": id, "text": text, "limit": LIMIT })
+            .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+        {
             let _ = worker.post_message(&message);
         }
     }
@@ -152,7 +151,9 @@ pub fn use_search(
         leptos::task::spawn_local(async move {
             gloo_timers::future::TimeoutFuture::new(DEBOUNCE_MS).await;
 
-            search.with_value(|search| search.rebuild(&songs));
+            // The screen may be gone by the time the debounce elapses; there is nothing left
+            // to index for.
+            let _ = search.try_with_value(|search| search.rebuild(&songs));
         });
     });
 
@@ -168,8 +169,11 @@ pub fn use_search(
         leptos::task::spawn_local(async move {
             gloo_timers::future::TimeoutFuture::new(DEBOUNCE_MS).await;
 
-            search.with_value(|search| {
-                search.query(&text, move |hits| set_hits.set(Some(hits)));
+            let _ = search.try_with_value(|search| {
+                search.query(&text, move |hits| {
+                    // Likewise: an answer that arrives after the screen closed has nowhere to go.
+                    let _ = set_hits.try_set(Some(hits));
+                });
             });
         });
     });

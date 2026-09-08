@@ -13,6 +13,7 @@ use crate::app::shell::Shell;
 use crate::app::{provide_workspace, storage};
 use crate::auth::AuthScreen;
 use crate::auth::local;
+use crate::library::page::LibraryPage;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Phase {
@@ -156,8 +157,11 @@ fn SignedIn(
         <Router>
             <Routes fallback=|| view! { <Placeholder title="Not found" /> }>
                 <ParentRoute path=path!("/") view=move || view! { <Shell on_sign_out /> }>
-                    <Route path=path!("") view=|| view! { <Placeholder title="Library" /> } />
-                    <Route path=path!("library") view=|| view! { <Placeholder title="Library" /> } />
+                    <Route path=path!("") view=LibraryPage />
+                    <Route path=path!("library") view=LibraryPage />
+                    <Route path=path!("library/folder/:folder_id") view=LibraryPage />
+                    <Route path=path!("library/trash") view=|| view! { <Placeholder title="Trash" /> } />
+                    <Route path=path!("song/:song_id") view=|| view! { <Placeholder title="Song" /> } />
                     <Route path=path!("sets") view=|| view! { <Placeholder title="Sets" /> } />
                     <Route path=path!("join") view=|| view! { <Placeholder title="Join a session" /> } />
                     <Route

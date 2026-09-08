@@ -44,6 +44,14 @@ impl WorkspaceContext {
     pub fn database(&self) -> Option<Database> {
         self.db.get()
     }
+
+    /// Writing to the library. `None` only while the database is opening.
+    pub fn library(&self) -> Option<crate::library::Library> {
+        Some(crate::library::Library::new(
+            self.db.get()?,
+            self.engine.get()?,
+        ))
+    }
 }
 
 pub fn use_workspace() -> WorkspaceContext {

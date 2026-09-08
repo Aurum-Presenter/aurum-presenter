@@ -18,7 +18,8 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
     let pending = context.pending;
     let local = context.local;
 
-    // The chip has to keep up with the outbox, and with a cable being pulled out.
+    // One pass now, and one every thirty seconds after — with the device-wide lock inside the
+    // engine making sure three open windows do one device's work rather than three copies of it.
     {
         let context = context.clone();
 
@@ -28,12 +29,22 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
             };
 
             spawn_local(async move {
-                pending.set(engine.pending_count().await);
+                loop {
+                    let _ = engine.sync().await;
+
+                    // The count is read after every pass, so the chip tells the truth about
+                    // what is still waiting rather than about what the last pass started with.
+                    if pending.try_set(engine.pending_count().await).is_none() {
+                        return;
+                    }
+
+                    gloo_timers::future::TimeoutFuture::new(TICK_MS).await;
+                }
             });
         });
     }
 
-    watch_connectivity(online);
+    watch_connectivity(online, context.clone());
 
     let switching = context.clone();
 
@@ -102,8 +113,12 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
     }
 }
 
-/// Keeps the chip honest about the radio.
-fn watch_connectivity(online: RwSignal<bool>) {
+/// How often a window looks for work. The lock inside the engine decides which window does it.
+const TICK_MS: u32 = 30_000;
+
+/// Keeps the chip honest about the radio, and pushes as soon as a connection comes back rather
+/// than waiting out the rest of the tick.
+fn watch_connectivity(online: RwSignal<bool>, context: super::WorkspaceContext) {
     use wasm_bindgen::prelude::*;
 
     let Some(window) = web_sys::window() else {
@@ -111,7 +126,23 @@ fn watch_connectivity(online: RwSignal<bool>) {
     };
 
     for (event, state) in [("online", true), ("offline", false)] {
-        let listener = Closure::<dyn Fn()>::new(move || online.set(state));
+        let context = context.clone();
+
+        let listener = Closure::<dyn Fn()>::new(move || {
+            online.set(state);
+
+            if !state {
+                return;
+            }
+
+            let Some(engine) = context.engine.get_untracked() else {
+                return;
+            };
+
+            spawn_local(async move {
+                let _ = engine.sync().await;
+            });
+        });
 
         let _ = window.add_event_listener_with_callback(event, listener.as_ref().unchecked_ref());
 

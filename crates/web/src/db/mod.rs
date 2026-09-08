@@ -105,8 +105,7 @@ impl Database {
     }
 
     pub async fn put<T: Serialize>(&self, store: &str, record: &T) -> Result<JsValue, DbError> {
-        let value = serde_wasm_bindgen::to_value(record)
-            .map_err(|error| DbError::Shape(error.to_string()))?;
+        let value = to_js(record)?;
         let key = idb::request(
             self.store(store, IdbTransactionMode::Readwrite)?
                 .put(&value)
@@ -131,8 +130,7 @@ impl Database {
         let mut last = None;
 
         for record in records {
-            let value = serde_wasm_bindgen::to_value(record)
-                .map_err(|error| DbError::Shape(error.to_string()))?;
+            let value = to_js(record)?;
 
             last = Some(
                 handle
@@ -231,6 +229,18 @@ fn create_missing_stores(database: &IdbDatabase) {
             let _ = created.create_index_with_str_sequence(index.name, &key_path.unchecked_into());
         }
     }
+}
+
+/// A record, as a plain JavaScript object.
+///
+/// Not the default: `serde_wasm_bindgen` turns a map into an ES `Map`, and IndexedDB cannot read
+/// a key path out of one — a store keyed on `id` rejects the write with a bare DataError. Struct
+/// records happen to serialise as objects either way, which is exactly why this was invisible
+/// until the first row that arrived as a map.
+fn to_js<T: Serialize + ?Sized>(record: &T) -> Result<JsValue, DbError> {
+    record
+        .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+        .map_err(|error| DbError::Shape(error.to_string()))
 }
 
 fn from_js<T: DeserializeOwned>(value: JsValue) -> Result<Option<T>, DbError> {

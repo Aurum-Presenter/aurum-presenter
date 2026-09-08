@@ -244,3 +244,28 @@ async fn a_write_wakes_a_query_over_that_store() {
     // Kept alive to here: dropping the handle earlier would stop the effect being run.
     let _ = effect;
 }
+
+/// The bug this exists to stop coming back: a row that arrives as a map, not a struct.
+///
+/// `serde_wasm_bindgen` turns a map into an ES `Map` by default, and IndexedDB cannot read a key
+/// path out of one — so the write fails with a bare DataError and nothing is stored. Struct
+/// records serialise as plain objects either way, which is why every test above passed while
+/// every write the sync engine made was failing.
+#[wasm_bindgen_test]
+async fn writes_a_record_that_arrived_as_a_map() {
+    let db = database().await;
+    let mut row = serde_json::Map::new();
+
+    row.insert("id".to_owned(), serde_json::json!("s1"));
+    row.insert("title".to_owned(), serde_json::json!("Amazing Grace"));
+    row.insert("change_seq".to_owned(), serde_json::json!(0));
+
+    db.put("songs", &row).await.expect("a write");
+
+    let read: Option<Song> = db.get("songs", "s1").await.expect("a read");
+
+    assert_eq!(
+        read.map(|song| song.title),
+        Some("Amazing Grace".to_owned())
+    );
+}
