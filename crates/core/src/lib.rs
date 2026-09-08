@@ -6,6 +6,8 @@
 //! implemented twice and cannot drift between the two sides of the wire.
 #![forbid(unsafe_code)]
 
+pub mod chart;
+
 /// Proves the crate builds for both targets. Replaced by the first real rule that moves in.
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
@@ -17,6 +19,6 @@ mod tests {
 
     #[test]
     fn the_crate_reports_its_version() {
-        assert!(! version().is_empty());
+        assert!(!version().is_empty());
     }
 }
