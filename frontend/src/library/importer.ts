@@ -1,4 +1,5 @@
 import { parseChart, type Chart } from '../chart/chordpro';
+import { formatNote } from '../chart/notes';
 import { detectNotation, toChordPro } from '../chart/overLyrics';
 
 /**
@@ -90,10 +91,11 @@ function firstChordKey(chart: Chart): string | null {
         const chord = segment.chord?.chord;
 
         if (chord != null) {
-          const root = /^[A-G](?:##|bb|[#b])?/.exec(segment.chord!.text.trim())?.[0] ?? null;
+          // From the parsed root, not from the raw text: a chart pasted from the web writes
+          // its accidentals as ♯ and ♭, and a regex over the text reads E♯ as E.
           const minor = /^(?:m|min)(?![a-z])/.test(chord.quality);
 
-          return root === null ? null : root + (minor ? 'm' : '');
+          return formatNote(chord.root) + (minor ? 'm' : '');
         }
       }
     }

@@ -72,6 +72,10 @@ web: ## Run the PWA dev server
 web-test: ## Run the PWA test suite (chart parsing, transposition, conversion)
 	cd frontend && npm test
 
+.PHONY: differential
+differential: ## Run the same inputs through the TypeScript, the PHP and the Rust and diff them
+	node differential/run.mjs $(CASES)
+
 .PHONY: e2e
 e2e: ## Drive the running stack through a browser (SPEC=sheets runs a subset)
 	cd e2e && npm install --silent && node run.mjs $(SPEC)

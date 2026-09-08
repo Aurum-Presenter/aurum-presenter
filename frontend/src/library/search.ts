@@ -139,9 +139,11 @@ export function search(index: SearchIndex, query: string, limit = 50): SearchHit
     }
   }
 
+  // Song order breaks a tie, so the same query always returns the same list. Without it the
+  // order falls out of which term was scanned first, and two identical searches can disagree.
   return [...(running ?? new Map())]
+    .sort((a, b) => b[1].score - a[1].score || a[0] - b[0])
     .map(([song, hit]) => ({ id: index.ids[song]!, score: hit.score, field: hit.field }))
-    .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }
 

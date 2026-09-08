@@ -118,14 +118,14 @@ pub fn title_from_filename(filename: &str) -> String {
 /// With no `{key}` directive, the first chord is the best guess a chart can offer — and it is
 /// right far more often than it is wrong, because charts start on the one.
 fn first_chord_key(chart: &Chart) -> Option<String> {
-    let token = chart
+    // The first *chord*, not the first bracket: a chart that opens `[N.C.]` or with a token
+    // nobody could read still has a key, further down.
+    let chord = chart
         .sections
         .iter()
         .flat_map(|section| &section.lines)
         .flat_map(|line| &line.segments)
-        .find_map(|segment| segment.chord.as_ref())
-        .filter(|token| token.chord.is_some())?;
-    let chord = token.chord.as_ref()?;
+        .find_map(|segment| segment.chord.as_ref()?.chord.as_ref())?;
 
     let minor = chord
         .quality

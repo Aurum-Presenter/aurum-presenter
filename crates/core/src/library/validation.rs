@@ -29,7 +29,10 @@ pub fn validate_song(input: &SongInput) -> Vec<String> {
         problems.push(format!("A title is at most {MAX_TITLE} characters."));
     }
 
-    if input.tempo.is_some_and(|tempo| !TEMPO_RANGE.contains(&tempo)) {
+    if input
+        .tempo
+        .is_some_and(|tempo| !TEMPO_RANGE.contains(&tempo))
+    {
         problems.push(format!(
             "Tempo is between {} and {} bpm.",
             TEMPO_RANGE.start(),
@@ -131,10 +134,16 @@ mod tests {
         };
 
         assert!(with(Some(72), Some("22025")).is_empty());
-        assert!(with(None, Some("")).is_empty(), "an empty field is not a wrong one");
+        assert!(
+            with(None, Some("")).is_empty(),
+            "an empty field is not a wrong one"
+        );
         assert_eq!(with(Some(2026), None), ["Tempo is between 20 and 300 bpm."]);
         assert_eq!(with(Some(19), None).len(), 1);
-        assert_eq!(with(None, Some("CCLI 22025")), ["A CCLI number is digits only."]);
+        assert_eq!(
+            with(None, Some("CCLI 22025")),
+            ["A CCLI number is digits only."]
+        );
     }
 
     #[test]
@@ -164,10 +173,19 @@ mod tests {
             ("advent", Some("hymns")),
         ];
 
-        assert!(would_cycle(&folders, "root", Some("advent")), "onto its own descendant");
+        assert!(
+            would_cycle(&folders, "root", Some("advent")),
+            "onto its own descendant"
+        );
         assert!(would_cycle(&folders, "hymns", Some("hymns")), "onto itself");
-        assert!(!would_cycle(&folders, "advent", Some("root")), "further up is fine");
-        assert!(!would_cycle(&folders, "hymns", None), "to the top is always fine");
+        assert!(
+            !would_cycle(&folders, "advent", Some("root")),
+            "further up is fine"
+        );
+        assert!(
+            !would_cycle(&folders, "hymns", None),
+            "to the top is always fine"
+        );
     }
 
     /// Two offline moves can leave a loop already in the tree; the check must not spin on it.

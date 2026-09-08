@@ -108,10 +108,12 @@ fn has_bracketed_chord(text: &str) -> bool {
         let rest = &text[start + 1..];
 
         rest.starts_with(|c: char| c.is_ascii_alphabetic() && c.to_ascii_uppercase() <= 'G')
+            // Up to twelve characters of chord between the note letter and the bracket, so the
+            // closing bracket may be the thirteenth character after it — `[Bbbmaj9#11/Db]`.
             && rest
                 .chars()
                 .skip(1)
-                .take(12)
+                .take(13)
                 .take_while(|c| *c != '\n')
                 .any(|c| c == ']')
     })
@@ -262,6 +264,15 @@ mod tests {
         );
         assert_eq!(detect_notation("{soc}\nWords"), Notation::ChordPro);
         assert_eq!(detect_notation("just some words"), Notation::Ambiguous);
+        // The longest chord that still counts as one: twelve characters after the note letter.
+        assert_eq!(
+            detect_notation("words [Bbbmaj9#11/Db]here"),
+            Notation::ChordPro
+        );
+        assert_eq!(
+            detect_notation("words [Bbbmaj9#11/Dbb]here"),
+            Notation::Ambiguous
+        );
         assert!(is_chord_line("G           C"));
         assert!(!is_chord_line("Amazing grace"));
         assert!(!is_chord_line("   "));
