@@ -2,3 +2,4 @@
 
 pub mod importer;
 pub mod search;
+pub mod validation;
