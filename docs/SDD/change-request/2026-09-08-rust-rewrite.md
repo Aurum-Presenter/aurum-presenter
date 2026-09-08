@@ -195,6 +195,35 @@ Three cutovers, each leaving the app working and the end-to-end suite green.
 7. The deployed artefact is one binary plus a directory of static assets; `docker compose up`
    still provides a working stack with an object store and a mail catcher, and no PHP.
 
+## Progress
+
+**`crates/core` is done.** Every rule listed above is ported, with 157 native tests, and it
+compiles for the host and for `wasm32-unknown-unknown`.
+
+Acceptance criterion 1 is demonstrated rather than asserted: the axum binary serves the synced
+table list out of `aurum_core::sync::schema`, and the Leptos client — the same crate compiled to
+WebAssembly — renders `[F]Amazing [G]grace` transposed into two keys in a browser, spelling the
+fourth `Gb` in Db and `F#` in B. One implementation, two shells, and no table of accidentals
+anywhere.
+
+Acceptance criterion 2 is met by `differential/`, which runs 150,000 generated cases per run
+through three implementations at once: the TypeScript client, the PHP server driven through the
+real `SyncService` over a real SQLite workspace built from the real migrations, and the Rust.
+Each rule is checked against whichever half it was ported from. No divergence. It found four
+defects that had already shipped — two in the TypeScript, since fixed there, and two in the new
+Rust.
+
+Measured at the end of the phase, for the questions below:
+
+| | Size |
+|---|---|
+| Client shell (WebAssembly) | 42.8 KB gzipped, 95.8 KB raw |
+| Client glue (JavaScript) | 5.5 KB gzipped |
+| Server binary | 1.18 MB |
+
+That shell is the rules plus Leptos plus a router-less page, not the app; the number is a floor,
+not an answer. It is recorded here so the growth is visible as the screens arrive.
+
 ## Open questions
 
 - [ ] Does the WebAssembly shell stay small enough that the two-second offline launch holds on a
