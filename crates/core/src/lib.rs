@@ -13,6 +13,8 @@ pub mod library;
 pub mod present;
 pub mod sets;
 pub mod sheets;
+pub mod storage;
+pub mod sync;
 pub mod time;
 
 /// Proves the crate builds for both targets. Replaced by the first real rule that moves in.
