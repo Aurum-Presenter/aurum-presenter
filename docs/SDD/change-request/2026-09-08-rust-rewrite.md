@@ -112,13 +112,31 @@ never calls into. Every rule, every screen and every byte of state handling is R
 ### The sheet renderer
 
 `pdfium-render` replaces `pdf.js` behind a narrow interface — page count, and render a page to a
-bitmap — used by the viewer, the print pack and sheet slides alike. The engine is around 2 MB
-compressed against `pdf.js`'s 105 KB, so it is fetched when a sheet is first opened and cached at
-runtime rather than precached with the shell. That matches the rule sheets already follow: a
-device that has never downloaded a sheet has nothing to render.
+bitmap — used by the viewer, the print pack and sheet slides alike.
 
-The interface exists so the decision stays reversible. If the payload or the main-thread cost
-proves wrong in practice, the engine moves to a worker or is replaced, and no screen changes.
+Measured before committing to it, rendering the piano fixture in a headless browser:
+
+| | Pdfium | `pdf.js` today |
+|---|---|---|
+| Engine | 1.94 MB gzipped (3.8 MB of WebAssembly) | 105 KB gzipped |
+| Loader glue | 40 KB gzipped of Emscripten JavaScript | — |
+| Rust bindings, linked into the app | 149 KB gzipped | — |
+| Engine load | 69 ms | — |
+| First page at 1400 px | 89 ms — 7 ms to parse, 44 ms to render, 29 ms to paint | — |
+
+So: fast enough to render on the main thread, and twenty times the download. The engine and its
+glue are fetched when a sheet is first opened and cached at runtime rather than precached, which
+is the rule sheets already follow — a device that has never downloaded a sheet has nothing to
+render. The 149 KB of bindings cannot be deferred that way, because they are linked into the
+application module; if that proves too much for the shell, the renderer moves into a second
+WebAssembly module loaded on demand.
+
+Wiring is not free: Pdfium has to be handed to the bindings from JavaScript
+(`initialize_pdfium_render(engine, bindings, false)`) once both modules are up, which means a
+custom Trunk initialiser rather than the default loader.
+
+The interface exists so the decision stays reversible. If the payload proves wrong in practice,
+the engine moves to a worker or is replaced, and no screen changes.
 
 ## Unchanged
 
