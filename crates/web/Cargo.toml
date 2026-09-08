@@ -6,6 +6,15 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+# Two entry points: the app, and the worker that holds the search index.
+[[bin]]
+name = "aurum-web"
+path = "src/main.rs"
+
+[[bin]]
+name = "search-worker"
+path = "src/library/search_worker.rs"
+
 [dependencies]
 aurum-core.workspace = true
 serde.workspace = true
@@ -54,6 +63,11 @@ features = [
   "EventTarget",
   "BroadcastChannel",
   "MessageEvent",
+  "Worker",
+  "WorkerOptions",
+  "WorkerType",
+  "WorkerGlobalScope",
+  "DedicatedWorkerGlobalScope",
 ]
 
 [dev-dependencies]

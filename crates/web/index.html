@@ -19,6 +19,18 @@
     <link
       data-trunk
       rel="rust"
+      data-bin="aurum-web"
+      data-wasm-opt="z"
+      data-wasm-opt-params="--enable-bulk-memory --enable-bulk-memory-opt --enable-nontrapping-float-to-int --enable-sign-ext --enable-mutable-globals --enable-reference-types --enable-multivalue"
+    />
+
+    <!-- The search index, off the main thread. See `search_worker.rs` for the measurement. -->
+    <link
+      data-trunk
+      rel="rust"
+      data-bin="search-worker"
+      data-type="worker"
+      data-loader-shim
       data-wasm-opt="z"
       data-wasm-opt-params="--enable-bulk-memory --enable-bulk-memory-opt --enable-nontrapping-float-to-int --enable-sign-ext --enable-mutable-globals --enable-reference-types --enable-multivalue"
     />
