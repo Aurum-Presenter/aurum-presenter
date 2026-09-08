@@ -214,6 +214,7 @@ dependencies = [
  "hex",
  "hmac",
  "http 1.5.0",
+ "http-body-util",
  "include_dir",
  "lettre",
  "rand",
