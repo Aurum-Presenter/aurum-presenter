@@ -7,6 +7,8 @@
 #![forbid(unsafe_code)]
 
 pub mod chart;
+pub mod present;
+pub mod sheets;
 
 /// Proves the crate builds for both targets. Replaced by the first real rule that moves in.
 pub fn version() -> &'static str {
