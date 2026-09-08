@@ -5,3 +5,5 @@ pub mod chord;
 pub mod chordpro;
 pub mod effective_key;
 pub mod notes;
+pub mod over_lyrics;
+pub mod render;
