@@ -6,9 +6,14 @@
 //! implemented twice and cannot drift between the two sides of the wire.
 #![forbid(unsafe_code)]
 
+pub mod blobs;
 pub mod chart;
+pub mod ids;
+pub mod library;
 pub mod present;
+pub mod sets;
 pub mod sheets;
+pub mod time;
 
 /// Proves the crate builds for both targets. Replaced by the first real rule that moves in.
 pub fn version() -> &'static str {
