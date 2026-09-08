@@ -1,0 +1,13 @@
+{
+  "name": "aurum-e2e",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end verification: drives the real stack through a browser and asserts what a musician would see.",
+  "scripts": {
+    "test": "node run.mjs",
+    "seed": "node lib/seed.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}

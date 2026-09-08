@@ -71,3 +71,7 @@ web: ## Run the PWA dev server
 .PHONY: web-test
 web-test: ## Run the PWA test suite (chart parsing, transposition, conversion)
 	cd frontend && npm test
+
+.PHONY: e2e
+e2e: ## Drive the running stack through a browser (SPEC=sheets runs a subset)
+	cd e2e && npm install --silent && node run.mjs $(SPEC)
