@@ -14,8 +14,8 @@ return [
         // The content tier. One file per workspace, named by its UUID.
         'workspace_dir' => Env::string('WORKSPACE_DB_DIR', $dataDir . '/workspace'),
 
-        'control_migrations'   => APP_DIR . '/migrations/control',
-        'workspace_migrations' => APP_DIR . '/migrations/workspace',
+        'control_migrations'   => dirname(APP_DIR) . '/migrations/control',
+        'workspace_migrations' => dirname(APP_DIR) . '/migrations/workspace',
 
         // PHP-FPM is multi-process, so concurrent writers must queue rather than fail.
         'busy_timeout_ms' => Env::int('SQLITE_BUSY_TIMEOUT_MS', 5000),

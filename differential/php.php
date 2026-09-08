@@ -32,7 +32,7 @@ $file = tempnam(sys_get_temp_dir(), 'aurum-diff-') . '.sqlite';
 
 $factory = new ConnectionFactory();
 $db = $factory->open($file);
-(new Migrator($root . '/backend/migrations/workspace'))->migrate($db);
+(new Migrator($root . '/migrations/workspace'))->migrate($db);
 
 $sync = new SyncService(new WriteTransaction(), new Clock());
 $user = '01890000-0000-7000-8000-000000000001';
