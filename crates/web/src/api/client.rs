@@ -260,13 +260,20 @@ impl Api {
     /// control surface and a stage window together would present one cookie three times and sign
     /// the user out of everything, mid-service.
     async fn refresh(&self) -> bool {
+        self.refresh_once().await == RestoreResult::Ok
+    }
+
+    /// The one place a refresh actually happens, and the only one that can tell the two failures
+    /// apart. It rotates the cookie, so it must be called once per attempt and no more.
+    async fn refresh_once(&self) -> RestoreResult {
         let base = self.base.clone();
 
         in_turn("aurum-refresh", async move {
             let api = Api::new(base);
 
             let Ok(response) = api.fetch("POST", "/auth/refresh", None).await else {
-                return false;
+                // The request never reached the server. That says nothing about the session.
+                return RestoreResult::Offline;
             };
 
             if !response.ok() {
@@ -281,9 +288,11 @@ impl Api {
                             listener();
                         }
                     });
+
+                    return RestoreResult::SignedOut;
                 }
 
-                return false;
+                return RestoreResult::Offline;
             }
 
             let Some(token) = JsFuture::from(response.json().expect("a body"))
@@ -295,28 +304,21 @@ impl Api {
                         .and_then(|token| token.as_string())
                 })
             else {
-                return false;
+                return RestoreResult::SignedOut;
             };
 
             Api::set_access_token(Some(token));
 
-            true
+            RestoreResult::Ok
         })
         .await
     }
 
     /// A refresh that reports which of the two failures happened.
+    ///
+    /// One request, not two: every attempt rotates the cookie, so asking twice to find out
+    /// would burn a rotation on every start of the app.
     pub async fn restore(&self) -> RestoreResult {
-        // `refresh` folds a network failure into `false`, which is exactly the distinction this
-        // has to keep, so it asks the question again itself.
-        if self.fetch("POST", "/auth/refresh", None).await.is_err() {
-            return RestoreResult::Offline;
-        }
-
-        if self.refresh().await {
-            RestoreResult::Ok
-        } else {
-            RestoreResult::SignedOut
-        }
+        self.refresh_once().await
     }
 }
