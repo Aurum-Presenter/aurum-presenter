@@ -24,6 +24,13 @@
       data-wasm-opt-params="--enable-bulk-memory --enable-bulk-memory-opt --enable-nontrapping-float-to-int --enable-sign-ext --enable-mutable-globals --enable-reference-types --enable-multivalue"
     />
 
+    <!--
+      Chrome's PDF engine, for sheet music. Copied rather than hashed, and never imported: the
+      renderer fetches it the first time a sheet is opened, which is the rule sheets already
+      follow — a device that has never downloaded a sheet has nothing to render.
+    -->
+    <link data-trunk rel="copy-dir" href="../../web/build/pdfium" />
+
     <!-- The search index, off the main thread. See `search_worker.rs` for the measurement. -->
     <link
       data-trunk

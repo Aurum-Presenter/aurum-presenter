@@ -131,9 +131,22 @@ render. The 149 KB of bindings cannot be deferred that way, because they are lin
 application module; if that proves too much for the shell, the renderer moves into a second
 WebAssembly module loaded on demand.
 
-Wiring is not free: Pdfium has to be handed to the bindings from JavaScript
-(`initialize_pdfium_render(engine, bindings, false)`) once both modules are up, which means a
-custom Trunk initialiser rather than the default loader.
+Wiring is not free, but it is cheaper than the spike suggested. Pdfium still has to be handed to
+the bindings from JavaScript — `initialize_pdfium_render` is exported to JavaScript only, and it
+wants our own module's exports as its second argument — but Trunk already publishes those on
+`window.wasmBindings`, so the whole thing is a six-line inline snippet holding one dynamic
+`import()` rather than a custom Trunk initialiser. The engine is fetched from `/pdfium/`, copied
+out of `node_modules` by a build hook and versioned by the lockfile, and nothing downloads it
+until the first sheet is opened.
+
+One thing the spike did not find, because it rendered once: Pdfium is a process-wide singleton
+and `pdfium-render` enforces it — the second call to `bind_to_system_library` returns "already
+initialized". A `Pdfium` per render therefore works exactly once. The client holds one for the
+life of the tab.
+
+In the finished client, attaching the two-page fixture and opening it renders the first page at
+950 × 1344 in 127 ms with the engine already warm; the engine itself is 3.9 MB over the wire
+(1.94 MB gzipped) and 259 KB of loader glue.
 
 The interface exists so the decision stays reversible. If the payload proves wrong in practice,
 the engine moves to a worker or is replaced, and no screen changes.

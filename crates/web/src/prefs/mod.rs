@@ -8,3 +8,4 @@
 
 pub mod display;
 pub mod song;
+pub mod user;

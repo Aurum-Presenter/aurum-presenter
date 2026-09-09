@@ -20,6 +20,8 @@ use crate::db::records::{Arrangement, Song, alive};
 use crate::library::repository::list_of;
 use crate::prefs::display::{self, Display};
 use crate::prefs::song::{SongPrefs, read as read_prefs, write as write_prefs};
+use crate::prefs::user::{self, UserPrefs};
+use crate::sheets::SheetsPanel;
 use crate::song::drawer::SongMetadataDrawer;
 
 /// The twelve keys a chart can be written in, measured from C.
@@ -62,6 +64,7 @@ struct Loaded {
     song: Option<Option<Song>>,
     arrangements: Vec<Arrangement>,
     prefs: SongPrefs,
+    mine: UserPrefs,
 }
 
 #[component]
@@ -111,6 +114,7 @@ pub fn SongPage(#[prop(optional)] edit: bool) -> impl IntoView {
                 song: Some(song),
                 arrangements,
                 prefs: read_prefs(&db, &user_id, &song_id).await,
+                mine: user::read(&db, &user_id).await,
             }
         }
     });
@@ -119,6 +123,7 @@ pub fn SongPage(#[prop(optional)] edit: bool) -> impl IntoView {
     let song = Signal::derive(move || held.get().song.flatten());
     let arrangements = Signal::derive(move || held.get().arrangements);
     let prefs = Signal::derive(move || held.get().prefs);
+    let mine = Signal::derive(move || held.get().mine);
 
     let arrangement = Signal::derive(move || {
         chosen_arrangement(&arrangements.get(), prefs.get().arrangement_id.as_deref()).cloned()
@@ -420,6 +425,32 @@ pub fn SongPage(#[prop(optional)] edit: bool) -> impl IntoView {
                                 </Show>
                             </Show>
                         </div>
+
+                        <SheetsPanel
+                            song_id
+                            song_key=Signal::derive(move || target.get().0)
+                            part=Signal::derive(move || mine.get().part)
+                            on_part=Callback::new(move |part| {
+                                let (Some(db), Some(engine)) =
+                                    (db.get_untracked(), context.engine.get_untracked())
+                                else {
+                                    return;
+                                };
+
+                                let user_id = me.get_untracked().id;
+
+                                spawn_local(async move {
+                                    let _ = user::write(&db, &engine, &user_id, &UserPrefs { part })
+                                        .await;
+
+                                    prefs_version.update(|value| *value += 1);
+                                });
+                            })
+                            pinned=Signal::derive(move || prefs.get().pinned)
+                            on_pinned=Callback::new(move |pinned: bool| {
+                                update(SongPrefs { pinned, ..prefs.get_untracked() });
+                            })
+                        />
 
                         <Show when=move || {
                             can_edit && !arrangements.get().is_empty() && !editing.get()

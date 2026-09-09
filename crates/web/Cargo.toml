@@ -27,6 +27,11 @@ js-sys = "0.3"
 leptos_router = "0.8"
 serde-wasm-bindgen = "0.6"
 gloo-timers = { version = "0.3", features = ["futures"] }
+
+# Chrome's PDF engine, for sheet music. No default features: `thread_safe` is meaningless in a
+# single-threaded browser tab, and the `image` crate it would otherwise pull in is a megabyte of
+# encoders to produce a bitmap that goes straight onto a canvas as raw bytes.
+pdfium-render = { version = "0.9.4", default-features = false, features = ["pdfium_latest"] }
 thiserror.workspace = true
 
 [dependencies.web-sys]
@@ -88,9 +93,21 @@ features = [
   "Crypto",
   "SubtleCrypto",
   "Url",
+  "PointerEvent",
+  "Element",
+  "DomRect",
+  "HtmlCanvasElement",
+  "CanvasRenderingContext2d",
+  "ImageData",
+  "HtmlImageElement",
 ]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
 any_spawner = { version = "0.3", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3", features = ["futures"] }
+
+# Chrome's PDF engine, for sheet music. No default features: `thread_safe` is meaningless in a
+# single-threaded browser tab, and the `image` crate it would otherwise pull in is a megabyte of
+# encoders to produce a bitmap that goes straight onto a canvas as raw bytes.
+pdfium-render = { version = "0.9.4", default-features = false, features = ["pdfium_latest"] }

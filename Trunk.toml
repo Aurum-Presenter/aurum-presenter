@@ -16,6 +16,14 @@ command_arguments = [
   "cd web && node_modules/.bin/tailwindcss --input app.css --output build/app.css --minify",
 ]
 
+# Pdfium is copied out of node_modules rather than committed: it is four megabytes of Chrome's
+# PDF engine, versioned by the lockfile like any other dependency. It is a plain copy, unhashed,
+# because the sheet renderer fetches it by name at runtime rather than importing it.
+[[hooks]]
+stage = "pre_build"
+command = "sh"
+command_arguments = ["-c", "cd web && npm run --silent pdfium"]
+
 [watch]
 watch = ["crates/web/src", "crates/core/src", "crates/web/index.html", "web/app.css"]
 
