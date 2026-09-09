@@ -14,6 +14,7 @@ use crate::app::{provide_workspace, storage};
 use crate::auth::AuthScreen;
 use crate::auth::local;
 use crate::library::page::LibraryPage;
+use crate::song::SongPage;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Phase {
@@ -161,7 +162,11 @@ fn SignedIn(
                     <Route path=path!("library") view=LibraryPage />
                     <Route path=path!("library/folder/:folder_id") view=LibraryPage />
                     <Route path=path!("library/trash") view=|| view! { <Placeholder title="Trash" /> } />
-                    <Route path=path!("song/:song_id") view=|| view! { <Placeholder title="Song" /> } />
+                    <Route path=path!("song/:song_id") view=|| view! { <SongPage /> } />
+                    <Route
+                        path=path!("song/:song_id/edit")
+                        view=|| view! { <SongPage edit=true /> }
+                    />
                     <Route path=path!("sets") view=|| view! { <Placeholder title="Sets" /> } />
                     <Route path=path!("join") view=|| view! { <Placeholder title="Join a session" /> } />
                     <Route

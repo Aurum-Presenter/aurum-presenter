@@ -325,6 +325,18 @@ pub fn songs_in_folder(
         .collect()
 }
 
+/// What a song has to look like before it is saved.
+///
+/// The rule is `aurum-core`'s, so the sentence the form shows is the same sentence the server
+/// would produce; only the shape of the input differs, and that is what this maps.
+pub fn validate(input: &SongInput) -> Vec<String> {
+    aurum_core::library::validation::validate_song(&aurum_core::library::validation::SongInput {
+        title: input.title.clone(),
+        ccli_number: input.ccli_number.clone(),
+        tempo: input.tempo,
+    })
+}
+
 /// A JSON array column, read as the list it holds. Anything unreadable is an empty list rather
 /// than an error: a tag list nobody can parse must not stop a song opening.
 pub fn list_of(json: Option<&str>) -> Vec<String> {

@@ -9,9 +9,12 @@
 pub mod api;
 pub mod app;
 pub mod auth;
+pub mod chart;
 pub mod db;
 pub mod library;
+pub mod prefs;
 pub mod routes;
+pub mod song;
 pub mod sync;
 
 /// The wall clock, in the one format every timestamp in this system uses.

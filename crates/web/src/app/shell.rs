@@ -24,6 +24,12 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
         let context = context.clone();
 
         Effect::new(move |_| {
+            // A device working without an account has nothing to sync with. Pretending otherwise
+            // would mean a failing request every thirty seconds and a chip that means nothing.
+            if local {
+                return;
+            }
+
             let Some(engine) = context.engine.get() else {
                 return;
             };
@@ -131,7 +137,9 @@ fn watch_connectivity(online: RwSignal<bool>, context: super::WorkspaceContext) 
         let listener = Closure::<dyn Fn()>::new(move || {
             online.set(state);
 
-            if !state {
+            // Coming back on air is a reason to sync; going off air is not, and neither is
+            // either one on a device with no account behind it.
+            if !state || context.local {
                 return;
             }
 

@@ -68,6 +68,10 @@ features = [
   "WorkerType",
   "WorkerGlobalScope",
   "DedicatedWorkerGlobalScope",
+  "ClipboardEvent",
+  "DataTransfer",
+  "HtmlTextAreaElement",
+  "SubmitEvent",
 ]
 
 [dev-dependencies]

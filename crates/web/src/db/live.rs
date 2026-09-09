@@ -23,7 +23,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::{BroadcastChannel, MessageEvent};
 
 thread_local! {
-    static VERSIONS: RefCell<HashMap<String, RwSignal<u64>>> = RefCell::new(HashMap::new());
+    static VERSIONS: RefCell<HashMap<String, ArcRwSignal<u64>>> = RefCell::new(HashMap::new());
     static CHANNEL: RefCell<Option<BroadcastChannel>> = const { RefCell::new(None) };
 }
 
@@ -31,12 +31,21 @@ fn channel_name(workspace_id: &str) -> String {
     format!("aurum-db-{workspace_id}")
 }
 
-fn version_of(store: &str) -> RwSignal<u64> {
+/// The counter for one store.
+///
+/// Deliberately an `ArcRwSignal` and not an `RwSignal`. An `RwSignal` belongs to whichever
+/// reactive owner happened to create it, and the first reader of a store is usually a component:
+/// the library page reads `arrangements` to show each song's key. Navigate away and that owner is
+/// disposed, taking the counter with it — after which every write to the store updates a signal
+/// nobody can hear, and the next screen silently stops being live. An `ArcRwSignal` lives as long
+/// as this map does, which is as long as the tab.
+fn version_of(store: &str) -> ArcRwSignal<u64> {
     VERSIONS.with(|versions| {
-        *versions
+        versions
             .borrow_mut()
             .entry(store.to_owned())
-            .or_insert_with(|| RwSignal::new(0))
+            .or_insert_with(|| ArcRwSignal::new(0))
+            .clone()
     })
 }
 
@@ -107,4 +116,48 @@ where
 
         read()
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The bug this guards: the counter used to be an `RwSignal`, so the first component to read
+    /// a store owned it. Navigating away disposed that owner, and every later write to the store
+    /// went nowhere — the next screen showed data that never changed again.
+    #[test]
+    fn a_counter_outlives_the_screen_that_first_read_it() {
+        let _root = Owner::new();
+        _root.set();
+
+        let screen = Owner::new();
+
+        screen.with(|| watching(&["songs"]));
+        screen.cleanup();
+        drop(screen);
+
+        let counter = version_of("songs");
+        let before = counter.get_untracked();
+
+        bump("songs");
+
+        assert_eq!(
+            counter.get_untracked(),
+            before + 1,
+            "a write after the first reader was disposed must still be heard",
+        );
+    }
+
+    #[test]
+    fn stores_count_separately() {
+        let _root = Owner::new();
+        _root.set();
+
+        let songs = version_of("sets-test-a").get_untracked();
+
+        bump("sets-test-b");
+
+        assert_eq!(version_of("sets-test-a").get_untracked(), songs);
+        assert_eq!(version_of("sets-test-b").get_untracked(), 1);
+    }
 }
