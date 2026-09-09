@@ -25,6 +25,19 @@ pub enum SlideKind {
     Title,
 }
 
+impl SlideKind {
+    /// The word a control surface shows for a slide that has no label of its own.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            SlideKind::Lyrics => "lyrics",
+            SlideKind::Text => "text",
+            SlideKind::Blank => "blank",
+            SlideKind::Sheet => "sheet",
+            SlideKind::Title => "title",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Slide {
     pub id: String,

@@ -27,6 +27,7 @@ js-sys = "0.3"
 leptos_router = "0.8"
 serde-wasm-bindgen = "0.6"
 gloo-timers = { version = "0.3", features = ["futures"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
 
 # Chrome's PDF engine, for sheet music. No default features: `thread_safe` is meaningless in a
 # single-threaded browser tab, and the `image` crate it would otherwise pull in is a megabyte of
@@ -100,12 +101,32 @@ features = [
   "CanvasRenderingContext2d",
   "ImageData",
   "HtmlImageElement",
+  "Screen",
+  "MediaQueryList",
+  "ServiceWorkerContainer",
+  "ServiceWorkerRegistration",
+  "ServiceWorker",
+  "WebSocket",
+  "CloseEvent",
+  "RtcPeerConnection",
+  "RtcConfiguration",
+  "RtcDataChannel",
+  "RtcDataChannelInit",
+  "RtcDataChannelEvent",
+  "RtcDataChannelState",
+  "RtcIceCandidate",
+  "RtcIceCandidateInit",
+  "RtcPeerConnectionIceEvent",
+  "RtcSdpType",
+  "RtcSessionDescription",
+  "RtcSessionDescriptionInit",
 ]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
 any_spawner = { version = "0.3", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3", features = ["futures"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
 
 # Chrome's PDF engine, for sheet music. No default features: `thread_safe` is meaningless in a
 # single-threaded browser tab, and the `image` crate it would otherwise pull in is a megabyte of

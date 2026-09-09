@@ -261,6 +261,7 @@ dependencies = [
  "any_spawner",
  "aurum-core",
  "console_error_panic_hook",
+ "futures-util",
  "gloo-timers",
  "js-sys",
  "leptos",

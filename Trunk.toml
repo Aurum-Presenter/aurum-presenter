@@ -24,6 +24,13 @@ stage = "pre_build"
 command = "sh"
 command_arguments = ["-c", "cd web && npm run --silent pdfium"]
 
+# The service worker is built last, because what it precaches is exactly the distribution Trunk
+# has just written — hashed filenames and all.
+[[hooks]]
+stage = "post_build"
+command = "sh"
+command_arguments = ["-c", "cd web && npm run --silent sw"]
+
 [watch]
 watch = ["crates/web/src", "crates/core/src", "crates/web/index.html", "web/app.css"]
 

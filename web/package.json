@@ -4,11 +4,14 @@
   "description": "The client's non-Rust assets: the stylesheet Tailwind builds, the service worker, and the Pdfium engine the sheet renderer drives.",
   "scripts": {
     "css": "tailwindcss --input app.css --output build/app.css --minify",
-    "pdfium": "mkdir -p build/pdfium && cp node_modules/@hyzyla/pdfium/dist/index.esm.browser.js build/pdfium/pdfium.js && cp node_modules/@hyzyla/pdfium/dist/pdfium.wasm build/pdfium/pdfium.wasm && cp node_modules/@hyzyla/pdfium/LICENSE.md build/pdfium/LICENSE.md"
+    "pdfium": "mkdir -p build/pdfium && cp node_modules/@hyzyla/pdfium/dist/index.esm.browser.js build/pdfium/pdfium.js && cp node_modules/@hyzyla/pdfium/dist/pdfium.wasm build/pdfium/pdfium.wasm && cp node_modules/@hyzyla/pdfium/LICENSE.md build/pdfium/LICENSE.md",
+    "sw": "node build-sw.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.0",
-    "tailwindcss": "^4.0.0"
+    "esbuild": "^0.28.2",
+    "tailwindcss": "^4.0.0",
+    "workbox-build": "^7.4.1"
   },
   "dependencies": {
     "@hyzyla/pdfium": "^2.1.13"

@@ -14,6 +14,7 @@ use crate::app::{provide_workspace, storage};
 use crate::auth::AuthScreen;
 use crate::auth::local;
 use crate::library::page::LibraryPage;
+use crate::present::{AudiencePage, ControlPage, JoinPage, StagePage};
 use crate::sets::{PrintPage, ReaderPage, SetPage, SetsPage};
 use crate::settings::ConflictsPage;
 use crate::sheets::SheetViewerPage;
@@ -160,6 +161,11 @@ fn SignedIn(
     view! {
         <Router>
             <Routes fallback=|| view! { <Placeholder title="Not found" /> }>
+                // The output windows sit outside the shell: they are screens in a room, not
+                // pages in an app, and a projector must never show a navigation bar.
+                <Route path=path!("/output/audience") view=AudiencePage />
+                <Route path=path!("/output/stage") view=StagePage />
+
                 <ParentRoute path=path!("/") view=move || view! { <Shell on_sign_out /> }>
                     <Route path=path!("") view=LibraryPage />
                     <Route path=path!("library") view=LibraryPage />
@@ -175,7 +181,8 @@ fn SignedIn(
                     <Route path=path!("sets/:set_id") view=SetPage />
                     <Route path=path!("sets/:set_id/read/:index") view=ReaderPage />
                     <Route path=path!("sets/:set_id/print") view=PrintPage />
-                    <Route path=path!("join") view=|| view! { <Placeholder title="Join a session" /> } />
+                    <Route path=path!("join") view=JoinPage />
+                    <Route path=path!("present/:session_id") view=ControlPage />
                     <Route path=path!("settings/conflicts") view=ConflictsPage />
                     <Route
                         path=path!("settings/account")

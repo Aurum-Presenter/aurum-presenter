@@ -15,6 +15,8 @@ use super::repository::{ITEM_TYPES, SetInput, Sets, parse_list};
 use super::resolved::{ResolvedItem, use_resolved_set};
 use crate::app::use_workspace;
 use crate::db::live::live_query;
+use crate::present::store::{Sessions, take_snapshot};
+use crate::present::theme::workspace_theme;
 // Aliased: `Set` is also the reactive trait that gives a signal its `set` method.
 use crate::db::records::{Set as SetRecord, Song, alive};
 
@@ -248,6 +250,40 @@ pub fn SetPage() -> impl IntoView {
 
     let adding = RwSignal::new(false);
     let dragging = RwSignal::new(None::<usize>);
+    let presenting = RwSignal::new(false);
+    let navigate = StoredValue::new(use_navigate());
+
+    // The snapshot is taken here, once: from this moment the session is immune to anything
+    // anyone edits anywhere (acceptance criterion 2).
+    let present = move || {
+        let (Some(db), Some(engine)) = (context.db.get_untracked(), context.engine.get_untracked())
+        else {
+            return;
+        };
+
+        let (Some(set), items) = (set.get_untracked(), items.get_untracked()) else {
+            return;
+        };
+
+        presenting.set(true);
+
+        let workspace_id = context.workspace.get_untracked().id;
+        let _ = &engine;
+
+        spawn_local(async move {
+            let theme = workspace_theme(&db).await;
+            let sessions = Sessions::new(db);
+            let snapshot = take_snapshot(Some(&set.id), &set.name, &items);
+
+            match sessions.create(&workspace_id, snapshot, theme).await {
+                Ok(session) => navigate.get_value()(
+                    &format!("/present/{}", session.session_id),
+                    Default::default(),
+                ),
+                Err(_) => presenting.set(false),
+            }
+        });
+    };
 
     let change = move |changes: Map<String, Value>| {
         let (Some(repository), id) = (use_sets(), set_id.get_untracked()) else {
@@ -379,6 +415,15 @@ pub fn SetPage() -> impl IntoView {
                             >
                                 "Print"
                             </A>
+
+                            <button
+                                class="rounded bg-slate-900 px-3 py-1 text-white dark:bg-slate-100 dark:text-slate-900"
+                                data-testid="present"
+                                prop:disabled=move || presenting.get()
+                                on:click=move |_| present()
+                            >
+                                "Present"
+                            </button>
                         </span>
                     </Show>
                 </div>

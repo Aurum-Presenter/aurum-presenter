@@ -14,6 +14,7 @@ pub mod chart;
 pub mod db;
 pub mod library;
 pub mod prefs;
+pub mod present;
 pub mod pwa;
 pub mod routes;
 pub mod sets;

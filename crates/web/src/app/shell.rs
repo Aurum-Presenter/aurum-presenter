@@ -13,6 +13,8 @@ use crate::blobs::store::BlobStore;
 use crate::blobs::wanted::{Kind, compute, release, released};
 use crate::blobs::{BlobQueue, StorageFull};
 use crate::prefs::user;
+use crate::pwa::install::InstallBanner;
+use crate::pwa::update::UpdateToast;
 
 #[component]
 pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
@@ -81,6 +83,9 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
 
     view! {
         <div class="min-h-dvh bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+            <InstallBanner />
+            <UpdateToast />
+
             <Show when=move || full.get().is_some()>
                 <OutOfRoom
                     full=Signal::derive(move || full.get().expect("a file that would not fit"))
