@@ -72,6 +72,22 @@ features = [
   "DataTransfer",
   "HtmlTextAreaElement",
   "SubmitEvent",
+  "Document",
+  "VisibilityState",
+  "TouchEvent",
+  "TouchList",
+  "Touch",
+  "KeyboardEvent",
+  "DragEvent",
+  "HtmlInputElement",
+  "Blob",
+  "File",
+  "FileList",
+  "BlobPropertyBag",
+  "StorageManager",
+  "Crypto",
+  "SubtleCrypto",
+  "Url",
 ]
 
 [dev-dependencies]

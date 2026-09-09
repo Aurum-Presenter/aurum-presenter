@@ -9,11 +9,14 @@
 pub mod api;
 pub mod app;
 pub mod auth;
+pub mod blobs;
 pub mod chart;
 pub mod db;
 pub mod library;
 pub mod prefs;
+pub mod pwa;
 pub mod routes;
+pub mod sets;
 pub mod song;
 pub mod sync;
 

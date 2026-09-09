@@ -14,6 +14,7 @@ use crate::app::{provide_workspace, storage};
 use crate::auth::AuthScreen;
 use crate::auth::local;
 use crate::library::page::LibraryPage;
+use crate::sets::{ReaderPage, SetPage, SetsPage};
 use crate::song::SongPage;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -167,7 +168,9 @@ fn SignedIn(
                         path=path!("song/:song_id/edit")
                         view=|| view! { <SongPage edit=true /> }
                     />
-                    <Route path=path!("sets") view=|| view! { <Placeholder title="Sets" /> } />
+                    <Route path=path!("sets") view=SetsPage />
+                    <Route path=path!("sets/:set_id") view=SetPage />
+                    <Route path=path!("sets/:set_id/read/:index") view=ReaderPage />
                     <Route path=path!("join") view=|| view! { <Placeholder title="Join a session" /> } />
                     <Route
                         path=path!("settings/account")
