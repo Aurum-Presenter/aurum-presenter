@@ -17,6 +17,7 @@ pub mod prefs;
 pub mod pwa;
 pub mod routes;
 pub mod sets;
+pub mod settings;
 pub mod sheets;
 pub mod song;
 pub mod sync;

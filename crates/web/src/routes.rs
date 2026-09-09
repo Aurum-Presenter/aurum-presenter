@@ -14,7 +14,8 @@ use crate::app::{provide_workspace, storage};
 use crate::auth::AuthScreen;
 use crate::auth::local;
 use crate::library::page::LibraryPage;
-use crate::sets::{ReaderPage, SetPage, SetsPage};
+use crate::sets::{PrintPage, ReaderPage, SetPage, SetsPage};
+use crate::settings::ConflictsPage;
 use crate::sheets::SheetViewerPage;
 use crate::song::SongPage;
 
@@ -173,7 +174,9 @@ fn SignedIn(
                     <Route path=path!("sets") view=SetsPage />
                     <Route path=path!("sets/:set_id") view=SetPage />
                     <Route path=path!("sets/:set_id/read/:index") view=ReaderPage />
+                    <Route path=path!("sets/:set_id/print") view=PrintPage />
                     <Route path=path!("join") view=|| view! { <Placeholder title="Join a session" /> } />
+                    <Route path=path!("settings/conflicts") view=ConflictsPage />
                     <Route
                         path=path!("settings/account")
                         view=|| view! { <Placeholder title="Account" /> }

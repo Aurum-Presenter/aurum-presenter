@@ -105,17 +105,32 @@ impl Database {
     }
 
     pub async fn put<T: Serialize>(&self, store: &str, record: &T) -> Result<JsValue, DbError> {
-        let value = to_js(record)?;
-        let key = idb::request(
-            self.store(store, IdbTransactionMode::Readwrite)?
-                .put(&value)
-                .map_err(|_| DbError::Request(format!("writing to {store}")))?,
-        )
-        .await?;
+        let key = self.put_quietly(store, record).await?;
 
         live::changed(&self.workspace_id, store);
 
         Ok(key)
+    }
+
+    /// A write nothing is told about.
+    ///
+    /// For bookkeeping that is not news: touching a blob's `cached_at` on read is what makes
+    /// eviction least-recently-*used*, and announcing it would wake every query over `blobs` —
+    /// including the ones whose own results cause the read. That is not a slow screen, it is a
+    /// loop, and the print pack found it.
+    pub async fn put_quietly<T: Serialize>(
+        &self,
+        store: &str,
+        record: &T,
+    ) -> Result<JsValue, DbError> {
+        let value = to_js(record)?;
+
+        idb::request(
+            self.store(store, IdbTransactionMode::Readwrite)?
+                .put(&value)
+                .map_err(|_| DbError::Request(format!("writing to {store}")))?,
+        )
+        .await
     }
 
     /// Writes many records in one transaction, and announces the store once.
