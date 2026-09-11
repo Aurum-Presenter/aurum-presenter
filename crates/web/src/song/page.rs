@@ -284,31 +284,31 @@ pub fn SongPage(#[prop(optional)] edit: bool) -> impl IntoView {
     view! {
         {move || match phase.get() {
             Phase::Loading => {
-                view! { <p class="p-6 text-sm text-slate-500">"Loading…"</p> }.into_any()
+                view! { <p class="p-6 text-sm text-ink-3">"Loading…"</p> }.into_any()
             }
 
             Phase::Missing => view! {
                 <div class="p-6 text-sm">
-                    <p class="text-slate-500">
+                    <p class="text-ink-3">
                         "That song is not in this workspace. It may belong to another one, or it \
                          may have been deleted."
                     </p>
-                    <A href="/library" attr:class="underline">"Back to the library"</A>
+                    <A href="/library" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Back to the library"</A>
                 </div>
             }
             .into_any(),
 
             Phase::Deleted => view! {
                 <div class="p-6 text-sm">
-                    <p class="text-slate-500">"This song has been deleted."</p>
-                    <A href="/library/trash" attr:class="underline">"Open Trash"</A>
+                    <p class="text-ink-3">"This song has been deleted."</p>
+                    <A href="/library/trash" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Open Trash"</A>
                 </div>
             }
             .into_any(),
 
             Phase::Ready => view! {
                     <div class="mx-auto max-w-5xl p-4">
-                        <A href="/library" attr:class="text-sm underline">"← Library"</A>
+                        <A href="/library" attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Library"</A>
 
                         <SongHeader
                             song=Signal::derive(move || song.get().unwrap_or_default())
@@ -456,7 +456,7 @@ pub fn SongPage(#[prop(optional)] edit: bool) -> impl IntoView {
                             can_edit && !arrangements.get().is_empty() && !editing.get()
                         }>
                             <button
-                                class="mt-6 text-sm underline"
+                                class="mt-6 text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                 data-testid="add-arrangement"
                                 on:click=move |_| create_arrangement.run(())
                             >
@@ -492,19 +492,19 @@ fn SongHeader(song: Signal<Song>, can_edit: bool, on_details: Callback<()>) -> i
                 {move || song.get().title}
             </h2>
             {move || song.get().artist.map(|artist| view! {
-                <span class="text-slate-500">{artist}</span>
+                <span class="text-ink-3">{artist}</span>
             })}
             {move || song.get().tempo.map(|tempo| view! {
-                <span class="text-sm text-slate-500">{format!("{tempo} bpm")}</span>
+                <span class="text-sm text-ink-3">{format!("{tempo} bpm")}</span>
             })}
             {move || song.get().time_signature.map(|time| view! {
-                <span class="text-sm text-slate-500">{time}</span>
+                <span class="text-sm text-ink-3">{time}</span>
             })}
 
             {move || list_of(song.get().tags.as_deref())
                 .into_iter()
                 .map(|tag| view! {
-                    <span class="rounded bg-slate-100 px-2 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    <span class="rounded-md bg-raised px-2 text-xs text-ink-3">
                         {tag}
                     </span>
                 })
@@ -512,10 +512,10 @@ fn SongHeader(song: Signal<Song>, can_edit: bool, on_details: Callback<()>) -> i
 
             <Show when=move || can_edit>
                 <span class="ml-auto flex gap-3 text-sm">
-                    <button class="underline" on:click=move |_| on_details.run(())>"Details"</button>
+                    <button class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| on_details.run(())>"Details"</button>
 
                     <button
-                        class="underline"
+                        class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         data-testid="duplicate-song"
                         on:click=move |_| {
                             let (Some(library), navigate, id) =
@@ -537,7 +537,7 @@ fn SongHeader(song: Signal<Song>, can_edit: bool, on_details: Callback<()>) -> i
                     </button>
 
                     <button
-                        class="underline"
+                        class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         data-testid="archive-song"
                         on:click=move |_| {
                             let (Some(library), id, archived) =
@@ -555,7 +555,7 @@ fn SongHeader(song: Signal<Song>, can_edit: bool, on_details: Callback<()>) -> i
                     </button>
 
                     <button
-                        class="underline text-red-700 dark:text-red-400"
+                        class="text-live-ink underline-offset-2 hover:underline"
                         data-testid="delete-song"
                         on:click=move |_| {
                             let (Some(library), navigate, id) =
@@ -578,7 +578,7 @@ fn SongHeader(song: Signal<Song>, can_edit: bool, on_details: Callback<()>) -> i
         </div>
 
         {move || song.get().subtitle.map(|subtitle| view! {
-            <p class="mb-3 text-slate-500">{subtitle}</p>
+            <p class="mb-3 text-ink-3">{subtitle}</p>
         })}
     }
 }
@@ -607,7 +607,7 @@ fn ArrangementSettings(
     view! {
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
             <input
-                class="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-900"
+                class="rounded-md border border-line-strong px-2 py-1"
                 data-testid="arrangement-name"
                 placeholder="Arrangement name"
                 prop:value=move || arrangement.get().name
@@ -622,7 +622,7 @@ fn ArrangementSettings(
             <label class="flex items-center gap-1">
                 "Written in"
                 <select
-                    class="rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                    class="rounded-md border border-line-strong bg-transparent px-2 py-1"
                     prop:value=move || arrangement.get().default_key.unwrap_or_default()
                     on:change=move |event| {
                         let value = event_target_value(&event);
@@ -646,7 +646,7 @@ fn ArrangementSettings(
             <label class="flex items-center gap-1">
                 "Suggested capo"
                 <select
-                    class="rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                    class="rounded-md border border-line-strong bg-transparent px-2 py-1"
                     prop:value=move || {
                         arrangement.get().capo_hint.map(|fret| fret.to_string()).unwrap_or_default()
                     }
@@ -671,10 +671,10 @@ fn ArrangementSettings(
             <Show
                 when=move || arrangement.get().is_default == 1
                 fallback=move || view! {
-                    <button class="underline" on:click=make_default>"Make default"</button>
+                    <button class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=make_default>"Make default"</button>
                 }
             >
-                <span class="text-slate-500">"Default arrangement"</span>
+                <span class="text-ink-3">"Default arrangement"</span>
             </Show>
         </div>
     }
@@ -696,7 +696,7 @@ fn ChartBody(
         <Show
             when=move || !arrangement.get().body.trim().is_empty()
             fallback=|| view! {
-                <p class="text-sm text-slate-500">"This arrangement has no chart yet."</p>
+                <p class="text-sm text-ink-3">"This arrangement has no chart yet."</p>
             }
         >
             <ChartView
@@ -714,12 +714,12 @@ fn ChartBody(
 #[component]
 fn EmptyChart(can_edit: bool, on_create: Callback<()>) -> impl IntoView {
     view! {
-        <div class="rounded border border-dashed border-slate-300 p-6 text-center dark:border-slate-700">
-            <p class="text-sm text-slate-500">"No chart yet."</p>
+        <div class="rounded-md border border-dashed border-line-strong p-6 text-center">
+            <p class="text-sm text-ink-3">"No chart yet."</p>
 
             <Show when=move || can_edit>
                 <button
-                    class="mt-3 rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                    class="mt-3 rounded-md bg-accent px-4 py-2 text-sm text-on-accent"
                     data-testid="add-chart"
                     on:click=move |_| on_create.run(())
                 >
@@ -738,22 +738,22 @@ fn NoKeyYet(can_edit: bool, on_pick: Callback<Key>) -> impl IntoView {
         <Show
             when=move || can_edit
             fallback=|| view! {
-                <p class="text-sm text-slate-500">
+                <p class="text-sm text-ink-3">
                     "This song has no key set, so it cannot be transposed."
                 </p>
             }
         >
             <div
-                class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3 text-sm dark:border-slate-800"
+                class="flex flex-wrap items-center gap-2 border-b border-line pb-3 text-sm"
                 data-testid="no-key-yet"
             >
-                <span class="text-slate-500">"What key is this chart written in?"</span>
+                <span class="text-ink-3">"What key is this chart written in?"</span>
 
                 {twelve()
                     .into_iter()
                     .map(|key| view! {
                         <button
-                            class="rounded border border-slate-200 px-2 py-1 dark:border-slate-700"
+                            class="rounded-md border border-line px-2 py-1"
                             on:click=move |_| on_pick.run(key)
                         >
                             {key.to_string()}

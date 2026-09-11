@@ -132,11 +132,11 @@ pub fn ThemeDrawer(
 
     view! {
         <div
-            class="fixed inset-0 z-20 flex justify-end bg-slate-900/40"
+            class="fixed inset-0 z-20 flex justify-end bg-black/50"
             on:click=move |_| on_close.run(())
         >
             <div
-                class="h-full w-80 overflow-auto bg-white p-4 text-sm shadow-xl dark:bg-slate-900"
+                class="h-full w-80 overflow-auto bg-surface p-4 text-sm shadow-xl"
                 data-testid="theme-drawer"
                 on:click=|event| event.stop_propagation()
             >
@@ -144,9 +144,9 @@ pub fn ThemeDrawer(
 
                 <Show when=move || !stored.get().is_empty()>
                     <label class="mb-3 block">
-                        <span class="text-slate-500">"Workspace themes"</span>
+                        <span class="text-ink-3">"Workspace themes"</span>
                         <select
-                            class="w-full rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                            class="w-full rounded-md border border-line-strong bg-transparent px-2 py-1"
                             prop:value=move || theme.get().id
                             on:change=move |event| {
                                 let wanted = event_target_value(&event);
@@ -170,7 +170,7 @@ pub fn ThemeDrawer(
 
                 <Field label="Name">
                     <input
-                        class="w-full rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-950"
+                        class="w-full rounded-md border border-line-strong px-2 py-1"
                         prop:value=move || theme.get().name
                         on:input=move |event| {
                             on_change.run(Theme {
@@ -257,12 +257,12 @@ pub fn ThemeDrawer(
                     />
 
                     <Show when=move || uploading.get().is_some()>
-                        <p class="text-xs text-slate-500">{move || uploading.get()}</p>
+                        <p class="text-xs text-ink-3">{move || uploading.get()}</p>
                     </Show>
 
                     <Show when=move || theme.get().background_kind == BackgroundKind::Image>
                         <button
-                            class="mt-1 text-xs underline"
+                            class="mt-1 text-xs text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                             on:click=move |_| {
                                 on_change.run(Theme {
                                     background_kind: BackgroundKind::Color,
@@ -277,7 +277,7 @@ pub fn ThemeDrawer(
                 </Field>
 
                 <label class="mb-3 block">
-                    <span class="text-slate-500">
+                    <span class="text-ink-3">
                         {move || format!("Maximum size — {}vh", theme.get().font_size_vh)}
                     </span>
                     <div>
@@ -300,7 +300,7 @@ pub fn ThemeDrawer(
                 </label>
 
                 <label class="mb-3 block">
-                    <span class="text-slate-500">
+                    <span class="text-ink-3">
                         {move || format!("Safe margin — {}%", theme.get().safe_area_pct)}
                     </span>
                     <div>
@@ -324,7 +324,7 @@ pub fn ThemeDrawer(
 
                 <Field label="Alignment">
                     <select
-                        class="w-full rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                        class="w-full rounded-md border border-line-strong bg-transparent px-2 py-1"
                         prop:value=move || match theme.get().align {
                             Align::Left => "left",
                             Align::Center => "center",
@@ -355,7 +355,7 @@ pub fn ThemeDrawer(
                     "Show section labels on the audience screen"
                 </label>
 
-                <p class="mb-3 text-xs text-slate-500">
+                <p class="mb-3 text-xs text-ink-3">
                     "Changing the size rebuilds the slides at the next session; the running \
                      session keeps the slides it started with, so nothing moves under the \
                      operator mid-service."
@@ -364,13 +364,13 @@ pub fn ThemeDrawer(
                 <div class="flex gap-2">
                     <Show when=move || can_edit>
                         <button
-                            class="rounded bg-slate-900 px-3 py-2 text-white dark:bg-slate-100 dark:text-slate-900"
+                            class="rounded-md bg-accent px-3 py-2 text-on-accent"
                             on:click=save_to_workspace
                         >
                             "Save to the workspace"
                         </button>
                     </Show>
-                    <button class="underline" on:click=move |_| on_close.run(())>"Close"</button>
+                    <button class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| on_close.run(())>"Close"</button>
                 </div>
             </div>
         </div>
@@ -385,8 +385,8 @@ fn Field(
 ) -> impl IntoView {
     view! {
         <label class="mb-3 block">
-            <span class="text-slate-500">{label}</span>
-            {hint.map(|hint| view! { <span class="ml-2 text-xs text-slate-400">{hint}</span> })}
+            <span class="text-ink-3">{label}</span>
+            {hint.map(|hint| view! { <span class="ml-2 text-xs text-ink-4">{hint}</span> })}
             <div>{children()}</div>
         </label>
     }

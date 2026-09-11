@@ -216,7 +216,7 @@ pub fn StageSlide(
                             view! {
                                 <div class="font-mono leading-tight">
                                     {chords.then(|| view! {
-                                        <div class="whitespace-pre font-semibold text-sky-300">
+                                        <div class="whitespace-pre font-semibold text-accent">
                                             {if rows.chords.is_empty() {
                                                 " ".to_owned()
                                             } else {

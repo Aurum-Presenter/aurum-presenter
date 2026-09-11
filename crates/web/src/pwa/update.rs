@@ -94,12 +94,12 @@ pub fn UpdateToast() -> impl IntoView {
     view! {
         <Show when=move || { ready.get() && !later.get() && !held() }>
             <div
-                class="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-slate-100 dark:text-slate-900"
+                class="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-accent px-4 py-2 text-sm text-on-accent shadow-lg"
                 data-testid="update-toast"
             >
                 <span>"A new version is ready."</span>
-                <button class="underline" on:click=reload>"Reload"</button>
-                <button class="opacity-70 underline" on:click=move |_| later.set(true)>
+                <button class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=reload>"Reload"</button>
+                <button class="opacity-70 text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| later.set(true)>
                     "Later"
                 </button>
             </div>

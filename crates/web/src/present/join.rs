@@ -180,7 +180,7 @@ pub fn JoinPage() -> impl IntoView {
                     <h2 class="mb-2 text-xl font-semibold" data-testid="screen-title">
                         "Join a session"
                     </h2>
-                    <p class="mb-4 text-sm text-slate-500">
+                    <p class="mb-4 text-sm text-ink-3">
                         "Enter the six characters shown on the control screen. Both devices need \
                          to be on the same network and signed into this workspace."
                     </p>
@@ -195,7 +195,7 @@ pub fn JoinPage() -> impl IntoView {
                         }
                     }>
                         <input
-                            class="mb-3 w-full rounded border border-slate-300 px-3 py-3 text-center font-mono text-2xl tracking-widest uppercase dark:border-slate-700 dark:bg-slate-900"
+                            class="mb-3 w-full rounded-md border border-line-strong px-3 py-3 text-center font-mono text-2xl tracking-widest uppercase"
                             data-testid="join-code"
                             placeholder="4KJ9QP"
                             maxlength="6"
@@ -207,7 +207,7 @@ pub fn JoinPage() -> impl IntoView {
                         />
 
                         <button
-                            class="w-full rounded bg-slate-900 py-2 text-white disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900"
+                            class="w-full rounded-md bg-accent py-2 text-on-accent disabled:opacity-40"
                             prop:disabled=move || {
                                 !is_valid_code(&code.get()) || phase.get() == Phase::Joining
                             }
@@ -218,7 +218,7 @@ pub fn JoinPage() -> impl IntoView {
 
                     <Show when=move || problem.get().is_some()>
                         <p
-                            class="mt-3 text-sm text-red-700 dark:text-red-400"
+                            class="mt-3 text-sm text-live-ink"
                             data-testid="join-problem"
                         >
                             {move || problem.get()}

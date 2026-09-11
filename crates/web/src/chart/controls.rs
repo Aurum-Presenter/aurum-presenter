@@ -26,6 +26,16 @@ pub struct ArrangementChoice {
     pub name: String,
 }
 
+/// One button of a segmented control. Segments rather than a `<select>`: a player mid-set should
+/// not have to open a menu, and on a stand the choice has to be readable without being tapped.
+fn segment(chosen: bool) -> &'static str {
+    if chosen {
+        "h-full border-line-strong px-3 text-sm font-semibold bg-raised text-ink not-first:border-l"
+    } else {
+        "h-full border-line-strong px-3 text-sm text-ink-3 hover:text-ink not-first:border-l"
+    }
+}
+
 #[component]
 #[allow(clippy::too_many_arguments)]
 pub fn ChartControls(
@@ -58,10 +68,10 @@ pub fn ChartControls(
     });
 
     view! {
-        <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
+        <div class="flex flex-wrap items-center gap-2 border-b border-line pb-3">
             <Show when=move || { arrangements.get().len() > 1 }>
                 <select
-                    class="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
+                    class="rounded-md border border-line-strong bg-transparent px-2 py-1 text-sm"
                     data-testid="arrangement-picker"
                     prop:value=move || arrangement_id.get().unwrap_or_default()
                     on:change=move |event| on_arrangement.run(event_target_value(&event))
@@ -74,33 +84,48 @@ pub fn ChartControls(
 
             <div class="relative">
                 <button
-                    class="rounded border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+                    class=move || format!(
+                        "flex h-9 items-center gap-3 rounded-lg border px-3 text-left {}",
+                        if target.get().is_some() {
+                            "border-accent/40 bg-accent/10"
+                        } else {
+                            "border-line-strong"
+                        },
+                    )
                     data-testid="key-button"
                     on:click=move |_| open.update(|value| *value = !*value)
                 >
-                    {move || match target.get() {
-                        None => "Set key".to_owned(),
-                        Some(key) => format!("Key of {key}"),
-                    }}
-
-                    <Show when=move || { capo.get() > 0 && target.get().is_some() }>
-                        <span class="ml-2 text-slate-500">
-                            {move || {
-                                let key = target.get().expect("a key");
-
-                                format!(
-                                    "Capo {} — shapes in {}",
-                                    capo.get(),
-                                    shape_key_of(&key, capo.get() as i16),
-                                )
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="text-xs text-ink-3">"Key of"</span>
+                        <span class="font-mono text-base font-bold text-accent">
+                            {move || match target.get() {
+                                None => "—".to_owned(),
+                                Some(key) => key.to_string(),
                             }}
+                        </span>
+                    </span>
+
+                    // Key, capo and the shapes they produce are one decision, so they are drawn
+                    // as one object rather than a setting and a footnote.
+                    <Show when=move || { capo.get() > 0 && target.get().is_some() }>
+                        <span class="border-l border-accent/30 pl-3 leading-tight">
+                            <span class="block text-xs font-semibold text-accent">
+                                {move || format!("Capo {}", capo.get())}
+                            </span>
+                            <span class="block text-xs text-ink-3">
+                                {move || {
+                                    let key = target.get().expect("a key");
+
+                                    format!("shapes in {}", shape_key_of(&key, capo.get() as i16))
+                                }}
+                            </span>
                         </span>
                     </Show>
                 </button>
 
                 <Show when=move || open.get()>
-                    <div class="absolute z-10 mt-1 w-64 rounded border border-slate-300 bg-white p-3 text-sm shadow dark:border-slate-700 dark:bg-slate-900">
-                        <p class="mb-2 text-xs text-slate-500" data-testid="key-source">
+                    <div class="absolute z-10 mt-1 w-64 rounded-md border border-line-strong bg-surface p-3 text-sm shadow">
+                        <p class="mb-2 text-xs text-ink-3" data-testid="key-source">
                             {move || source_label(source.get())}
                         </p>
 
@@ -111,7 +136,7 @@ pub fn ChartControls(
                                 let:choice
                             >
                                 <button
-                                    class="rounded border border-slate-200 px-1 py-1 text-xs dark:border-slate-700"
+                                    class="rounded-md border border-line px-1 py-1 text-xs"
                                     on:click=move |_| {
                                         on_key.run(Some(choice));
                                         open.set(false);
@@ -123,7 +148,7 @@ pub fn ChartControls(
                         </div>
 
                         <button
-                            class="mb-2 text-xs underline text-slate-500"
+                            class="mb-2 text-xs text-ink-3 underline-offset-2 hover:underline"
                             on:click=move |_| {
                                 on_key.run(None);
                                 open.set(false);
@@ -132,10 +157,10 @@ pub fn ChartControls(
                             "Back to the written key"
                         </button>
 
-                        <label class="mt-2 block text-xs text-slate-500">
+                        <label class="mt-2 block text-xs text-ink-3">
                             "Capo"
                             <input
-                                class="ml-2 w-16 rounded border border-slate-300 px-1 dark:border-slate-700"
+                                class="ml-2 w-16 rounded-md border border-line-strong px-1"
                                 data-testid="capo"
                                 type="number"
                                 min="0"
@@ -154,7 +179,7 @@ pub fn ChartControls(
 
             <Show when=move || respelled.get()>
                 <span
-                    class="rounded bg-amber-100 px-2 py-1 text-xs text-amber-900"
+                    class="rounded-md bg-warn/15 px-2 py-1 text-xs text-warn"
                     title="This key would need a double accidental, so a simpler spelling is shown."
                     data-testid="respelled"
                 >
@@ -162,41 +187,61 @@ pub fn ChartControls(
                 </span>
             </Show>
 
-            <select
-                class="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
+            <div
+                class="flex h-9 overflow-hidden rounded-lg border border-line-strong"
                 data-testid="layout"
-                prop:value=move || display.get().layout.as_str()
-                on:change=move |event| {
-                    on_display.run(Display {
-                        layout: Layout::parse(&event_target_value(&event)),
-                        ..display.get()
-                    });
-                }
+                role="group"
+                aria-label="Chart layout"
             >
-                <option value="over">"Chords over lyrics"</option>
-                <option value="inline">"Inline"</option>
-                <option value="nashville">"Nashville"</option>
-            </select>
+                {[
+                    (Layout::Over, "Chords over lyrics"),
+                    (Layout::Inline, "Inline"),
+                    (Layout::Nashville, "Nashville"),
+                ]
+                    .into_iter()
+                    .map(|(choice, label)| view! {
+                        <button
+                            class=move || segment(display.get().layout == choice)
+                            aria-pressed=move || (display.get().layout == choice).to_string()
+                            on:click=move |_| {
+                                on_display.run(Display { layout: choice, ..display.get() });
+                            }
+                        >
+                            {label}
+                        </button>
+                    })
+                    .collect_view()}
+            </div>
 
-            <select
-                class="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
+            <div
+                class="flex h-9 overflow-hidden rounded-lg border border-line-strong"
                 data-testid="mode"
-                prop:value=move || display.get().mode.as_str()
-                on:change=move |event| {
-                    on_display.run(Display {
-                        mode: Mode::parse(&event_target_value(&event)),
-                        ..display.get()
-                    });
-                }
+                role="group"
+                aria-label="What to show"
             >
-                <option value="both">"Chords and lyrics"</option>
-                <option value="chords">"Chords only"</option>
-                <option value="lyrics">"Lyrics only"</option>
-            </select>
+                {[
+                    (Mode::Both, "Chords and lyrics"),
+                    (Mode::Chords, "Chords only"),
+                    (Mode::Lyrics, "Lyrics only"),
+                ]
+                    .into_iter()
+                    .map(|(choice, label)| view! {
+                        <button
+                            class=move || segment(display.get().mode == choice)
+                            aria-pressed=move || (display.get().mode == choice).to_string()
+                            on:click=move |_| {
+                                on_display.run(Display { mode: choice, ..display.get() });
+                            }
+                        >
+                            {label}
+                        </button>
+                    })
+                    .collect_view()}
+            </div>
 
-            <div class="flex items-center gap-1 text-sm">
+            <div class="flex h-9 items-center overflow-hidden rounded-lg border border-line-strong text-sm">
                 <button
-                    class="rounded border border-slate-300 px-2 dark:border-slate-700"
+                    class="h-full px-3 text-ink-2 hover:bg-raised"
                     title="Smaller"
                     on:click=move |_| {
                         on_display.run(Display {
@@ -207,8 +252,11 @@ pub fn ChartControls(
                 >
                     "A-"
                 </button>
+                <span class="min-w-9 border-x border-line-strong px-1 text-center font-mono text-xs text-ink-3">
+                    {move || display.get().font_size.to_string()}
+                </span>
                 <button
-                    class="rounded border border-slate-300 px-2 dark:border-slate-700"
+                    class="h-full px-3 text-ink-2 hover:bg-raised"
                     title="Larger"
                     on:click=move |_| {
                         on_display.run(Display {
@@ -223,7 +271,7 @@ pub fn ChartControls(
 
             <Show when=move || can_edit>
                 <button
-                    class="ml-auto rounded bg-slate-900 px-3 py-1 text-sm text-white"
+                    class="ml-auto rounded-md bg-accent px-3 py-1 text-sm text-on-accent"
                     data-testid="edit-toggle"
                     on:click=move |_| on_toggle_edit.run(())
                 >

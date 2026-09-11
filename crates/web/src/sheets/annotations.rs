@@ -139,7 +139,7 @@ pub fn AnnotationLayer(
         </svg>
 
         <Show when=move || drawing.get()>
-            <div class="absolute left-2 top-2 flex items-center gap-2 rounded bg-white/90 p-1 shadow dark:bg-slate-900/90">
+            <div class="absolute left-2 top-2 flex items-center gap-2 rounded-md bg-surface/90 p-1 shadow">
                 {COLORS
                     .into_iter()
                     .map(|option| view! {
@@ -168,7 +168,7 @@ pub fn AnnotationLayer(
                 />
 
                 <button
-                    class="text-xs underline"
+                    class="text-xs text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                     data-testid="undo-stroke"
                     prop:disabled=move || mine.get().is_empty()
                     on:click=move |_| {
@@ -182,7 +182,7 @@ pub fn AnnotationLayer(
                 </button>
 
                 <button
-                    class="text-xs underline"
+                    class="text-xs text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                     prop:disabled=move || mine.get().is_empty()
                     on:click=move |_| on_change.run(Vec::new())
                 >

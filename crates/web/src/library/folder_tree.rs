@@ -127,7 +127,7 @@ pub fn FolderTree(
 
             <Show when=move || can_edit>
                 <button
-                    class="mt-2 text-xs underline text-slate-500"
+                    class="mt-2 text-xs text-ink-3 underline-offset-2 hover:underline"
                     data-testid="new-folder"
                     on:click=move |_| actions.create.run(None)
                 >
@@ -235,14 +235,16 @@ fn Row(
     view! {
         <div
             class=move || {
-                let mut classes = "flex items-center gap-1 rounded px-2 py-1".to_owned();
+                let mut classes = "flex h-8 items-center gap-2 rounded-md pr-2 text-sm".to_owned();
 
                 if is_selected.get() {
-                    classes.push_str(" bg-slate-200 dark:bg-slate-800");
+                    classes.push_str(" bg-raised font-medium text-ink");
+                } else {
+                    classes.push_str(" text-ink-2 hover:bg-surface");
                 }
 
                 if over.get() {
-                    classes.push_str(" ring-2 ring-sky-400");
+                    classes.push_str(" ring-2 ring-accent");
                 }
 
                 classes
@@ -258,9 +260,9 @@ fn Row(
             <button
                 class=move || {
                     if open.is_some_and(|has| has.get()) {
-                        "w-4 text-slate-400"
+                        "w-4 text-ink-4"
                     } else {
-                        "w-4 text-slate-400 invisible"
+                        "w-4 text-ink-4 invisible"
                     }
                 }
                 aria-label=move || if expanded.get() { "Collapse" } else { "Expand" }
@@ -268,6 +270,19 @@ fn Row(
             >
                 {move || if expanded.get() { "▾" } else { "▸" }}
             </button>
+
+            <svg
+                class="size-4 shrink-0 text-ink-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <path d="M3 7 L10 7 L12 9.5 L21 9.5 L21 19 L3 19 Z" />
+            </svg>
 
             <Show
                 when=move || renaming.get()
@@ -308,7 +323,7 @@ fn Row(
                 }
             >
                 <input
-                    class="flex-1 rounded border border-slate-300 px-1 dark:border-slate-700 dark:bg-slate-900"
+                    class="flex-1 rounded-md border border-line-strong px-1"
                     autofocus
                     value=row.get_value().map(|folder| folder.name).unwrap_or_default()
                     on:blur=finish_rename
@@ -316,10 +331,10 @@ fn Row(
                 />
             </Show>
 
-            <span class="text-xs text-slate-400">{move || count.get()}</span>
+            <span class="font-mono text-xs text-ink-4">{move || count.get()}</span>
 
             <Show when=move || editable>
-                <span class="flex gap-1 text-xs text-slate-400">
+                <span class="flex gap-1 text-xs text-ink-4">
                     <button title="New subfolder" on:click=move |_| actions.create.run(id.get_value())>
                         "＋"
                     </button>

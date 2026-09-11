@@ -164,12 +164,12 @@ pub fn ChartEditor(
             <div>
                 <Show when=move || undo_to.get().is_some()>
                     <div
-                        class="mb-2 flex items-center gap-3 rounded border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-900"
+                        class="mb-2 flex items-center gap-3 rounded-md border border-accent/60 bg-accent/10 px-3 py-2 text-sm text-accent"
                         data-testid="converted"
                     >
                         <span>"Converted from chords over lyrics."</span>
                         <button
-                            class="underline"
+                            class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                             data-testid="undo-conversion"
                             on:click=move |_| {
                                 if let Some(original) = undo_to.get_untracked() {
@@ -187,7 +187,7 @@ pub fn ChartEditor(
                 </Show>
 
                 <textarea
-                    class="h-[60vh] w-full rounded border border-slate-300 bg-white p-3 font-mono text-sm leading-relaxed dark:border-slate-700 dark:bg-slate-900"
+                    class="h-[60vh] w-full rounded-md border border-line-strong bg-surface p-3 font-mono text-sm leading-relaxed"
                     data-testid="chart-editor"
                     spellcheck="false"
                     placeholder=PLACEHOLDER
@@ -205,14 +205,14 @@ pub fn ChartEditor(
                     }
                 />
 
-                <div class="mt-2 flex items-start gap-4 text-xs text-slate-500">
+                <div class="mt-2 flex items-start gap-4 text-xs text-ink-3">
                     <span data-testid="save-state">
                         {move || if saved.get() { "Saved" } else { "Saving…" }}
                     </span>
 
                     <ul class="space-y-0.5" data-testid="chart-warnings">
                         <For each=move || shown.get() key=|warning| (warning.line, warning.token.clone()) let:warning>
-                            <li class="text-amber-700 dark:text-amber-400">
+                            <li class="text-warn">
                                 {format!(
                                     "Line {}: “{}” is not a chord — it will be shown as written.",
                                     warning.line,
@@ -224,7 +224,7 @@ pub fn ChartEditor(
                 </div>
             </div>
 
-            <div class="rounded border border-slate-200 p-3 dark:border-slate-800">
+            <div class="rounded-md border border-line p-3">
                 {move || preview.run(draft.get())}
             </div>
 
@@ -259,31 +259,31 @@ fn NotationPrompt(
 ) -> impl IntoView {
     view! {
         <div
-            class="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-6"
+            class="fixed inset-0 z-10 flex items-center justify-center bg-black/60 p-6"
             data-testid="notation-prompt"
         >
-            <div class="w-96 rounded bg-white p-4 shadow-lg dark:bg-slate-900">
+            <div class="w-96 rounded-md bg-surface p-4 shadow-lg">
                 <h2 class="mb-2 font-semibold">"Which notation is this?"</h2>
-                <p class="mb-4 text-sm text-slate-500">
+                <p class="mb-4 text-sm text-ink-3">
                     "No chord line was recognised, so the format cannot be told from the text alone."
                 </p>
                 <div class="flex gap-2">
                     <button
-                        class="rounded bg-slate-900 px-3 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                        class="rounded-md bg-accent px-3 py-2 text-sm text-on-accent"
                         data-testid="paste-over-lyrics"
                         on:click=move |_| on_over_lyrics.run(text.get_untracked())
                     >
                         "Chords over lyrics"
                     </button>
                     <button
-                        class="rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-3 py-2 text-sm"
                         data-testid="paste-chordpro"
                         on:click=move |_| on_chord_pro.run(text.get_untracked())
                     >
                         "ChordPro"
                     </button>
                     <button
-                        class="ml-auto text-sm underline"
+                        class="ml-auto text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         on:click=move |_| on_cancel.run(())
                     >
                         "Cancel"

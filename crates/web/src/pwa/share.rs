@@ -279,13 +279,13 @@ pub fn SharePage() -> impl IntoView {
     move || {
         match collected.get() {
         None => view! {
-            <p class="p-6 text-sm text-slate-500">"Looking at what was shared…"</p>
+            <p class="p-6 text-sm text-ink-3">"Looking at what was shared…"</p>
         }
         .into_any(),
         Some(0) => view! {
             <div class="p-6 text-sm">
-                <p class="text-slate-500">"Nothing was shared with Aurum."</p>
-                <A href="/library" attr:class="underline">"Go to the library"</A>
+                <p class="text-ink-3">"Nothing was shared with Aurum."</p>
+                <A href="/library" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Go to the library"</A>
             </div>
         }
         .into_any(),
@@ -315,7 +315,7 @@ pub fn SharePage() -> impl IntoView {
                                 <li class=if result.error.is_none() {
                                     String::new()
                                 } else {
-                                    "text-amber-700 dark:text-amber-400".to_owned()
+                                    "text-warn".to_owned()
                                 }>
                                     <span class="font-mono text-xs">
                                         {result.filename.clone()}
@@ -336,12 +336,12 @@ pub fn SharePage() -> impl IntoView {
                         <h3 class="mb-1 font-semibold">
                             {move || format!("{} PDF(s) to attach", waiting.get())}
                         </h3>
-                        <p class="mb-2 text-sm text-slate-500">
+                        <p class="mb-2 text-sm text-ink-3">
                             "A sheet belongs to a song. Which one?"
                         </p>
 
                         <select
-                            class="mb-3 w-full rounded border border-slate-300 px-2 py-2 dark:border-slate-700 dark:bg-slate-900"
+                            class="mb-3 w-full rounded-md border border-line-strong px-2 py-2"
                             data-testid="share-song"
                             prop:value=move || chosen.get()
                             on:change=move |event| {
@@ -367,7 +367,7 @@ pub fn SharePage() -> impl IntoView {
                         </select>
 
                         <button
-                            class="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900"
+                            class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent disabled:opacity-40"
                             data-testid="share-attach"
                             disabled=move || chosen.get().is_empty()
                             on:click=attach
@@ -377,7 +377,7 @@ pub fn SharePage() -> impl IntoView {
                     </section>
                 </Show>
 
-                <A href="/library" attr:class="mt-6 block text-sm underline">"Done"</A>
+                <A href="/library" attr:class="mt-6 block text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Done"</A>
             </div>
         }
         .into_any(),

@@ -124,11 +124,11 @@ pub fn SongMetadataDrawer(song: Song, on_close: Callback<()>) -> impl IntoView {
 
     view! {
         <div
-            class="fixed inset-0 z-20 flex justify-end bg-slate-900/40"
+            class="fixed inset-0 z-20 flex justify-end bg-black/50"
             on:click=move |_| on_close.run(())
         >
             <form
-                class="h-full w-full max-w-md overflow-auto bg-white p-4 shadow-xl dark:bg-slate-900"
+                class="h-full w-full max-w-md overflow-auto bg-surface p-4 shadow-xl"
                 data-testid="song-details"
                 on:click=|event| event.stop_propagation()
                 on:submit=submit
@@ -136,7 +136,7 @@ pub fn SongMetadataDrawer(song: Song, on_close: Callback<()>) -> impl IntoView {
                 <h2 class="mb-3 text-lg font-semibold">"Song details"</h2>
 
                 <Show when=move || !problems.get().is_empty()>
-                    <ul class="mb-3 rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
+                    <ul class="mb-3 rounded-md border border-live/50 bg-live/10 p-2 text-sm text-live-ink">
                         <For each=move || problems.get() key=|problem| problem.clone() let:problem>
                             <li>{problem}</li>
                         </For>
@@ -255,7 +255,7 @@ pub fn SongMetadataDrawer(song: Song, on_close: Callback<()>) -> impl IntoView {
 
                 <Field label="Notes" hint="Never shown on the audience screen">
                     <textarea
-                        class="w-full rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-950"
+                        class="w-full rounded-md border border-line-strong px-2 py-1"
                         rows="3"
                         prop:value=move || form.get().notes
                         on:input=move |event| {
@@ -267,12 +267,12 @@ pub fn SongMetadataDrawer(song: Song, on_close: Callback<()>) -> impl IntoView {
                 </Field>
 
                 <div class="mt-4 flex gap-2">
-                    <button class="rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900">
+                    <button class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent">
                         "Save"
                     </button>
                     <button
                         type="button"
-                        class="text-sm underline"
+                        class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         on:click=move |_| on_close.run(())
                     >
                         "Cancel"
@@ -291,8 +291,8 @@ fn Field(
 ) -> impl IntoView {
     view! {
         <label class="mb-2 block text-sm">
-            <span class="text-slate-500">{label}</span>
-            {hint.map(|hint| view! { <span class="ml-2 text-xs text-slate-400">{hint}</span> })}
+            <span class="text-ink-3">{label}</span>
+            {hint.map(|hint| view! { <span class="ml-2 text-xs text-ink-4">{hint}</span> })}
             {children()}
         </label>
     }
@@ -302,7 +302,7 @@ fn Field(
 fn Text(value: Signal<String>, on_change: Callback<String>) -> impl IntoView {
     view! {
         <input
-            class="w-full rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-950"
+            class="w-full rounded-md border border-line-strong px-2 py-1"
             prop:value=move || value.get()
             on:input=move |event| on_change.run(event_target_value(&event))
         />

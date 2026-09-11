@@ -71,22 +71,22 @@ pub fn MembersPage() -> impl IntoView {
 
     view! {
         <div class="mx-auto max-w-3xl p-4">
-            <A href="/library" attr:class="text-sm underline">"← Library"</A>
+            <A href="/library" attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Library"</A>
             <h2 class="mb-1 mt-3 text-2xl font-semibold" data-testid="screen-title">
                 {move || workspace.get().name}
             </h2>
-            <p class="mb-4 text-sm text-slate-500">
+            <p class="mb-4 text-sm text-ink-3">
                 "Owners manage members. Editors change songs, charts and sets. Viewers read \
                  everything and keep their own keys, capos and notes."
             </p>
 
             <Show when=move || problem.get().is_some()>
-                <p class="mb-3 rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
+                <p class="mb-3 rounded-md border border-warn/50 bg-warn/10 p-2 text-sm text-warn">
                     {move || problem.get()}
                 </p>
             </Show>
 
-            <ul class="mb-6 divide-y divide-slate-200 dark:divide-slate-800" data-testid="members">
+            <ul class="mb-6 divide-y divide-line " data-testid="members">
                 {move || people
                     .get()
                     .into_iter()
@@ -97,9 +97,9 @@ pub fn MembersPage() -> impl IntoView {
                         view! {
                             <li class="flex flex-wrap items-center gap-3 py-2 text-sm">
                                 <span class="font-medium">{member.display_name.clone()}</span>
-                                <span class="text-slate-500">{member.email.clone()}</span>
+                                <span class="text-ink-3">{member.email.clone()}</span>
                                 {you.then(|| view! {
-                                    <span class="text-xs text-slate-400">"you"</span>
+                                    <span class="text-xs text-ink-4">"you"</span>
                                 })}
 
                                 <Show
@@ -108,13 +108,13 @@ pub fn MembersPage() -> impl IntoView {
                                         let role = member.role.clone();
 
                                         move || view! {
-                                            <span class="ml-auto text-slate-500">{role.clone()}</span>
+                                            <span class="ml-auto text-ink-3">{role.clone()}</span>
                                         }
                                     }
                                 >
                                     <span class="ml-auto flex items-center gap-3">
                                         <select
-                                            class="rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                                            class="rounded-md border border-line-strong bg-transparent px-2 py-1"
                                             prop:value=member.role.clone()
                                             on:change=move |event| {
                                                 let (api, id, user, next) = (
@@ -140,7 +140,7 @@ pub fn MembersPage() -> impl IntoView {
                                         </select>
 
                                         <button
-                                            class="underline text-red-700 dark:text-red-400"
+                                            class="text-live-ink underline-offset-2 hover:underline"
                                             on:click=move |_| {
                                                 let (api, id, user) = (
                                                     api.get_value(),
@@ -168,7 +168,7 @@ pub fn MembersPage() -> impl IntoView {
                     .collect_view()}
 
                 <Show when=move || people.get().is_empty()>
-                    <li class="py-2 text-sm text-slate-500">"Nobody else is here yet."</li>
+                    <li class="py-2 text-sm text-ink-3">"Nobody else is here yet."</li>
                 </Show>
             </ul>
 
@@ -178,7 +178,7 @@ pub fn MembersPage() -> impl IntoView {
 
                     <form class="mb-3 flex flex-wrap gap-2" on:submit=invite>
                         <input
-                            class="min-w-56 flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                            class="min-w-56 flex-1 rounded-md border border-line-strong px-3 py-2 text-sm"
                             type="email"
                             placeholder="their email"
                             data-testid="invite-email"
@@ -187,7 +187,7 @@ pub fn MembersPage() -> impl IntoView {
                         />
 
                         <select
-                            class="rounded border border-slate-300 bg-transparent px-2 py-2 text-sm dark:border-slate-700"
+                            class="rounded-md border border-line-strong bg-transparent px-2 py-2 text-sm"
                             prop:value=move || role.get()
                             on:change=move |event| role.set(event_target_value(&event))
                         >
@@ -195,19 +195,19 @@ pub fn MembersPage() -> impl IntoView {
                             <option value="viewer">"viewer"</option>
                         </select>
 
-                        <button class="rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900">
+                        <button class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent">
                             "Send invitation"
                         </button>
                     </form>
 
-                    <p class="mb-3 text-xs text-slate-500">
+                    <p class="mb-3 text-xs text-ink-3">
                         "Ownership is granted after someone has joined and has two-factor \
                          authentication on their account — that is why it is not in this list."
                     </p>
 
                     <Show when=move || link.get().is_some()>
                         <p
-                            class="mb-3 rounded border border-sky-300 bg-sky-50 p-2 text-sm text-sky-900"
+                            class="mb-3 rounded-md border border-accent/60 bg-accent/10 p-2 text-sm text-accent"
                             data-testid="invite-link"
                         >
                             "Invitation sent. You can also hand it over directly: "
@@ -216,7 +216,7 @@ pub fn MembersPage() -> impl IntoView {
                     </Show>
 
                     <Show when=move || !pending.get().is_empty()>
-                        <ul class="divide-y divide-slate-200 text-sm dark:divide-slate-800">
+                        <ul class="divide-y divide-line text-sm">
                             {move || pending
                                 .get()
                                 .into_iter()
@@ -226,8 +226,8 @@ pub fn MembersPage() -> impl IntoView {
                                     view! {
                                         <li class="flex items-center gap-3 py-2">
                                             <span>{held.email.clone()}</span>
-                                            <span class="text-slate-500">{held.role.clone()}</span>
-                                            <span class="text-xs text-slate-400">
+                                            <span class="text-ink-3">{held.role.clone()}</span>
+                                            <span class="text-xs text-ink-4">
                                                 {format!(
                                                     "expires {}",
                                                     held.expires_at.chars().take(10).collect::<String>(),
@@ -236,7 +236,7 @@ pub fn MembersPage() -> impl IntoView {
 
                                             {held.not_sent.then(|| view! {
                                                 <span
-                                                    class="text-xs text-amber-700 dark:text-amber-400"
+                                                    class="text-xs text-warn"
                                                     title="The mail server refused it five times"
                                                 >
                                                     "not sent"
@@ -244,7 +244,7 @@ pub fn MembersPage() -> impl IntoView {
                                             })}
 
                                             <button
-                                                class="ml-auto underline"
+                                                class="ml-auto text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                                 on:click=move |_| {
                                                     let (api, id, held) = (
                                                         api.get_value(),
@@ -328,7 +328,7 @@ pub fn InvitePage() -> impl IntoView {
             <h2 class="mb-3 text-xl font-semibold" data-testid="screen-title">"Invitation"</h2>
 
             <Show when=move || problem.get().is_some()>
-                <p class="mb-3 rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
+                <p class="mb-3 rounded-md border border-live/50 bg-live/10 p-2 text-sm text-live-ink">
                     {move || problem.get()}
                 </p>
             </Show>
@@ -342,7 +342,7 @@ pub fn InvitePage() -> impl IntoView {
                 .into_any(),
 
                 (None, None) => view! {
-                    <p class="text-sm text-slate-500">"Checking the link…"</p>
+                    <p class="text-sm text-ink-3">"Checking the link…"</p>
                 }
                 .into_any(),
 
@@ -360,19 +360,19 @@ pub fn InvitePage() -> impl IntoView {
                             </p>
 
                             {invite.used.then(|| view! {
-                                <p class="mb-3 text-amber-700 dark:text-amber-400">
+                                <p class="mb-3 text-warn">
                                     "This invitation has already been used."
                                 </p>
                             })}
                             {invite.expired.then(|| view! {
-                                <p class="mb-3 text-amber-700 dark:text-amber-400">
+                                <p class="mb-3 text-warn">
                                     "This invitation has expired."
                                 </p>
                             })}
 
                             <div class="flex gap-3">
                                 <button
-                                    class="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900"
+                                    class="rounded-md bg-accent px-4 py-2 text-on-accent disabled:opacity-40"
                                     data-testid="accept-invite"
                                     prop:disabled=spent
                                     on:click=accept
@@ -380,7 +380,7 @@ pub fn InvitePage() -> impl IntoView {
                                     "Accept"
                                 </button>
                                 <button
-                                    class="underline"
+                                    class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                     on:click=move |_| {
                                         navigate.get_value()("/library", Default::default())
                                     }

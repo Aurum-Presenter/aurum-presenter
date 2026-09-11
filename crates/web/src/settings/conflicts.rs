@@ -128,23 +128,23 @@ pub fn ConflictsPage() -> impl IntoView {
 
     view! {
         <div class="mx-auto max-w-3xl p-4">
-            <A href="/library" attr:class="text-sm underline">"← Library"</A>
+            <A href="/library" attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Library"</A>
             <h2 class="mb-1 mt-3 text-2xl font-semibold" data-testid="screen-title">"Conflicts"</h2>
-            <p class="mb-4 text-sm text-slate-500">
+            <p class="mb-4 text-sm text-ink-3">
                 "When two people change the same field before either has synced, the later edit \
                  wins and the earlier one is kept here. Nothing is deleted; the older value can \
                  be put back."
             </p>
 
             <Show when=move || problem.get().is_some()>
-                <p class="text-sm text-amber-700 dark:text-amber-400">{move || problem.get()}</p>
+                <p class="text-sm text-warn">{move || problem.get()}</p>
             </Show>
 
             {move || match (rows.get().is_none(), open.get()) {
-                (true, _) => view! { <p class="text-sm text-slate-500">"Loading…"</p> }.into_any(),
+                (true, _) => view! { <p class="text-sm text-ink-3">"Loading…"</p> }.into_any(),
 
                 (false, found) if found.is_empty() => view! {
-                    <p class="text-sm text-slate-500" data-testid="no-conflicts">
+                    <p class="text-sm text-ink-3" data-testid="no-conflicts">
                         "Nothing has been overwritten."
                     </p>
                 }
@@ -158,14 +158,14 @@ pub fn ConflictsPage() -> impl IntoView {
                                 let conflict = row.conflict.clone();
 
                                 view! {
-                                    <li class="rounded border border-slate-200 p-3 text-sm dark:border-slate-800">
+                                    <li class="rounded-md border border-line p-3 text-sm">
                                         <p class="font-medium">
                                             {format!(
                                                 "{}.{}",
                                                 conflict.table_name,
                                                 conflict.field,
                                             )}
-                                            <span class="ml-2 text-xs text-slate-500">
+                                            <span class="ml-2 text-xs text-ink-3">
                                                 {conflict.at.clone()}
                                             </span>
                                         </p>
@@ -186,7 +186,7 @@ pub fn ConflictsPage() -> impl IntoView {
 
                                         <Show when=move || can_edit>
                                             <button
-                                                class="mt-2 underline"
+                                                class="mt-2 text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                                 data-testid="restore-value"
                                                 on:click={
                                                     let conflict = conflict.clone();
@@ -213,8 +213,8 @@ pub fn ConflictsPage() -> impl IntoView {
 fn Held(label: &'static str, value: String) -> impl IntoView {
     view! {
         <div>
-            <p class="text-xs uppercase tracking-widest text-slate-500">{label}</p>
-            <pre class="max-h-40 overflow-auto whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs dark:bg-slate-800">
+            <p class="text-xs uppercase tracking-widest text-ink-3">{label}</p>
+            <pre class="max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-raised p-2 text-xs">
                 {value}
             </pre>
         </div>

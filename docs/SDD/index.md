@@ -29,3 +29,4 @@ is `Approved`.
 | Sheet PDFs on S3-compatible object storage | 2026-09-06 | Approved | Sheet attachments, Sync engine | [→](change-request/2026-09-06-s3-sheet-storage.md) |
 | Self-hosted WebSocket signalling for stage pairing | 2026-09-06 | Approved | Stage view | [→](change-request/2026-09-06-lan-websocket-signalling.md) |
 | One language for both halves — Rust and WebAssembly | 2026-09-08 | Approved | Every feature (stack only; no behaviour changes) | [→](change-request/2026-09-08-rust-rewrite.md) |
+| Stage dark — one interface vocabulary for the client | 2026-09-11 | Approved | Library, Chord charts, Presentation, Presenter output, Stage view, PWA (appearance only) | [→](change-request/2026-09-11-stage-dark-interface.md) |

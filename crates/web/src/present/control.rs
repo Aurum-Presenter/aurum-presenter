@@ -427,8 +427,8 @@ pub fn ControlPage() -> impl IntoView {
             when=move || state.get().is_some()
             fallback=|| view! {
                 <div class="p-6 text-sm">
-                    <p class="text-slate-500">"That session is not running on this device."</p>
-                    <A href="/sets" attr:class="underline">"Back to sets"</A>
+                    <p class="text-ink-3">"That session is not running on this device."</p>
+                    <A href="/sets" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Back to sets"</A>
                 </div>
             }
         >
@@ -438,13 +438,20 @@ pub fn ControlPage() -> impl IntoView {
             >
                 <div class="flex min-h-0 flex-col gap-3">
                     <div class="flex flex-wrap items-center gap-2 text-sm">
+                        // Red is live all the way through this screen — the badge, the preview
+                        // border, the chip in the running order — so the operator never reads a
+                        // label to know what the room is seeing.
+                        <span class="flex h-6 items-center gap-2 rounded-sm bg-live px-2.5 text-[11px] font-bold tracking-[0.1em] text-white">
+                            <span class="size-1.5 rounded-full bg-white"></span>
+                            "LIVE"
+                        </span>
                         <span class="font-medium">
                             {move || state
                                 .get()
                                 .map(|state| state.set_snapshot.set_name)
                                 .unwrap_or_default()}
                         </span>
-                        <span class="text-slate-500" data-testid="control-position">
+                        <span class="font-mono text-ink-3" data-testid="control-position">
                             {move || state
                                 .get()
                                 .map(|state| format!("{} / {}", state.index + 1, state.slides.len()))
@@ -453,14 +460,14 @@ pub fn ControlPage() -> impl IntoView {
 
                         <span class="ml-auto flex flex-wrap gap-2">
                             <button
-                                class="rounded border border-slate-300 px-3 py-1 dark:border-slate-700"
+                                class="rounded-md border border-line-strong px-3 py-1"
                                 data-testid="previous-slide"
                                 on:click=move |_| move_by(-1)
                             >
                                 "← Previous"
                             </button>
                             <button
-                                class="rounded bg-slate-900 px-3 py-1 text-white dark:bg-slate-100 dark:text-slate-900"
+                                class="rounded-md bg-accent px-3 py-1 text-on-accent"
                                 data-testid="next-slide"
                                 on:click=move |_| move_by(1)
                             >
@@ -475,9 +482,9 @@ pub fn ControlPage() -> impl IntoView {
                                             .get()
                                             .is_some_and(|state| state.blank_mode == mode)
                                         {
-                                            "rounded border px-3 py-1 border-sky-500 bg-sky-50 dark:bg-sky-950"
+                                            "rounded-md border px-3 py-1 border-accent bg-accent/10"
                                         } else {
-                                            "rounded border px-3 py-1 border-slate-300 dark:border-slate-700"
+                                            "rounded-md border px-3 py-1 border-line-strong"
                                         }
                                         data-testid=format!("blank-{label}")
                                         on:click=move |_| {
@@ -492,13 +499,13 @@ pub fn ControlPage() -> impl IntoView {
                                 .collect_view()}
 
                             <button
-                                class="rounded border border-slate-300 px-3 py-1 dark:border-slate-700"
+                                class="rounded-md border border-line-strong px-3 py-1"
                                 on:click=move |_| theme_open.set(true)
                             >
                                 "Theme"
                             </button>
                             <button
-                                class="rounded border border-red-300 px-3 py-1 text-red-700 dark:text-red-400"
+                                class="rounded-md border border-live/50 px-3 py-1 text-live-ink"
                                 data-testid="end-session"
                                 on:click=move |_| ending.set(true)
                             >
@@ -509,11 +516,12 @@ pub fn ControlPage() -> impl IntoView {
 
                     <div class="grid min-h-0 flex-1 grid-cols-2 gap-3">
                         <figure class="flex min-h-0 flex-col">
-                            <figcaption class="mb-1 text-xs uppercase tracking-widest text-slate-500">
+                            <figcaption class="mb-1 flex items-center gap-2 text-xs uppercase tracking-widest text-live-ink">
+                                <span class="size-1.5 rounded-full bg-live"></span>
                                 "On the audience screen"
                             </figcaption>
                             <div
-                                class="aspect-video overflow-hidden rounded border border-slate-200 dark:border-slate-800"
+                                class="aspect-video overflow-hidden rounded-md border-2 border-live"
                                 data-testid="audience-preview"
                                 style=move || {
                                     let theme = state
@@ -546,10 +554,11 @@ pub fn ControlPage() -> impl IntoView {
                         </figure>
 
                         <figure class="flex min-h-0 flex-col">
-                            <figcaption class="mb-1 text-xs uppercase tracking-widest text-slate-500">
+                            <figcaption class="mb-1 flex items-center gap-2 text-xs uppercase tracking-widest text-accent">
+                                <span class="size-1.5 rounded-full bg-accent"></span>
                                 "Next"
                             </figcaption>
-                            <div class="aspect-video overflow-hidden rounded border border-slate-200 bg-black p-3 text-slate-100 dark:border-slate-800">
+                            <div class="aspect-video overflow-hidden rounded-md border border-accent/40 bg-black p-3 text-white">
                                 <StageSlide
                                     slide=Signal::derive(move || {
                                         state.get().and_then(|state| state.next_slide().cloned())
@@ -594,21 +603,21 @@ pub fn ControlPage() -> impl IntoView {
 
                         <div class="mb-2 flex flex-wrap gap-2">
                             <button
-                                class="rounded border border-slate-300 px-3 py-1 dark:border-slate-700"
+                                class="rounded-md border border-line-strong px-3 py-1"
                                 data-testid="open-audience"
                                 on:click=move |_| open_output("audience")
                             >
                                 "Audience window"
                             </button>
                             <button
-                                class="rounded border border-slate-300 px-3 py-1 dark:border-slate-700"
+                                class="rounded-md border border-line-strong px-3 py-1"
                                 data-testid="open-stage"
                                 on:click=move |_| open_output("stage")
                             >
                                 "Stage window"
                             </button>
                             <button
-                                class="rounded border border-slate-300 px-3 py-1 dark:border-slate-700"
+                                class="rounded-md border border-line-strong px-3 py-1"
                                 data-testid="pair-a-device"
                                 on:click=start_pairing
                             >
@@ -617,11 +626,11 @@ pub fn ControlPage() -> impl IntoView {
                         </div>
 
                         <Show when=move || { hint.get().is_some() && !hint_dismissed.get() }>
-                            <p class="mb-2 text-xs text-slate-500">
+                            <p class="mb-2 text-xs text-ink-3">
                                 {move || hint.get()}
                                 " "
                                 <button
-                                    class="underline"
+                                    class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                     on:click=move |_| {
                                         hint_dismissed.set(true);
                                         // Without storage it comes back next time, which is the
@@ -635,21 +644,21 @@ pub fn ControlPage() -> impl IntoView {
                         </Show>
 
                         <Show when=move || code_expired.get()>
-                            <p class="mb-2 text-xs text-amber-700 dark:text-amber-400">
+                            <p class="mb-2 text-xs text-warn">
                                 "That code has expired. Issue a new one to pair a device."
                             </p>
                         </Show>
 
                         {move || code.get().map(|(value, expires)| view! {
                             <div
-                                class="mb-2 rounded border border-slate-200 p-2 dark:border-slate-800"
+                                class="mb-2 rounded-md border border-line p-2"
                                 data-testid="pairing-code"
                             >
-                                <p class="text-xs text-slate-500">
+                                <p class="text-xs text-ink-3">
                                     "On the other device: open Aurum, choose Join session, and enter"
                                 </p>
                                 <p class="my-1 font-mono text-2xl tracking-widest">{value}</p>
-                                <p class="text-xs text-slate-500">
+                                <p class="text-xs text-ink-3">
                                     {move || match pairing.get() {
                                         Some(Status::Failed) => "The signalling relay could not \
                                              be reached; a device on this network can still not \
@@ -668,7 +677,7 @@ pub fn ControlPage() -> impl IntoView {
 
                         <ul class="space-y-1" data-testid="outputs">
                             <Show when=move || outputs.get().is_empty()>
-                                <li class="text-slate-500">"No screens attached yet."</li>
+                                <li class="text-ink-3">"No screens attached yet."</li>
                             </Show>
 
                             {move || outputs
@@ -681,14 +690,14 @@ pub fn ControlPage() -> impl IntoView {
                                     view! {
                                         <li class="flex items-center gap-2">
                                             <span class=if output.responding {
-                                                "text-emerald-600"
+                                                "text-ok"
                                             } else {
-                                                "text-amber-600"
+                                                "text-warn"
                                             }>
                                                 "●"
                                             </span>
                                             <span>{output.label.clone()}</span>
-                                            <span class="text-xs text-slate-500">
+                                            <span class="text-xs text-ink-3">
                                                 {if output.responding {
                                                     format!("revision {}", output.last_ack_revision)
                                                 } else {
@@ -730,7 +739,7 @@ pub fn ControlPage() -> impl IntoView {
                                 .into_iter()
                                 .map(|group| view! {
                                     <li>
-                                        <p class="mt-2 text-xs uppercase tracking-widest text-slate-500">
+                                        <p class="mt-2 text-xs uppercase tracking-widest text-ink-3">
                                             {group.title.clone()}
                                         </p>
                                         <div class="flex flex-wrap gap-1">
@@ -739,13 +748,23 @@ pub fn ControlPage() -> impl IntoView {
                                                 .into_iter()
                                                 .map(|(index, slide)| view! {
                                                     <button
-                                                        class=move || if state
-                                                            .get()
-                                                            .is_some_and(|state| state.index == index)
-                                                        {
-                                                            "rounded border px-2 py-1 text-xs border-sky-500 bg-sky-50 dark:bg-sky-950"
-                                                        } else {
-                                                            "rounded border px-2 py-1 text-xs border-slate-200 dark:border-slate-800"
+                                                        class=move || {
+                                                            // The same two signals as the previews:
+                                                            // red is on the screen now, gold is
+                                                            // what one press away looks like.
+                                                            let here = state
+                                                                .get()
+                                                                .map(|state| state.index);
+
+                                                            match here {
+                                                                Some(at) if at == index => {
+                                                                    "rounded-md border px-2 py-1 text-xs font-semibold border-live bg-live/10 text-live-ink"
+                                                                }
+                                                                Some(at) if at + 1 == index => {
+                                                                    "rounded-md border px-2 py-1 text-xs border-accent/60 text-accent"
+                                                                }
+                                                                _ => "rounded-md border px-2 py-1 text-xs border-line text-ink-3",
+                                                            }
                                                         }
                                                         on:click=move |_| {
                                                             if let Some(current) = state.get_untracked() {
@@ -789,22 +808,22 @@ pub fn ControlPage() -> impl IntoView {
                 </Show>
 
                 <Show when=move || ending.get()>
-                    <div class="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 p-6">
-                        <div class="w-80 rounded bg-white p-4 shadow-lg dark:bg-slate-900">
+                    <div class="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-6">
+                        <div class="w-80 rounded-md bg-surface p-4 shadow-lg">
                             <h2 class="mb-2 font-semibold">"End this session?"</h2>
-                            <p class="mb-4 text-sm text-slate-500">
+                            <p class="mb-4 text-sm text-ink-3">
                                 "Every screen closes and the session is written to the log."
                             </p>
                             <div class="flex gap-2">
                                 <button
-                                    class="rounded bg-slate-900 px-3 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                                    class="rounded-md bg-accent px-3 py-2 text-sm text-on-accent"
                                     data-testid="confirm-end"
                                     on:click=finish
                                 >
                                     "End session"
                                 </button>
                                 <button
-                                    class="text-sm underline"
+                                    class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                     on:click=move |_| ending.set(false)
                                 >
                                     "Keep going"
@@ -830,20 +849,20 @@ fn Announcement(
     view! {
         <div class="flex flex-wrap gap-2 text-sm">
             <input
-                class="min-w-40 flex-1 rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                class="min-w-40 flex-1 rounded-md border border-line-strong px-3 py-2"
                 placeholder=placeholder
                 data-testid=testid
                 prop:value=move || value.get()
                 on:input=move |event| value.set(event_target_value(&event))
             />
             <button
-                class="rounded border border-slate-300 px-3 dark:border-slate-700"
+                class="rounded-md border border-line-strong px-3"
                 on:click=move |_| on_show.run(Some(value.get_untracked()))
             >
                 {show}
             </button>
             <button
-                class="rounded border border-slate-300 px-3 dark:border-slate-700"
+                class="rounded-md border border-line-strong px-3"
                 on:click=move |_| {
                     value.set(String::new());
                     on_show.run(None);

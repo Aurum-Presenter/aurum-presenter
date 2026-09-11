@@ -154,7 +154,7 @@ pub fn PrintPage() -> impl IntoView {
     view! {
         <Show
             when=move || set.get().is_some()
-            fallback=|| view! { <p class="p-6 text-sm text-slate-500">"Loading…"</p> }
+            fallback=|| view! { <p class="p-6 text-sm text-ink-3">"Loading…"</p> }
         >
             <div class="mx-auto max-w-4xl p-6 print:max-w-none print:p-0">
                 <style>
@@ -170,7 +170,7 @@ pub fn PrintPage() -> impl IntoView {
                     <div class="flex flex-wrap items-center gap-3">
                         <A
                             href=move || format!("/sets/{}", set_id.get())
-                            attr:class="text-sm underline"
+                            attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         >
                             {move || format!(
                                 "← {}",
@@ -178,7 +178,7 @@ pub fn PrintPage() -> impl IntoView {
                             )}
                         </A>
 
-                        <label class="flex items-center gap-1 text-sm text-slate-500">
+                        <label class="flex items-center gap-1 text-sm text-ink-3">
                             <input
                                 type="checkbox"
                                 prop:checked=move || use_sheets.get()
@@ -188,7 +188,7 @@ pub fn PrintPage() -> impl IntoView {
                         </label>
 
                         <button
-                            class="rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                            class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent"
                             data-testid="print"
                             on:click=move |_| {
                                 if let Some(window) = web_sys::window() {
@@ -202,7 +202,7 @@ pub fn PrintPage() -> impl IntoView {
 
                     <Show when=move || { use_sheets.get() && !chosen.get().1.is_empty() }>
                         <p
-                            class="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                            class="mt-2 rounded-md border border-warn/50 bg-warn/10 px-3 py-2 text-sm text-warn"
                             data-testid="sheets-not-here"
                         >
                             {move || {
@@ -220,7 +220,7 @@ pub fn PrintPage() -> impl IntoView {
                         </p>
                     </Show>
 
-                    <p class="mt-2 text-xs text-slate-500">
+                    <p class="mt-2 text-xs text-ink-3">
                         "Everything below is rendered here on the device. Nothing is fetched, so \
                          this works offline."
                     </p>
@@ -229,7 +229,7 @@ pub fn PrintPage() -> impl IntoView {
                 <h1 class="mb-1 text-2xl font-semibold">
                     {move || set.get().map(|set| set.name).unwrap_or_default()}
                 </h1>
-                <p class="mb-6 text-sm text-slate-500">{move || subtitle.get()}</p>
+                <p class="mb-6 text-sm text-ink-3">{move || subtitle.get()}</p>
 
                 {move || plan
                     .get()
@@ -311,13 +311,13 @@ fn PrintItem(
     view! {
         <section class="set-item mb-8">
             <h2 class="mb-1 text-lg font-semibold">
-                <span class="mr-2 text-slate-400">{index + 1}</span>
+                <span class="mr-2 text-ink-4">{index + 1}</span>
                 {resolved.title.clone()}
                 {resolved.key.map(|key| view! {
-                    <span class="ml-3 text-base font-normal text-slate-500">{key.to_string()}</span>
+                    <span class="ml-3 text-base font-normal text-ink-3">{key.to_string()}</span>
                 })}
                 {(capo > 0).then(|| view! {
-                    <span class="ml-2 text-base font-normal text-slate-500">
+                    <span class="ml-2 text-base font-normal text-ink-3">
                         {format!("capo {capo}")}
                     </span>
                 })}

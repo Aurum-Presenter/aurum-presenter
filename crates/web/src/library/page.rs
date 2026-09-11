@@ -288,7 +288,7 @@ pub fn LibraryPage() -> impl IntoView {
                     counts=counts
                     actions=actions
                 />
-                <A href="/library/trash" attr:class="mt-4 block text-xs underline text-slate-500">
+                <A href="/library/trash" attr:class="mt-4 block text-xs text-ink-3 underline-offset-2 hover:underline">
                     "Trash"
                 </A>
             </aside>
@@ -297,16 +297,30 @@ pub fn LibraryPage() -> impl IntoView {
                 <h1 class="sr-only" data-testid="screen-title">"Library"</h1>
 
                 <div class="mb-3 flex flex-wrap items-center gap-2">
-                    <input
-                        class="min-w-48 flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-                        data-testid="search"
-                        placeholder="Search titles, lyrics, tags…"
-                        prop:value=move || query.get()
-                        on:input=move |event| query.set(event_target_value(&event))
-                    />
+                    <label class="flex h-10 min-w-48 flex-1 items-center gap-2.5 rounded-lg border border-line-strong bg-surface px-3">
+                        <svg
+                            class="size-4 shrink-0 text-ink-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.9"
+                            stroke-linecap="round"
+                            aria-hidden="true"
+                        >
+                            <circle cx="11" cy="11" r="6.5" />
+                            <path d="M16 16 L21 21" />
+                        </svg>
+                        <input
+                            class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-4"
+                            data-testid="search"
+                            placeholder="Search titles, lyrics, tags…"
+                            prop:value=move || query.get()
+                            on:input=move |event| query.set(event_target_value(&event))
+                        />
+                    </label>
 
                     <select
-                        class="rounded border border-slate-300 bg-transparent px-2 py-2 text-sm dark:border-slate-700"
+                        class="h-10 rounded-lg border border-line-strong bg-transparent px-2.5 text-sm text-ink-2"
                         on:change=move |event| sort.set(Sort::parse(&event_target_value(&event)))
                     >
                         <option value="title">"Title"</option>
@@ -316,7 +330,7 @@ pub fn LibraryPage() -> impl IntoView {
                     </select>
 
                     <select
-                        class="rounded border border-slate-300 bg-transparent px-2 py-2 text-sm dark:border-slate-700"
+                        class="h-10 rounded-lg border border-line-strong bg-transparent px-2.5 text-sm text-ink-2"
                         on:change=move |event| tag.set(event_target_value(&event))
                     >
                         <option value="">"All tags"</option>
@@ -327,7 +341,7 @@ pub fn LibraryPage() -> impl IntoView {
 
                     <Show when=move || !keys.get().is_empty()>
                         <select
-                            class="rounded border border-slate-300 bg-transparent px-2 py-2 text-sm dark:border-slate-700"
+                            class="h-10 rounded-lg border border-line-strong bg-transparent px-2.5 text-sm text-ink-2"
                             on:change=move |event| key.set(event_target_value(&event))
                         >
                             <option value="">"Any key"</option>
@@ -337,7 +351,7 @@ pub fn LibraryPage() -> impl IntoView {
                         </select>
                     </Show>
 
-                    <label class="flex items-center gap-1 text-xs text-slate-500">
+                    <label class="flex items-center gap-1.5 text-xs text-ink-3">
                         <input
                             type="checkbox"
                             prop:checked=move || show_archived.get()
@@ -352,7 +366,7 @@ pub fn LibraryPage() -> impl IntoView {
 
                     <button
                         type="button"
-                        class="mb-3 rounded border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
+                        class="mb-3 rounded-md border border-line-strong px-4 py-2 text-sm"
                         data-testid="open-import"
                         on:click=move |_| importing.set(true)
                     >
@@ -360,15 +374,23 @@ pub fn LibraryPage() -> impl IntoView {
                     </button>
                 </Show>
 
-                <ul class="divide-y divide-slate-200 dark:divide-slate-800" data-testid="song-list">
+                <div class="cap grid grid-cols-[1fr_auto] gap-4 border-b border-line px-3 pb-2 sm:grid-cols-[1fr_11rem_3.5rem_3.5rem_9rem]">
+                    <span>"Song"</span>
+                    <span class="hidden sm:block">"Artist"</span>
+                    <span class="hidden sm:block">"Key"</span>
+                    <span class="hidden sm:block">"BPM"</span>
+                    <span class="hidden sm:block">"Tags"</span>
+                </div>
+
+                <ul data-testid="song-list">
                     <For each=move || visible.get() key=|song| song.id.clone() let:song>
                         {
                             let dragged = song.id.clone();
                             let title = song.title.trim().to_lowercase();
+                            let archived = song.archived == 1;
 
                             view! {
                                 <li
-                                    class="py-2"
                                     draggable=if can_edit { "true" } else { "false" }
                                     on:dragstart=move |event: DragEvent| {
                                         if let Some(data) = event.data_transfer() {
@@ -376,25 +398,46 @@ pub fn LibraryPage() -> impl IntoView {
                                         }
                                     }
                                 >
-                                    <A href=format!("/song/{}", song.id) attr:class="flex items-baseline gap-2">
-                                        <span class="font-medium">{song.title.clone()}</span>
-                                        <span class="text-sm text-slate-500">
+                                    <A
+                                        href=format!("/song/{}", song.id)
+                                        attr:class="grid grid-cols-[1fr_auto] items-center gap-4 rounded-md border-l-2 border-transparent px-3 py-2.5 hover:border-accent hover:bg-surface sm:grid-cols-[1fr_11rem_3.5rem_3.5rem_9rem]"
+                                    >
+                                        <span class="flex flex-wrap items-baseline gap-2">
+                                            <span class=if archived {
+                                                "text-ink-3"
+                                            } else {
+                                                "font-medium"
+                                            }>{song.title.clone()}</span>
+
+                                            <Show when=move || archived>
+                                                <span class="rounded-sm border border-line-strong px-1.5 text-xs text-ink-4">
+                                                    "archived"
+                                                </span>
+                                            </Show>
+
+                                            <Show when=move || {
+                                                duplicates.get().get(&title).copied().unwrap_or(0) > 1
+                                            }>
+                                                <span
+                                                    class="rounded-sm border border-warn/50 px-1.5 text-xs text-warn"
+                                                    title="Another song has this title"
+                                                >
+                                                    "possible duplicate"
+                                                </span>
+                                            </Show>
+                                        </span>
+
+                                        <span class="hidden truncate text-sm text-ink-3 sm:block">
                                             {song.artist.clone()}
                                         </span>
-                                        <span class="text-xs text-slate-400">
+                                        <span class="hidden font-mono text-sm text-ink-2 sm:block">
                                             {song.original_key.clone()}
                                         </span>
-                                        <Show when=move || {
-                                            duplicates.get().get(&title).copied().unwrap_or(0) > 1
-                                        }>
-                                            <span
-                                                class="text-xs text-slate-400"
-                                                title="Another song has this title"
-                                            >
-                                                "possible duplicate"
-                                            </span>
-                                        </Show>
-                                        <span class="ml-auto flex gap-1">
+                                        <span class="hidden font-mono text-sm text-ink-3 sm:block">
+                                            {song.tempo.map(|beats| beats.to_string())}
+                                        </span>
+
+                                        <span class="flex justify-end gap-1 sm:justify-start">
                                             <For
                                                 each={
                                                     let tags = list_of(song.tags.as_deref());
@@ -403,7 +446,7 @@ pub fn LibraryPage() -> impl IntoView {
                                                 key=|name| name.clone()
                                                 let:name
                                             >
-                                                <span class="rounded bg-slate-100 px-2 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                <span class="rounded-sm bg-raised px-2 py-0.5 text-xs text-ink-3">
                                                     {name.clone()}
                                                 </span>
                                             </For>
@@ -416,7 +459,7 @@ pub fn LibraryPage() -> impl IntoView {
                 </ul>
 
                 <Show when=move || visible.get().is_empty()>
-                    <p class="py-8 text-center text-sm text-slate-500">
+                    <p class="py-8 text-center text-sm text-ink-3">
                         {move || if query.get().trim().is_empty() {
                             "Nothing here yet."
                         } else {
@@ -427,7 +470,7 @@ pub fn LibraryPage() -> impl IntoView {
                     <Show when=move || can_edit && query.get().trim().is_empty()>
                         <p class="pb-8 text-center">
                             <button
-                                class="text-sm underline"
+                                class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                 on:click=move |_| importing.set(true)
                             >
                                 "Import ChordPro or text files"
@@ -446,7 +489,7 @@ pub fn LibraryPage() -> impl IntoView {
 
             <Show when=move || problem.get().is_some()>
                 <p
-                    class="fixed inset-x-4 bottom-4 rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800"
+                    class="fixed inset-x-4 bottom-4 rounded-md border border-live/50 bg-live/10 p-2 text-sm text-live-ink"
                     data-testid="folder-problem"
                     on:click=move |_| problem.set(None)
                 >
@@ -482,10 +525,10 @@ fn DeleteFolder(
 ) -> impl IntoView {
     view! {
         <div
-            class="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 p-6"
+            class="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-6"
             data-testid="delete-folder"
         >
-            <div class="w-96 rounded bg-white p-4 shadow-lg dark:bg-slate-900">
+            <div class="w-96 rounded-md bg-surface p-4 shadow-lg">
                 <h2 class="mb-2 font-semibold">
                     {move || {
                         let name = folder.get().map(|folder| folder.name).unwrap_or_default();
@@ -493,7 +536,7 @@ fn DeleteFolder(
                         format!("Delete “{name}”?")
                     }}
                 </h2>
-                <p class="mb-4 text-sm text-slate-500">
+                <p class="mb-4 text-sm text-ink-3">
                     {move || match songs.get() {
                         0 => "The folder is empty. Subfolders move up to its parent.".to_owned(),
                         1 => "1 song is filed here. Nothing is deleted — choose where it goes."
@@ -505,18 +548,18 @@ fn DeleteFolder(
                 </p>
                 <div class="flex flex-wrap gap-2">
                     <button
-                        class="rounded bg-slate-900 px-3 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                        class="rounded-md bg-accent px-3 py-2 text-sm text-on-accent"
                         on:click=move |_| on_confirm.run(FolderSongs::MoveToParent)
                     >
                         "Move songs to the parent folder"
                     </button>
                     <button
-                        class="rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-3 py-2 text-sm"
                         on:click=move |_| on_confirm.run(FolderSongs::Archive)
                     >
                         "Archive the songs"
                     </button>
-                    <button class="ml-auto text-sm underline" on:click=move |_| on_cancel.run(())>
+                    <button class="ml-auto text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| on_cancel.run(())>
                         "Cancel"
                     </button>
                 </div>
@@ -576,17 +619,17 @@ fn AddSong(folder_id: Signal<Option<String>>) -> impl IntoView {
     view! {
         <form class="mb-3 flex gap-2" on:submit=submit>
             <input
-                class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                class="flex-1 rounded-md border border-line-strong px-3 py-2 text-sm"
                 data-testid="new-song-title"
                 placeholder="Add a song…"
                 prop:value=move || title.get()
                 on:input=move |event| title.set(event_target_value(&event))
             />
-            <button class="rounded bg-slate-900 px-3 py-2 text-sm text-white">"Add"</button>
+            <button class="rounded-md bg-accent px-3 py-2 text-sm text-on-accent">"Add"</button>
         </form>
 
         <Show when=move || problem.get().is_some()>
-            <p class="mb-2 text-sm text-red-600">{move || problem.get()}</p>
+            <p class="mb-2 text-sm text-live-ink">{move || problem.get()}</p>
         </Show>
     }
 }

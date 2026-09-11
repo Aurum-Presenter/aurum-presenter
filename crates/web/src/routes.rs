@@ -123,7 +123,7 @@ pub fn App() -> impl IntoView {
     view! {
         {move || match phase.get() {
             Phase::Loading => view! {
-                <div class="flex min-h-dvh items-center justify-center text-slate-500">
+                <div class="flex min-h-dvh items-center justify-center text-ink-3">
                     "Opening your library…"
                 </div>
             }

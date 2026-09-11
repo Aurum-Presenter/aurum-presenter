@@ -205,7 +205,7 @@ pub fn SheetViewerPage() -> impl IntoView {
     view! {
         <div class="mx-auto max-w-5xl p-4">
             <div class="mb-3 flex flex-wrap items-center gap-3 text-sm">
-                <A href=move || format!("/song/{}", song_id.get()) attr:class="underline">
+                <A href=move || format!("/song/{}", song_id.get()) attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">
                     "← Song"
                 </A>
 
@@ -228,12 +228,12 @@ pub fn SheetViewerPage() -> impl IntoView {
                 </span>
 
                 {move || held.get().and_then(|sheet| sheet.filename).map(|name| view! {
-                    <span class="text-slate-500">{name}</span>
+                    <span class="text-ink-3">{name}</span>
                 })}
 
                 <span class="ml-auto flex flex-wrap items-center gap-2">
                     <button
-                        class="rounded border border-slate-300 px-2 dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-2"
                         data-testid="page-back"
                         on:click=move |_| turn(-1)
                     >
@@ -243,7 +243,7 @@ pub fn SheetViewerPage() -> impl IntoView {
                         {move || format!("{} / {}", page.get(), pages.get())}
                     </span>
                     <button
-                        class="rounded border border-slate-300 px-2 dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-2"
                         data-testid="page-forward"
                         on:click=move |_| turn(1)
                     >
@@ -251,7 +251,7 @@ pub fn SheetViewerPage() -> impl IntoView {
                     </button>
 
                     <button
-                        class="rounded border border-slate-300 px-2 dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-2"
                         on:click=move |_| {
                             fit.set(Fit::Free);
                             zoom.update(|value| *value = (*value - 0.25).max(0.25));
@@ -260,7 +260,7 @@ pub fn SheetViewerPage() -> impl IntoView {
                         "−"
                     </button>
                     <button
-                        class="rounded border border-slate-300 px-2 dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-2"
                         data-testid="zoom-in"
                         on:click=move |_| {
                             fit.set(Fit::Free);
@@ -271,9 +271,9 @@ pub fn SheetViewerPage() -> impl IntoView {
                     </button>
                     <button
                         class=move || if fit.get() == Fit::Width {
-                            "rounded border px-2 border-sky-500"
+                            "rounded-md border px-2 border-accent"
                         } else {
-                            "rounded border px-2 border-slate-300 dark:border-slate-700"
+                            "rounded-md border px-2 border-line-strong"
                         }
                         on:click=move |_| fit.set(Fit::Width)
                     >
@@ -281,16 +281,16 @@ pub fn SheetViewerPage() -> impl IntoView {
                     </button>
                     <button
                         class=move || if fit.get() == Fit::Page {
-                            "rounded border px-2 border-sky-500"
+                            "rounded-md border px-2 border-accent"
                         } else {
-                            "rounded border px-2 border-slate-300 dark:border-slate-700"
+                            "rounded-md border px-2 border-line-strong"
                         }
                         on:click=move |_| fit.set(Fit::Page)
                     >
                         "fit page"
                     </button>
                     <button
-                        class="rounded border border-slate-300 px-2 dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-2"
                         data-testid="rotate"
                         on:click=move |_| rotation.update(|value| *value = (*value + 90) % 360)
                     >
@@ -299,9 +299,9 @@ pub fn SheetViewerPage() -> impl IntoView {
 
                     <button
                         class=move || if drawing.get() {
-                            "rounded border px-2 border-sky-500"
+                            "rounded-md border px-2 border-accent"
                         } else {
-                            "rounded border px-2 border-slate-300 dark:border-slate-700"
+                            "rounded-md border px-2 border-line-strong"
                         }
                         data-testid="annotate"
                         on:click=move |_| drawing.update(|value| *value = !*value)
@@ -311,7 +311,7 @@ pub fn SheetViewerPage() -> impl IntoView {
 
                     <Show when=move || drawing.get()>
                         <select
-                            class="rounded border border-slate-300 bg-transparent px-1 dark:border-slate-700"
+                            class="rounded-md border border-line-strong bg-transparent px-1"
                             data-testid="annotation-scope"
                             prop:value=move || scope.get()
                             on:change=move |event| scope.set(event_target_value(&event))
@@ -327,7 +327,7 @@ pub fn SheetViewerPage() -> impl IntoView {
 
             <Show when=move || { stale.get() > 0 }>
                 <p
-                    class="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                    class="mb-3 rounded-md border border-warn/50 bg-warn/10 px-3 py-2 text-sm text-warn"
                     data-testid="marks-may-not-line-up"
                 >
                     {move || {
@@ -346,13 +346,13 @@ pub fn SheetViewerPage() -> impl IntoView {
                 </p>
             </Show>
 
-            <div class="rounded border border-slate-200 p-2 dark:border-slate-800">
+            <div class="rounded-md border border-line p-2">
                 {move || match (file.get().flatten(), failure.get()) {
                     (_, Some(why)) => view! { <NotDownloaded sheet=held reason=Some(why) /> }
                         .into_any(),
 
                     (None, None) if file.get().is_none() => view! {
-                        <p class="py-16 text-center text-sm text-slate-500">"Opening…"</p>
+                        <p class="py-16 text-center text-sm text-ink-3">"Opening…"</p>
                     }
                     .into_any(),
 
@@ -406,7 +406,7 @@ pub fn SheetViewerPage() -> impl IntoView {
 fn NotDownloaded(sheet: Signal<Option<Sheet>>, reason: Option<String>) -> impl IntoView {
     view! {
         <div class="py-16 text-center" data-testid="not-downloaded">
-            <p class="text-sm text-slate-500">
+            <p class="text-sm text-ink-3">
                 {move || format!(
                     "This sheet has not been downloaded to this device{}.",
                     sheet
@@ -416,11 +416,11 @@ fn NotDownloaded(sheet: Signal<Option<Sheet>>, reason: Option<String>) -> impl I
                         .unwrap_or_default(),
                 )}
             </p>
-            <p class="mt-2 text-sm text-slate-500">
+            <p class="mt-2 text-sm text-ink-3">
                 "Pin the song, or the set it is in, and it will be here the next time you have a \
                  connection."
             </p>
-            {reason.map(|reason| view! { <p class="mt-2 text-xs text-slate-400">{reason}</p> })}
+            {reason.map(|reason| view! { <p class="mt-2 text-xs text-ink-4">{reason}</p> })}
         </div>
     }
 }

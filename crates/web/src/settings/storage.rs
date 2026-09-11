@@ -258,11 +258,11 @@ pub fn StoragePage() -> impl IntoView {
 
     view! {
         <div class="mx-auto max-w-3xl p-4">
-            <A href="/library" attr:class="text-sm underline">"← Library"</A>
+            <A href="/library" attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Library"</A>
             <h2 class="mb-1 mt-3 text-2xl font-semibold" data-testid="screen-title">
                 "Offline storage"
             </h2>
-            <p class="mb-4 text-sm text-slate-500">
+            <p class="mb-4 text-sm text-ink-3">
                 "Songs, charts and sets are always kept on this device — they are text, and small. \
                  Sheet PDFs are kept when they are pinned or coming up."
             </p>
@@ -333,14 +333,14 @@ pub fn StoragePage() -> impl IntoView {
 
             <div class="mb-6 flex flex-wrap gap-3">
                 <button
-                    class="rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                    class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent"
                     data-testid="download-pinned"
                     on:click=move |_| refresh_pins()
                 >
                     "Download what is pinned"
                 </button>
                 <button
-                    class="rounded border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
+                    class="rounded-md border border-line-strong px-4 py-2 text-sm"
                     data-testid="download-everything"
                     disabled=move || fetching.get() || uncached.get().is_empty()
                     on:click=download_everything
@@ -353,7 +353,7 @@ pub fn StoragePage() -> impl IntoView {
                         }
                     }}
                 </button>
-                <button class="text-sm underline" on:click=clear_opportunistic>
+                <button class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=clear_opportunistic>
                     "Clear files that were only opened"
                 </button>
             </div>
@@ -362,10 +362,10 @@ pub fn StoragePage() -> impl IntoView {
             <ul class="space-y-1 text-sm" data-testid="kept-sets">
                 <For each=move || kept.get() key=|set| set.id.clone() let:set>
                     <li class="flex gap-2">
-                        <A href=format!("/sets/{}", set.id) attr:class="underline">
+                        <A href=format!("/sets/{}", set.id) attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">
                             {set.name.clone()}
                         </A>
-                        <span class="text-slate-500">
+                        <span class="text-ink-3">
                             {if set.pinned == 1 {
                                 "pinned".to_owned()
                             } else {
@@ -378,7 +378,7 @@ pub fn StoragePage() -> impl IntoView {
                     </li>
                 </For>
                 <Show when=move || kept.get().is_empty()>
-                    <li class="text-slate-500">
+                    <li class="text-ink-3">
                         "Nothing is pinned and no set is within the next fortnight."
                     </li>
                 </Show>
@@ -390,7 +390,7 @@ pub fn StoragePage() -> impl IntoView {
                 !letting_go.sets.is_empty() || !letting_go.songs.is_empty()
             }>
                 <h3 class="mb-2 mt-6 font-semibold">"Released on this device"</h3>
-                <p class="mb-2 text-sm text-slate-500">
+                <p class="mb-2 text-sm text-ink-3">
                     "Still pinned for everybody else — this device was simply out of room."
                 </p>
                 <ul class="space-y-1 text-sm" data-testid="released">
@@ -468,9 +468,9 @@ fn Freed(
     view! {
         <li class="flex gap-2">
             <span>{name}</span>
-            <span class="text-xs text-slate-500">{label_of(kind)}</span>
+            <span class="text-xs text-ink-3">{label_of(kind)}</span>
             <button
-                class="underline"
+                class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                 on:click=move |_| {
                     let workspace = workspace_id.get_untracked();
 
@@ -489,7 +489,7 @@ fn Freed(
 fn Row(label: &'static str, value: Signal<String>) -> impl IntoView {
     view! {
         <div class="flex gap-2">
-            <dt class="w-44 text-slate-500">{label}</dt>
+            <dt class="w-44 text-ink-3">{label}</dt>
             <dd>{move || value.get()}</dd>
         </div>
     }

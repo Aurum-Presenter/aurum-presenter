@@ -149,21 +149,21 @@ pub fn StageScreen(
         <Show
             when=move || !ended.get()
             fallback=|| view! {
-                <div class="flex h-dvh w-dvw items-center justify-center bg-black text-slate-400">
+                <div class="flex h-dvh w-dvw items-center justify-center bg-black text-white/60">
                     <p>"The session has ended."</p>
                 </div>
             }
         >
             <div
                 class=move || if stale.get() {
-                    "flex h-dvh w-dvw flex-col bg-black text-slate-100 ring-4 ring-amber-500"
+                    "flex h-dvh w-dvw flex-col bg-black text-white ring-4 ring-warn"
                 } else {
-                    "flex h-dvh w-dvw flex-col bg-black text-slate-100"
+                    "flex h-dvh w-dvw flex-col bg-black text-white"
                 }
                 data-testid="stage"
                 style=move || format!("filter: brightness({})", prefs.get().brightness)
             >
-                <header class="flex items-center gap-3 border-b border-slate-800 px-3 py-2 text-sm">
+                <header class="flex items-center gap-3 border-b border-line px-3 py-2 text-sm">
                     <span class="font-medium" data-testid="stage-title">
                         {move || current
                             .get()
@@ -182,7 +182,7 @@ pub fn StageScreen(
                     // blank in front of a congregation is worse than one a few seconds behind.
                     <Show when=move || stale.get()>
                         <span
-                            class="rounded-full bg-amber-500 px-2 text-xs text-black"
+                            class="rounded-full bg-warn px-2 text-xs text-ground"
                             data-testid="stage-stale"
                         >
                             "reconnecting"
@@ -206,7 +206,7 @@ pub fn StageScreen(
                         </Show>
 
                         <button
-                            class="underline"
+                            class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                             on:click=move |_| settings.update(|open| *open = !*open)
                         >
                             "layout"
@@ -216,7 +216,7 @@ pub fn StageScreen(
 
                 {move || state.get().and_then(|state| state.stage_message).map(|message| view! {
                     <p
-                        class="bg-amber-500 px-3 py-2 text-lg font-medium text-black"
+                        class="bg-warn px-3 py-2 text-lg font-medium text-ground"
                         data-testid="stage-message"
                     >
                         {message}
@@ -234,7 +234,7 @@ pub fn StageScreen(
                     </section>
 
                     <Show when=move || prefs.get().preview>
-                        <section class="overflow-auto border-l border-slate-800 pl-4 opacity-60">
+                        <section class="overflow-auto border-l border-line pl-4 opacity-60">
                             <p class="mb-2 text-xs uppercase tracking-widest">"Next"</p>
                             <StageSlide
                                 slide=next
@@ -247,7 +247,7 @@ pub fn StageScreen(
                     </Show>
                 </main>
 
-                <footer class="flex items-center gap-3 border-t border-slate-800 px-3 py-2 text-sm opacity-70">
+                <footer class="flex items-center gap-3 border-t border-line px-3 py-2 text-sm opacity-70">
                     <span>
                         {move || state
                             .get()
@@ -268,14 +268,14 @@ pub fn StageScreen(
                     // advance (stage-view business rule 8); it is always safe to ask.
                     <span class="flex gap-2">
                         <button
-                            class="rounded border border-slate-700 px-2"
+                            class="rounded-md border border-line-strong px-2"
                             data-testid="stage-back"
                             on:click=move |_| on_advance.run(-1)
                         >
                             "←"
                         </button>
                         <button
-                            class="rounded border border-slate-700 px-2"
+                            class="rounded-md border border-line-strong px-2"
                             data-testid="stage-forward"
                             on:click=move |_| on_advance.run(1)
                         >
@@ -285,7 +285,7 @@ pub fn StageScreen(
                 </footer>
 
                 <Show when=move || settings.get()>
-                    <div class="absolute inset-x-0 bottom-0 border-t border-slate-700 bg-slate-900 p-4 text-sm">
+                    <div class="absolute inset-x-0 bottom-0 border-t border-line-strong bg-accent p-4 text-sm">
                         <div class="flex flex-wrap items-center gap-4">
                             <label class="flex items-center gap-2">
                                 "Size"
@@ -368,7 +368,7 @@ pub fn StageScreen(
                             </label>
 
                             <button
-                                class="ml-auto underline"
+                                class="ml-auto text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                 on:click=move |_| settings.set(false)
                             >
                                 "done"

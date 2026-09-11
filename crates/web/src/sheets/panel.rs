@@ -123,10 +123,10 @@ pub fn SheetsPanel(
             <div class="mb-2 flex flex-wrap items-center gap-3">
                 <h3 class="font-semibold">"Sheets"</h3>
 
-                <label class="flex items-center gap-1 text-sm text-slate-500">
+                <label class="flex items-center gap-1 text-sm text-ink-3">
                     "My part"
                     <select
-                        class="rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                        class="rounded-md border border-line-strong bg-transparent px-2 py-1"
                         data-testid="my-part"
                         prop:value=move || part.get().map(Part::as_str).unwrap_or_default()
                         on:change=move |event| {
@@ -144,7 +144,7 @@ pub fn SheetsPanel(
                 </label>
 
                 <label
-                    class="flex items-center gap-1 text-sm text-slate-500"
+                    class="flex items-center gap-1 text-sm text-ink-3"
                     title="Download this song's sheets and keep them"
                 >
                     <input
@@ -158,7 +158,7 @@ pub fn SheetsPanel(
 
                 <Show when=move || can_edit>
                     <button
-                        class="ml-auto text-sm underline"
+                        class="ml-auto text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         data-testid="attach-sheet"
                         on:click=move |_| attaching.set(true)
                     >
@@ -170,7 +170,7 @@ pub fn SheetsPanel(
             <Show
                 when=move || !rows.get().is_empty()
                 fallback=|| view! {
-                    <p class="text-sm text-slate-500">
+                    <p class="text-sm text-ink-3">
                         "No sheets for this song. The chart above is always available; a PDF is \
                          optional."
                     </p>
@@ -178,14 +178,14 @@ pub fn SheetsPanel(
             >
                 {move || chosen.get().and_then(|(_, why)| why).map(|why| view! {
                     <p
-                        class="mb-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                        class="mb-2 rounded-md border border-warn/50 bg-warn/10 px-3 py-2 text-sm text-warn"
                         data-testid="sheet-fallback"
                     >
                         {why}
                     </p>
                 })}
 
-                <ul class="divide-y divide-slate-200 dark:divide-slate-800">
+                <ul class="divide-y divide-line ">
                     {move || {
                         let held = cached.get().unwrap_or_default();
                         let picked = chosen.get().map(|(id, _)| id);
@@ -242,28 +242,28 @@ fn SheetRow(
             </A>
 
             {sheet.label.clone().map(|label| view! {
-                <span class="text-slate-500">{label}</span>
+                <span class="text-ink-3">{label}</span>
             })}
 
             {sheet.page_count.map(|pages| view! {
-                <span class="text-slate-400">
+                <span class="text-ink-4">
                     {if pages == 1 { "1 page".to_owned() } else { format!("{pages} pages") }}
                 </span>
             })}
 
             {showing.then(|| view! {
-                <span class="rounded-full bg-sky-100 px-2 text-xs text-sky-900">
+                <span class="rounded-full bg-accent/15 px-2 text-xs text-accent">
                     "shown for this key"
                 </span>
             })}
 
             {(!uploaded).then(|| view! {
-                <span class="text-xs text-amber-700 dark:text-amber-400">"waiting to upload"</span>
+                <span class="text-xs text-warn">"waiting to upload"</span>
             })}
 
             {(uploaded && !on_device).then(|| view! {
                 <span
-                    class="text-xs text-slate-500"
+                    class="text-xs text-ink-3"
                     title="The row synced, the file has not been downloaded"
                 >
                     {format!(
@@ -275,7 +275,7 @@ fn SheetRow(
 
             <Show when=move || can_edit>
                 <span class="ml-auto flex gap-3">
-                    <label class="cursor-pointer underline">
+                    <label class="cursor-pointer text-ink-3 hover:text-ink underline-offset-2 hover:underline">
                         "Replace"
                         <input
                             type="file"
@@ -298,7 +298,7 @@ fn SheetRow(
                     </label>
 
                     <button
-                        class="underline text-red-700 dark:text-red-400"
+                        class="text-live-ink underline-offset-2 hover:underline"
                         on:click=move |_| {
                             let Some(repository) = use_sheets() else {
                                 return;
@@ -369,11 +369,11 @@ fn AttachDialog(
 
     view! {
         <div
-            class="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 p-6"
+            class="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-6"
             on:click=move |_| on_close.run(())
         >
             <div
-                class="w-96 rounded bg-white p-4 shadow-lg dark:bg-slate-900"
+                class="w-96 rounded-md bg-surface p-4 shadow-lg"
                 data-testid="attach-sheet-dialog"
                 on:click=|event| event.stop_propagation()
             >
@@ -394,7 +394,7 @@ fn AttachDialog(
                 />
 
                 <Show when=move || { size.get() > WARN_SHEET_BYTES }>
-                    <p class="mb-3 text-xs text-amber-700 dark:text-amber-400">
+                    <p class="mb-3 text-xs text-warn">
                         {move || format!(
                             "{} MB will be kept on every device that pins this song.",
                             (size.get() / 1024.0 / 1024.0).round(),
@@ -406,7 +406,7 @@ fn AttachDialog(
                     <label class="flex-1">
                         "Key"
                         <select
-                            class="w-full rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                            class="w-full rounded-md border border-line-strong bg-transparent px-2 py-1"
                             prop:value=move || key.get()
                             on:change=move |event| key.set(event_target_value(&event))
                         >
@@ -423,7 +423,7 @@ fn AttachDialog(
                     <label class="flex-1">
                         "Part"
                         <select
-                            class="w-full rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                            class="w-full rounded-md border border-line-strong bg-transparent px-2 py-1"
                             prop:value=move || part.get()
                             on:change=move |event| part.set(event_target_value(&event))
                         >
@@ -438,25 +438,25 @@ fn AttachDialog(
                 </div>
 
                 <input
-                    class="mb-3 w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950"
+                    class="mb-3 w-full rounded-md border border-line-strong px-2 py-1 text-sm"
                     placeholder="Label — SATB, Kate's copy…"
                     prop:value=move || label.get()
                     on:input=move |event| label.set(event_target_value(&event))
                 />
 
                 <Show when=move || problem.get().is_some()>
-                    <p class="mb-3 text-sm text-red-700">{move || problem.get()}</p>
+                    <p class="mb-3 text-sm text-live-ink">{move || problem.get()}</p>
                 </Show>
 
                 <div class="flex gap-2">
                     <button
-                        class="rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                        class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent"
                         data-testid="confirm-attach"
                         on:click=attach
                     >
                         "Attach"
                     </button>
-                    <button class="text-sm underline" on:click=move |_| on_close.run(())>
+                    <button class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| on_close.run(())>
                         "Cancel"
                     </button>
                 </div>

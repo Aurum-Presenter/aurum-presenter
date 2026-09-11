@@ -36,7 +36,7 @@ pub fn AboutPage() -> impl IntoView {
 
     view! {
         <div class="mx-auto max-w-2xl p-4 text-sm">
-            <A href="/library" attr:class="underline">"← Library"</A>
+            <A href="/library" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Library"</A>
             <h2 class="mb-3 mt-3 text-2xl font-semibold" data-testid="screen-title">
                 "About Aurum Presenter"
             </h2>
@@ -71,7 +71,7 @@ pub fn AboutPage() -> impl IntoView {
             <Show when=move || !install.installed.get()>
                 <div class="mb-6">
                     <button
-                        class="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900"
+                        class="rounded-md bg-accent px-4 py-2 text-on-accent disabled:opacity-40"
                         data-testid="install-app"
                         disabled=move || !install.available.get() && !install.ios
                         on:click=move |_| install.ask()
@@ -80,13 +80,13 @@ pub fn AboutPage() -> impl IntoView {
                     </button>
 
                     <Show when=move || !install.available.get() && install.ios>
-                        <p class="mt-2 text-slate-500">
+                        <p class="mt-2 text-ink-3">
                             "On iOS: Share, then “Add to Home Screen”."
                         </p>
                     </Show>
 
                     <Show when=move || !install.available.get() && !install.ios>
-                        <p class="mt-2 text-slate-500">
+                        <p class="mt-2 text-ink-3">
                             "This browser has not offered an install prompt. It may already be \
                              installed, or it may not support installing web apps."
                         </p>
@@ -94,20 +94,20 @@ pub fn AboutPage() -> impl IntoView {
                 </div>
             </Show>
 
-            <p class="text-slate-500">
+            <p class="text-ink-3">
                 "Charts, sets and the library live on this device and sync when there is a \
                  connection. Nothing here needs the internet to work — that is the point of it."
             </p>
 
             <ul class="mt-4 space-y-1">
                 <li>
-                    <A href="/settings/storage" attr:class="underline">"Offline storage"</A>
+                    <A href="/settings/storage" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Offline storage"</A>
                 </li>
                 <li>
-                    <A href="/settings/sync/conflicts" attr:class="underline">"Conflicts"</A>
+                    <A href="/settings/sync/conflicts" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Conflicts"</A>
                 </li>
                 <li>
-                    <A href="/library/trash" attr:class="underline">"Trash"</A>
+                    <A href="/library/trash" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Trash"</A>
                 </li>
             </ul>
         </div>
@@ -118,7 +118,7 @@ pub fn AboutPage() -> impl IntoView {
 fn Row(label: &'static str, value: Signal<String>) -> impl IntoView {
     view! {
         <div class="flex gap-2">
-            <dt class="w-56 text-slate-500">{label}</dt>
+            <dt class="w-56 text-ink-3">{label}</dt>
             <dd>{move || value.get()}</dd>
         </div>
     }

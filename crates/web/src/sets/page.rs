@@ -114,27 +114,27 @@ pub fn SetsPage() -> impl IntoView {
             <Show when=move || can_edit>
                 <form class="mb-5 flex flex-wrap gap-2" on:submit=create>
                     <input
-                        class="min-w-48 flex-1 rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                        class="min-w-48 flex-1 rounded-md border border-line-strong px-3 py-2"
                         data-testid="new-set-name"
                         placeholder="New set — Sunday morning, the Anchor, …"
                         prop:value=move || name.get()
                         on:input=move |event| name.set(event_target_value(&event))
                     />
                     <input
-                        class="rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                        class="rounded-md border border-line-strong px-3 py-2"
                         data-testid="new-set-date"
                         type="date"
                         prop:value=move || date.get()
                         on:input=move |event| date.set(event_target_value(&event))
                     />
-                    <button class="rounded bg-slate-900 px-4 py-2 text-white dark:bg-slate-100 dark:text-slate-900">
+                    <button class="rounded-md bg-accent px-4 py-2 text-on-accent">
                         "Create"
                     </button>
                 </form>
 
                 // Said before the set exists, while there is still a date box to fill in.
                 <Show when=move || !name.get().trim().is_empty() && date.get().is_empty()>
-                    <p class="mb-3 text-xs text-amber-700 dark:text-amber-400">
+                    <p class="mb-3 text-xs text-warn">
                         "Without a date this set is not kept offline automatically — you can pin \
                          it instead."
                     </p>
@@ -144,13 +144,13 @@ pub fn SetsPage() -> impl IntoView {
             <Show
                 when=move || !sets.get().is_empty()
                 fallback=|| view! {
-                    <p class="rounded border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500 dark:border-slate-700">
+                    <p class="rounded-md border border-dashed border-line-strong py-10 text-center text-sm text-ink-3">
                         "No sets yet. Create one, or duplicate a past set once you have one."
                     </p>
                 }
             >
                 <ul
-                    class="divide-y divide-slate-200 dark:divide-slate-800"
+                    class="divide-y divide-line "
                     data-testid="set-list"
                 >
                     <For each=move || sets.get() key=|set| set.id.clone() let:set>
@@ -176,15 +176,15 @@ fn SetRow(set: SetRecord, can_edit: bool) -> impl IntoView {
         <li class="flex items-baseline gap-3 py-2">
             <A href=format!("/sets/{}", set.id) attr:class="font-medium">{set.name.clone()}</A>
             {set.scheduled_for.clone().map(|when| view! {
-                <span class="text-sm text-slate-500">{when}</span>
+                <span class="text-sm text-ink-3">{when}</span>
             })}
             {set.venue.clone().map(|venue| view! {
-                <span class="text-sm text-slate-500">{venue}</span>
+                <span class="text-sm text-ink-3">{venue}</span>
             })}
 
             <Show when=move || offline>
                 <span
-                    class="rounded-full bg-sky-100 px-2 text-xs text-sky-900"
+                    class="rounded-full bg-accent/15 px-2 text-xs text-accent"
                     data-testid="set-offline"
                     title=if set.pinned == 1 {
                         "Pinned for offline".to_owned()
@@ -199,7 +199,7 @@ fn SetRow(set: SetRecord, can_edit: bool) -> impl IntoView {
             <Show when=move || can_edit>
                 <span class="ml-auto flex gap-3 text-sm">
                     <button
-                        class="underline"
+                        class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         on:click=move |_| {
                             let (Some(repository), navigate, id) =
                                 (use_sets(), navigate.get_value(), id.get_value())
@@ -217,7 +217,7 @@ fn SetRow(set: SetRecord, can_edit: bool) -> impl IntoView {
                         "Duplicate"
                     </button>
                     <button
-                        class="underline text-red-700 dark:text-red-400"
+                        class="text-live-ink underline-offset-2 hover:underline"
                         on:click=move |_| {
                             let (Some(repository), id) = (use_sets(), id.get_value()) else {
                                 return;
@@ -320,11 +320,11 @@ pub fn SetPage() -> impl IntoView {
         <Show
             when=move || missing.get().is_none()
             fallback=move || view! {
-                <p class="p-6 text-sm text-slate-500">{move || missing.get().unwrap_or_default()}</p>
+                <p class="p-6 text-sm text-ink-3">{move || missing.get().unwrap_or_default()}</p>
             }
         >
             <div class="mx-auto max-w-4xl p-4">
-                <A href="/sets" attr:class="text-sm underline">"← Sets"</A>
+                <A href="/sets" attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Sets"</A>
 
                 <div class="mb-4 mt-2 flex flex-wrap items-center gap-3">
                     <Show
@@ -336,7 +336,7 @@ pub fn SetPage() -> impl IntoView {
                         }
                     >
                         <input
-                            class="rounded border border-transparent bg-transparent text-2xl font-semibold hover:border-slate-300 dark:hover:border-slate-700"
+                            class="rounded-md border border-transparent bg-transparent text-2xl font-semibold hover:border-line-strong"
                             data-testid="set-name"
                             prop:value=move || set.get().map(|set| set.name).unwrap_or_default()
                             on:input=move |event| {
@@ -345,7 +345,7 @@ pub fn SetPage() -> impl IntoView {
                         />
 
                         <input
-                            class="rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
+                            class="rounded-md border border-line-strong px-2 py-1 text-sm"
                             data-testid="set-date"
                             type="date"
                             prop:value=move || {
@@ -362,7 +362,7 @@ pub fn SetPage() -> impl IntoView {
                         />
 
                         <input
-                            class="rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
+                            class="rounded-md border border-line-strong px-2 py-1 text-sm"
                             placeholder="Venue"
                             prop:value=move || {
                                 set.get().and_then(|set| set.venue).unwrap_or_default()
@@ -372,7 +372,7 @@ pub fn SetPage() -> impl IntoView {
                             }
                         />
 
-                        <label class="flex items-center gap-1 text-sm text-slate-500">
+                        <label class="flex items-center gap-1 text-sm text-ink-3">
                             <input
                                 type="checkbox"
                                 data-testid="set-pinned"
@@ -396,7 +396,7 @@ pub fn SetPage() -> impl IntoView {
                                 && is_auto_pinned(false, set.scheduled_for.as_deref(), crate::now_ms())
                         })
                     }>
-                        <span class="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-900">
+                        <span class="rounded-full bg-accent/15 px-2 py-1 text-xs text-accent">
                             "kept offline — it is coming up"
                         </span>
                     </Show>
@@ -405,19 +405,19 @@ pub fn SetPage() -> impl IntoView {
                         <span class="ml-auto flex items-center gap-3 text-sm">
                             <A
                                 href=move || format!("/sets/{}/read/0", set_id.get())
-                                attr:class="underline"
+                                attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                             >
                                 "Read"
                             </A>
                             <A
                                 href=move || format!("/sets/{}/print", set_id.get())
-                                attr:class="underline"
+                                attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                             >
                                 "Print"
                             </A>
 
                             <button
-                                class="rounded bg-slate-900 px-3 py-1 text-white dark:bg-slate-100 dark:text-slate-900"
+                                class="rounded-md bg-accent px-3 py-1 text-on-accent"
                                 data-testid="present"
                                 prop:disabled=move || presenting.get()
                                 on:click=move |_| present()
@@ -431,13 +431,13 @@ pub fn SetPage() -> impl IntoView {
                 <Show
                     when=move || !items.get().is_empty()
                     fallback=|| view! {
-                        <p class="rounded border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500 dark:border-slate-700">
+                        <p class="rounded-md border border-dashed border-line-strong py-10 text-center text-sm text-ink-3">
                             "Nothing in this set yet."
                         </p>
                     }
                 >
                     <ol
-                        class="divide-y divide-slate-200 dark:divide-slate-800"
+                        class="divide-y divide-line "
                         data-testid="running-order"
                     >
                         {move || items
@@ -461,7 +461,7 @@ pub fn SetPage() -> impl IntoView {
 
                 <Show when=move || can_edit>
                     <button
-                        class="mt-4 rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                        class="mt-4 rounded-md bg-accent px-4 py-2 text-sm text-on-accent"
                         data-testid="add-items"
                         on:click=move |_| adding.set(true)
                     >
@@ -504,7 +504,7 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
 
     view! {
         <div class="flex flex-wrap items-baseline gap-2">
-            <span class="w-6 text-sm text-slate-400">{index + 1}</span>
+            <span class="w-6 text-sm text-ink-4">{index + 1}</span>
 
             {match song_id {
                 Some(song_id) => view! {
@@ -521,7 +521,7 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
 
                 None => view! {
                     <span class=if resolved.missing {
-                        "font-medium text-amber-700 dark:text-amber-400"
+                        "font-medium text-warn"
                     } else {
                         "font-medium"
                     }>
@@ -535,14 +535,14 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
             }}
 
             {resolved.item.item_type.clone().map(|kind| view! {
-                <span class="rounded bg-slate-100 px-2 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <span class="rounded-md bg-raised px-2 text-xs text-ink-3">
                     {kind}
                 </span>
             })}
 
             {resolved.key.map(|key| view! {
                 <span
-                    class="text-sm text-slate-500"
+                    class="text-sm text-ink-3"
                     data-testid="item-key"
                     title=format!("Key from the {}", resolved.source.as_str())
                 >
@@ -557,7 +557,7 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
                 <span class="ml-auto flex flex-wrap items-center gap-2 text-sm">
                     <Show when=move || is_song>
                         <select
-                            class="rounded border border-slate-300 bg-transparent px-1 dark:border-slate-700"
+                            class="rounded-md border border-line-strong bg-transparent px-1"
                             data-testid="key-override"
                             title="A key for the whole band, for this set only"
                             prop:value=move || {
@@ -582,7 +582,7 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
                         </select>
 
                         <select
-                            class="rounded border border-slate-300 bg-transparent px-1 dark:border-slate-700"
+                            class="rounded-md border border-line-strong bg-transparent px-1"
                             title="Capo for this set"
                             prop:value=move || {
                                 item.get_value()
@@ -607,7 +607,7 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
                     </Show>
 
                     <input
-                        class="w-40 rounded border border-slate-300 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900"
+                        class="w-40 rounded-md border border-line-strong px-2 py-1 text-xs"
                         placeholder="Note — start at chorus…"
                         value=note.get_value().unwrap_or_default()
                         on:blur=move |event| {
@@ -621,7 +621,7 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
                     />
 
                     <button
-                        class="text-red-700 underline dark:text-red-400"
+                        class="text-live-ink underline-offset-2 hover:underline"
                         on:click=move |_| {
                             let Some(repository) = use_sets() else {
                                 return;
@@ -640,11 +640,11 @@ fn Item(index: usize, resolved: ResolvedItem, can_edit: bool) -> impl IntoView {
             </Show>
 
             {(!can_edit).then(|| note.get_value()).flatten().map(|note| view! {
-                <span class="text-xs text-slate-500">{note}</span>
+                <span class="text-xs text-ink-3">{note}</span>
             })}
 
             {content.map(|content| view! {
-                <p class="basis-full pl-6 text-sm text-slate-500">{content}</p>
+                <p class="basis-full pl-6 text-sm text-ink-3">{content}</p>
             })}
         </div>
     }
@@ -740,24 +740,24 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
 
     view! {
         <div
-            class="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 p-6"
+            class="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-6"
             on:click=move |_| on_close.run(())
         >
             <div
-                class="flex max-h-[80vh] w-[36rem] flex-col rounded bg-white p-4 shadow-lg dark:bg-slate-900"
+                class="flex max-h-[80vh] w-[36rem] flex-col rounded-md bg-surface p-4 shadow-lg"
                 data-testid="add-items-dialog"
                 on:click=|event| event.stop_propagation()
             >
                 <h2 class="mb-2 font-semibold">"Add to the set"</h2>
 
                 <input
-                    class="mb-2 rounded border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
+                    class="mb-2 rounded-md border border-line-strong px-3 py-2"
                     placeholder="Search the library…"
                     prop:value=move || query.get()
                     on:input=move |event| query.set(event_target_value(&event))
                 />
 
-                <ul class="mb-3 min-h-24 flex-1 overflow-auto rounded border border-slate-200 dark:border-slate-800">
+                <ul class="mb-3 min-h-24 flex-1 overflow-auto rounded-md border border-line">
                     {move || matches
                         .get()
                         .into_iter()
@@ -773,7 +773,7 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
                                 <li>
                                     <button
                                         class=move || if order.get().is_some() {
-                                            "flex w-full items-baseline gap-2 px-2 py-1 text-left text-sm bg-sky-50 dark:bg-sky-950"
+                                            "flex w-full items-baseline gap-2 px-2 py-1 text-left text-sm bg-accent/10"
                                         } else {
                                             "flex w-full items-baseline gap-2 px-2 py-1 text-left text-sm"
                                         }
@@ -783,7 +783,7 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
                                             move |_| toggle(song.clone())
                                         }
                                     >
-                                        <span class="w-5 text-xs text-slate-400">
+                                        <span class="w-5 text-xs text-ink-4">
                                             {move || order
                                                 .get()
                                                 .map(|at| (at + 1).to_string())
@@ -791,10 +791,10 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
                                         </span>
                                         <span>{song.title.clone()}</span>
                                         {song.artist.clone().map(|artist| view! {
-                                            <span class="text-slate-500">{artist}</span>
+                                            <span class="text-ink-3">{artist}</span>
                                         })}
                                         {song.original_key.clone().map(|key| view! {
-                                            <span class="ml-auto text-slate-500">{key}</span>
+                                            <span class="ml-auto text-ink-3">{key}</span>
                                         })}
                                     </button>
                                 </li>
@@ -805,7 +805,7 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
 
                 <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
                     <select
-                        class="rounded border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700"
+                        class="rounded-md border border-line-strong bg-transparent px-2 py-1"
                         prop:value=move || kind.get()
                         on:change=move |event| kind.set(event_target_value(&event))
                     >
@@ -816,14 +816,14 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
                     </select>
 
                     <input
-                        class="flex-1 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-950"
+                        class="flex-1 rounded-md border border-line-strong px-2 py-1"
                         placeholder="Its text — read Psalm 121, roll the video…"
                         prop:value=move || content.get()
                         on:input=move |event| content.set(event_target_value(&event))
                     />
 
                     <button
-                        class="rounded border border-slate-300 px-3 py-1 dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-3 py-1"
                         on:click=add_item
                     >
                         "Add item"
@@ -832,7 +832,7 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
 
                 <div class="flex gap-2">
                     <button
-                        class="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900"
+                        class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent disabled:opacity-40"
                         prop:disabled=move || picked.get().is_empty()
                         on:click=add_songs
                     >
@@ -842,7 +842,7 @@ fn AddItems(set_id: Signal<String>, on_close: Callback<()>) -> impl IntoView {
                             many => format!("Add {many} songs"),
                         }}
                     </button>
-                    <button class="text-sm underline" on:click=move |_| on_close.run(())>
+                    <button class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| on_close.run(())>
                         "Close"
                     </button>
                 </div>

@@ -140,13 +140,13 @@ pub fn ImportDialog(folder_id: Signal<Option<String>>, on_close: Callback<()>) -
         Signal::derive(move || results.get().unwrap_or_default().len() - failures.get().len());
 
     view! {
-        <div class="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 p-6">
+        <div class="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-6">
             <div
-                class="max-h-[80vh] w-[32rem] overflow-auto rounded bg-white p-4 shadow-lg dark:bg-slate-900"
+                class="max-h-[80vh] w-[32rem] overflow-auto rounded-md bg-surface p-4 shadow-lg"
                 data-testid="import-dialog"
             >
                 <h2 class="mb-2 font-semibold">"Import songs"</h2>
-                <p class="mb-3 text-sm text-slate-500">
+                <p class="mb-3 text-sm text-ink-3">
                     "ChordPro (" <code>".cho"</code> ", " <code>".chopro"</code> ", "
                     <code>".pro"</code> ") or plain chords-over-lyrics text. Files that cannot be \
                      read are listed; the rest still import."
@@ -187,7 +187,7 @@ pub fn ImportDialog(folder_id: Signal<Option<String>>, on_close: Callback<()>) -
                                     key=|failure| failure.filename.clone()
                                     let:failure
                                 >
-                                    <li class="text-amber-700 dark:text-amber-400">
+                                    <li class="text-warn">
                                         <span class="font-mono text-xs">
                                             {failure.filename.clone()}
                                         </span>
@@ -201,7 +201,7 @@ pub fn ImportDialog(folder_id: Signal<Option<String>>, on_close: Callback<()>) -
                 </Show>
 
                 <button
-                    class="rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                    class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent"
                     on:click=move |_| on_close.run(())
                 >
                     {move || if results.get().is_none() { "Cancel" } else { "Done" }}

@@ -62,9 +62,9 @@ pub fn TrashPage() -> impl IntoView {
 
     view! {
         <div class="mx-auto max-w-3xl p-4">
-            <A href="/library" attr:class="text-sm underline">"← Library"</A>
+            <A href="/library" attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Library"</A>
             <h2 class="mb-1 mt-3 text-2xl font-semibold" data-testid="screen-title">"Trash"</h2>
-            <p class="mb-4 text-sm text-slate-500">
+            <p class="mb-4 text-sm text-ink-3">
                 {format!(
                     "Deleted songs are kept for {KEEP_DAYS} days and can be restored on any device.",
                 )}
@@ -73,10 +73,10 @@ pub fn TrashPage() -> impl IntoView {
             <Show
                 when=move || !rows.get().is_empty()
                 fallback=|| view! {
-                    <p class="text-sm text-slate-500">"Nothing has been deleted."</p>
+                    <p class="text-sm text-ink-3">"Nothing has been deleted."</p>
                 }
             >
-                <ul class="divide-y divide-slate-200 dark:divide-slate-800" data-testid="trash">
+                <ul class="divide-y divide-line " data-testid="trash">
                     <For each=move || rows.get() key=|song| song.id.clone() let:song>
                         <Deleted song can_edit />
                     </For>
@@ -94,13 +94,13 @@ fn Deleted(song: Song, can_edit: bool) -> impl IntoView {
     view! {
         <li class="flex items-center gap-3 py-2">
             <span class="font-medium">{song.title.clone()}</span>
-            <span class="text-xs text-slate-500">
+            <span class="text-xs text-ink-3">
                 {days_left(song.sync.deleted_at.as_deref(), crate::now_ms())}
             </span>
 
             <Show when=move || can_edit>
                 <button
-                    class="ml-auto text-sm underline"
+                    class="ml-auto text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                     data-testid="restore-song"
                     on:click=move |_| {
                         let (Some(library), id) = (library.get_value(), id.get_value()) else {

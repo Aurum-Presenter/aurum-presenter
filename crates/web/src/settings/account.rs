@@ -108,9 +108,9 @@ pub fn AccountPage() -> impl IntoView {
 
     view! {
         <div class="mx-auto max-w-2xl p-4">
-            <A href="/library" attr:class="text-sm underline">"← Library"</A>
+            <A href="/library" attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline">"← Library"</A>
             <h2 class="mb-1 mt-3 text-2xl font-semibold" data-testid="screen-title">"Account"</h2>
-            <p class="mb-4 text-sm text-slate-500">
+            <p class="mb-4 text-sm text-ink-3">
                 {move || {
                     let me = me.get();
 
@@ -120,7 +120,7 @@ pub fn AccountPage() -> impl IntoView {
 
             <Show when=move || problem.get().is_some()>
                 <p
-                    class="mb-3 rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800"
+                    class="mb-3 rounded-md border border-live/50 bg-live/10 p-2 text-sm text-live-ink"
                     data-testid="account-problem"
                 >
                     {move || problem.get()}
@@ -128,7 +128,7 @@ pub fn AccountPage() -> impl IntoView {
             </Show>
 
             <Show when=move || note.get().is_some()>
-                <p class="mb-3 rounded border border-sky-300 bg-sky-50 p-2 text-sm text-sky-900">
+                <p class="mb-3 rounded-md border border-accent/60 bg-accent/10 p-2 text-sm text-accent">
                     {move || note.get()}
                 </p>
             </Show>
@@ -137,7 +137,7 @@ pub fn AccountPage() -> impl IntoView {
                 <h3 class="mb-1 font-semibold">"Two-factor authentication"</h3>
 
                 <Show when=move || { me.get().totp.required && !enrolled.get() }>
-                    <p class="mb-2 rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
+                    <p class="mb-2 rounded-md border border-warn/50 bg-warn/10 p-2 text-sm text-warn">
                         "You own a band workspace, so this account needs a second factor."
                     </p>
                 </Show>
@@ -145,7 +145,7 @@ pub fn AccountPage() -> impl IntoView {
                 {move || match (enrolled.get(), enrolling.get()) {
                     (true, _) => view! {
                         <div class="text-sm">
-                            <p class="mb-2 text-slate-500">
+                            <p class="mb-2 text-ink-3">
                                 {move || format!(
                                     "Enabled. {} recovery code(s) left.",
                                     remaining.get(),
@@ -154,27 +154,27 @@ pub fn AccountPage() -> impl IntoView {
 
                             <div class="mb-2 flex flex-wrap gap-2">
                                 <input
-                                    class="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-900"
+                                    class="rounded-md border border-line-strong px-2 py-1"
                                     type="password"
                                     placeholder="your password"
                                     prop:value=move || password.get()
                                     on:input=move |event| password.set(event_target_value(&event))
                                 />
                                 <input
-                                    class="w-28 rounded border border-slate-300 px-2 py-1 tracking-widest dark:border-slate-700 dark:bg-slate-900"
+                                    class="w-28 rounded-md border border-line-strong px-2 py-1 tracking-widest"
                                     inputmode="numeric"
                                     placeholder="000000"
                                     prop:value=move || code.get()
                                     on:input=move |event| code.set(event_target_value(&event))
                                 />
                                 <button
-                                    class="rounded border border-slate-300 px-3 dark:border-slate-700"
+                                    class="rounded-md border border-line-strong px-3"
                                     on:click=regenerate.clone()
                                 >
                                     "New recovery codes"
                                 </button>
                                 <button
-                                    class="rounded border border-red-300 px-3 text-red-700 dark:text-red-400"
+                                    class="rounded-md border border-live/50 px-3 text-live-ink"
                                     data-testid="disable-totp"
                                     on:click=disable.clone()
                                 >
@@ -182,7 +182,7 @@ pub fn AccountPage() -> impl IntoView {
                                 </button>
                             </div>
 
-                            <p class="text-xs text-slate-500">
+                            <p class="text-xs text-ink-3">
                                 "Turning it off is refused while you own a band workspace — hand \
                                  ownership over first, or it would leave the band without one."
                             </p>
@@ -192,7 +192,7 @@ pub fn AccountPage() -> impl IntoView {
 
                     (false, None) => view! {
                         <button
-                            class="rounded bg-slate-900 px-4 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                            class="rounded-md bg-accent px-4 py-2 text-sm text-on-accent"
                             data-testid="enrol-totp"
                             on:click=begin.clone()
                         >
@@ -203,22 +203,22 @@ pub fn AccountPage() -> impl IntoView {
 
                     (false, Some(started)) => view! {
                         <div class="text-sm">
-                            <p class="mb-2 text-slate-500">
+                            <p class="mb-2 text-ink-3">
                                 "Add this to your authenticator, then type the six digits it shows."
                             </p>
                             <p
-                                class="mb-2 break-all rounded bg-slate-100 p-2 font-mono text-xs dark:bg-slate-800"
+                                class="mb-2 break-all rounded-md bg-raised p-2 font-mono text-xs"
                                 data-testid="totp-secret"
                             >
                                 {started.secret.clone()}
                             </p>
-                            <p class="mb-2 break-all text-xs text-slate-400">
+                            <p class="mb-2 break-all text-xs text-ink-4">
                                 {started.provisioning_uri.clone()}
                             </p>
 
                             <div class="flex gap-2">
                                 <input
-                                    class="w-28 rounded border border-slate-300 px-2 py-1 tracking-widest dark:border-slate-700 dark:bg-slate-900"
+                                    class="w-28 rounded-md border border-line-strong px-2 py-1 tracking-widest"
                                     inputmode="numeric"
                                     placeholder="000000"
                                     data-testid="totp-code"
@@ -226,7 +226,7 @@ pub fn AccountPage() -> impl IntoView {
                                     on:input=move |event| code.set(event_target_value(&event))
                                 />
                                 <button
-                                    class="rounded bg-slate-900 px-3 text-white dark:bg-slate-100 dark:text-slate-900"
+                                    class="rounded-md bg-accent px-3 text-on-accent"
                                     data-testid="confirm-totp"
                                     on:click=confirm.clone()
                                 >
@@ -241,11 +241,11 @@ pub fn AccountPage() -> impl IntoView {
 
             <Show when=move || codes.get().is_some()>
                 <section
-                    class="mb-6 rounded border border-slate-300 p-3 dark:border-slate-700"
+                    class="mb-6 rounded-md border border-line-strong p-3"
                     data-testid="recovery-codes"
                 >
                     <h3 class="mb-1 font-semibold">"Recovery codes"</h3>
-                    <p class="mb-2 text-sm text-slate-500">
+                    <p class="mb-2 text-sm text-ink-3">
                         "Shown once. Each works one time, in place of a code from your \
                          authenticator. Keep them somewhere that is not this device."
                     </p>
@@ -261,11 +261,11 @@ pub fn AccountPage() -> impl IntoView {
             </Show>
 
             <ul class="space-y-1 text-sm">
-                <li><A href="/settings/members" attr:class="underline">
+                <li><A href="/settings/members" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">
                     "Members of this workspace"
                 </A></li>
-                <li><A href="/settings/storage" attr:class="underline">"Offline storage"</A></li>
-                <li><A href="/settings/about" attr:class="underline">"About"</A></li>
+                <li><A href="/settings/storage" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"Offline storage"</A></li>
+                <li><A href="/settings/about" attr:class="text-ink-3 hover:text-ink underline-offset-2 hover:underline">"About"</A></li>
             </ul>
         </div>
     }

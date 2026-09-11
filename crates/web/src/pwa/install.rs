@@ -200,7 +200,7 @@ pub fn InstallBanner() -> impl IntoView {
             !installed.get() && !dismissed.get() && (available.get() || install.ios)
         }>
             <div
-                class="flex flex-wrap items-center gap-3 border-b border-sky-200 bg-sky-50 px-4 py-2 text-sm text-sky-900"
+                class="flex flex-wrap items-center gap-3 border-b border-accent/40 bg-accent/10 px-4 py-2 text-sm text-accent"
                 data-testid="install-banner"
             >
                 <span>
@@ -208,29 +208,29 @@ pub fn InstallBanner() -> impl IntoView {
                      network."
                 </span>
 
-                <button class="rounded bg-slate-900 px-3 py-1 text-white" on:click=ask>
+                <button class="rounded-md bg-accent px-3 py-1 text-on-accent" on:click=ask>
                     "Install"
                 </button>
 
-                <button class="underline" on:click=move |_| dismiss()>"Not now"</button>
+                <button class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| dismiss()>"Not now"</button>
             </div>
 
             <Show when=move || showing_ios.get()>
                 <div
-                    class="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 p-6"
+                    class="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-6"
                     on:click=move |_| showing_ios.set(false)
                 >
                     <div
-                        class="w-80 rounded bg-white p-4 text-sm dark:bg-slate-900"
+                        class="w-80 rounded-md bg-surface p-4 text-sm"
                         on:click=|event| event.stop_propagation()
                     >
                         <h2 class="mb-2 font-semibold">"Add to the Home Screen"</h2>
-                        <ol class="mb-3 list-decimal space-y-1 pl-4 text-slate-600 dark:text-slate-300">
+                        <ol class="mb-3 list-decimal space-y-1 pl-4 text-ink-3">
                             <li>"Tap the Share button in Safari."</li>
                             <li>"Choose “Add to Home Screen”."</li>
                             <li>"Open Aurum from the icon — it will work with no signal."</li>
                         </ol>
-                        <button class="underline" on:click=move |_| dismiss()>"Got it"</button>
+                        <button class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| dismiss()>"Got it"</button>
                     </div>
                 </div>
             </Show>

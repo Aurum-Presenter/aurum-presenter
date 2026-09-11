@@ -116,7 +116,7 @@ pub fn ReaderPage() -> impl IntoView {
     view! {
         <Show
             when=move || current.get().is_some()
-            fallback=|| view! { <p class="p-6 text-sm text-slate-500">"Loading…"</p> }
+            fallback=|| view! { <p class="p-6 text-sm text-ink-3">"Loading…"</p> }
         >
             <div
                 class="mx-auto max-w-4xl p-4"
@@ -141,16 +141,16 @@ pub fn ReaderPage() -> impl IntoView {
                     }
                 }
             >
-                <header class="mb-3 flex items-center gap-3 border-b border-slate-200 pb-2 dark:border-slate-800">
+                <header class="mb-3 flex items-center gap-3 border-b border-line pb-2">
                     <A
                         href=move || format!("/sets/{}", set_id.get())
-                        attr:class="text-sm underline"
+                        attr:class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                     >
                         {move || format!("← {}", name.get())}
                     </A>
 
                     <button
-                        class="text-sm underline"
+                        class="text-sm text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                         data-testid="reader-position"
                         on:click=move |_| jumping.set(true)
                     >
@@ -159,7 +159,7 @@ pub fn ReaderPage() -> impl IntoView {
 
                     <span class="ml-auto flex gap-2 text-sm">
                         <button
-                            class="rounded border border-slate-300 px-3 dark:border-slate-700"
+                            class="rounded-md border border-line-strong px-3"
                             data-testid="reader-back"
                             prop:disabled=move || position.get() == 0
                             on:click=move |_| step(-1)
@@ -167,7 +167,7 @@ pub fn ReaderPage() -> impl IntoView {
                             "←"
                         </button>
                         <button
-                            class="rounded border border-slate-300 px-3 dark:border-slate-700"
+                            class="rounded-md border border-line-strong px-3"
                             data-testid="reader-forward"
                             prop:disabled=move || position.get() + 1 >= count.get()
                             on:click=move |_| step(1)
@@ -183,11 +183,11 @@ pub fn ReaderPage() -> impl IntoView {
 
                 <Show when=move || jumping.get()>
                     <div
-                        class="fixed inset-0 z-20 flex items-end bg-slate-900/50"
+                        class="fixed inset-0 z-20 flex items-end bg-black/60"
                         on:click=move |_| jumping.set(false)
                     >
                         <ul
-                            class="max-h-[70vh] w-full overflow-auto rounded-t bg-white p-2 dark:bg-slate-900"
+                            class="max-h-[70vh] w-full overflow-auto rounded-t bg-surface p-2"
                             on:click=|event| event.stop_propagation()
                         >
                             {move || items
@@ -207,10 +207,10 @@ pub fn ReaderPage() -> impl IntoView {
                                                 jumping.set(false);
                                             }
                                         >
-                                            <span class="w-6 text-slate-400">{index + 1}</span>
+                                            <span class="w-6 text-ink-4">{index + 1}</span>
                                             <span>{item.title.clone()}</span>
                                             {item.key.map(|key| view! {
-                                                <span class="ml-auto text-slate-500">
+                                                <span class="ml-auto text-ink-3">
                                                     {key.to_string()}
                                                 </span>
                                             })}
@@ -243,21 +243,21 @@ pub fn ReaderItem(resolved: ResolvedItem, display: Signal<Display>) -> impl Into
             <h2 class="text-xl font-semibold">
                 {resolved.title.clone()}
                 {resolved.key.map(|key| view! {
-                    <span class="ml-3 text-base font-normal text-slate-500">{key.to_string()}</span>
+                    <span class="ml-3 text-base font-normal text-ink-3">{key.to_string()}</span>
                 })}
                 {(capo > 0).then(|| view! {
-                    <span class="ml-2 text-base font-normal text-slate-500">
+                    <span class="ml-2 text-base font-normal text-ink-3">
                         {format!("capo {capo}")}
                     </span>
                 })}
             </h2>
 
             {resolved.item.note.clone().map(|note| view! {
-                <p class="mb-2 rounded bg-amber-50 px-2 py-1 text-sm text-amber-900">{note}</p>
+                <p class="mb-2 rounded-md bg-warn/10 px-2 py-1 text-sm text-warn">{note}</p>
             })}
 
             {resolved.missing.then(|| view! {
-                <p class="mb-2 text-sm text-amber-700 dark:text-amber-400">
+                <p class="mb-2 text-sm text-warn">
                     "This song has been deleted from the library. The set keeps its title so the \
                      running order still reads."
                 </p>
@@ -284,7 +284,7 @@ pub fn ReaderItem(resolved: ResolvedItem, display: Signal<Display>) -> impl Into
                 }
 
                 (true, false) => view! {
-                    <p class="py-4 text-sm text-slate-500">"No chart for this song yet."</p>
+                    <p class="py-4 text-sm text-ink-3">"No chart for this song yet."</p>
                 }
                 .into_any(),
 

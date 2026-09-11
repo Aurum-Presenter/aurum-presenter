@@ -98,7 +98,7 @@ fn SectionView(
     view! {
         <section class="mb-5 break-inside-avoid">
             <Show when=move || display.get().show_sections && kind != SectionKind::None>
-                <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">
                     {heading.clone()}
                 </h3>
             </Show>
@@ -114,7 +114,7 @@ fn SectionView(
 #[component]
 fn Line(line: RenderedLine, display: Signal<Display>) -> impl IntoView {
     if let Some(comment) = &line.comment {
-        return view! { <p class="my-1 italic text-slate-500">{comment.clone()}</p> }.into_any();
+        return view! { <p class="my-1 italic text-ink-3">{comment.clone()}</p> }.into_any();
     }
 
     let rows = line.over_lyrics_rows();
@@ -143,7 +143,7 @@ fn Line(line: RenderedLine, display: Signal<Display>) -> impl IntoView {
             Mode::Chords if chords_only.is_empty() => ().into_any(),
 
             Mode::Chords => view! {
-                <p class="font-mono font-semibold text-sky-700 dark:text-sky-300">
+                <p class="font-mono font-semibold text-accent">
                     {chords_only.join("  ")}
                 </p>
             }
@@ -159,7 +159,7 @@ fn Line(line: RenderedLine, display: Signal<Display>) -> impl IntoView {
                             .map(|segment| view! {
                                 <span>
                                     {segment.chord.map(|chord| view! {
-                                        <span class="font-mono font-semibold text-sky-700 dark:text-sky-300">
+                                        <span class="font-mono font-semibold text-accent">
                                             {format!("[{chord}]")}
                                         </span>
                                     })}
@@ -179,7 +179,7 @@ fn Line(line: RenderedLine, display: Signal<Display>) -> impl IntoView {
 
                 view! {
                     <div class="font-mono leading-tight">
-                        <div class="whitespace-pre font-semibold text-sky-700 dark:text-sky-300">
+                        <div class="whitespace-pre font-semibold text-accent">
                             {if chords.is_empty() { " ".to_owned() } else { chords }}
                         </div>
                         <div class="whitespace-pre">
@@ -200,7 +200,7 @@ fn Line(line: RenderedLine, display: Signal<Display>) -> impl IntoView {
 fn PlainFallback(body: Signal<String>, chart: Signal<Chart>) -> impl IntoView {
     view! {
         <div>
-            <p class="mb-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            <p class="mb-3 rounded-md border border-warn/50 bg-warn/10 p-3 text-sm text-warn">
                 {move || {
                     let chart = chart.get();
                     let error = chart.error.as_ref();

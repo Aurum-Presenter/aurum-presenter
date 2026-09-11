@@ -6,6 +6,7 @@
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::{A, Outlet};
+use leptos_router::hooks::use_location;
 
 use super::use_workspace;
 use crate::blobs::pins::held;
@@ -16,6 +17,24 @@ use crate::prefs::user;
 use crate::pwa::install::InstallBanner;
 use crate::pwa::update::UpdateToast;
 use crate::settings::SyncPanel;
+
+/// A navigation tab's classes. The current section is a filled pill rather than an underline:
+/// on a near-black ground an underline is the first thing to disappear at a glance.
+///
+/// A tab owns its whole section, not just its own path — a song is somewhere in the library, and
+/// the library is what `/` shows — so the highlight does not go out whenever somebody opens
+/// something.
+fn tab(href: &str, path: &str) -> &'static str {
+    let here = path == href
+        || path.starts_with(&format!("{href}/"))
+        || (href == "/library" && (path == "/" || path.starts_with("/song/")));
+
+    if here {
+        "rounded-md bg-raised px-3 py-1.5 font-semibold text-ink"
+    } else {
+        "rounded-md px-3 py-1.5 text-ink-3 hover:text-ink"
+    }
+}
 
 #[component]
 pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
@@ -83,8 +102,10 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
 
     let switching = context.clone();
 
+    let path = Signal::derive(move || use_location().pathname.get());
+
     view! {
-        <div class="min-h-dvh bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <div class="min-h-dvh bg-ground text-ink">
             <InstallBanner />
             <UpdateToast />
 
@@ -95,17 +116,33 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
                 />
             </Show>
 
-            <header class="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-                <A href="/library" attr:class="text-lg font-semibold">"Aurum"</A>
+            <header class="flex flex-wrap items-center gap-3 border-b border-line bg-surface px-4 py-2.5">
+                <A href="/library" attr:class="flex items-center gap-2 text-sm font-bold">
+                    <svg
+                        class="size-5 text-accent"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3 L20 8 L20 16 L12 21 L4 16 L4 8 Z" />
+                        <path d="M12 8.5 L12 15.5" />
+                        <path d="M9 11 L15 11" />
+                    </svg>
+                    "Aurum"
+                </A>
 
-                <nav class="flex gap-3 text-sm">
-                    <A href="/library" attr:class="text-slate-500">"Library"</A>
-                    <A href="/sets" attr:class="text-slate-500">"Sets"</A>
-                    <A href="/join" attr:class="text-slate-500">"Join session"</A>
+                <nav class="flex gap-1 text-sm">
+                    <A href="/library" attr:class=move || tab("/library", &path.get())>"Library"</A>
+                    <A href="/sets" attr:class=move || tab("/sets", &path.get())>"Sets"</A>
+                    <A href="/join" attr:class=move || tab("/join", &path.get())>"Join session"</A>
                 </nav>
 
                 <select
-                    class="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
+                    class="h-8 rounded-md border border-line-strong bg-transparent px-2 text-sm text-ink-2"
                     data-testid="workspace-picker"
                     prop:value=move || workspace.get().id
                     on:change=move |event| switching.set_workspace(&event_target_value(&event))
@@ -123,17 +160,21 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
 
                 <button
                     class=move || format!(
-                        "ml-auto rounded-full px-3 py-1 text-xs font-medium {}",
+                        "ml-auto flex h-7 items-center gap-2 rounded-full px-3 text-xs font-medium {}",
                         if online.get() {
-                            "bg-emerald-100 text-emerald-900"
+                            "bg-ok/15 text-ok"
                         } else {
-                            "bg-amber-100 text-amber-900"
+                            "bg-warn/15 text-warn"
                         },
                     )
                     data-testid="sync-chip"
                     title="Nothing is blocked while offline; the outbox drains when a connection returns."
                     on:click=move |_| sync_open.set(true)
                 >
+                    <span class=move || format!(
+                        "size-1.5 rounded-full {}",
+                        if online.get() { "bg-ok" } else { "bg-warn" },
+                    )></span>
                     {move || {
                         let state = if online.get() { "synced" } else { "offline" };
                         let waiting = pending.get();
@@ -146,8 +187,13 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
                     }}
                 </button>
 
-                <A href="/settings/account" attr:class="text-sm underline">"Account"</A>
-                <button class="text-sm underline" on:click=move |_| on_sign_out.run(())>
+                <A href="/settings/account" attr:class="text-sm text-ink-3 hover:text-ink">
+                    "Account"
+                </A>
+                <button
+                    class="text-sm text-ink-3 hover:text-ink"
+                    on:click=move |_| on_sign_out.run(())
+                >
                     {if local { "Sign in" } else { "Sign out" }}
                 </button>
             </header>
@@ -261,12 +307,12 @@ fn OutOfRoom(full: Signal<StorageFull>, on_close: Callback<()>) -> impl IntoView
 
     view! {
         <div
-            class="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 p-6"
+            class="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-6"
             data-testid="out-of-room"
         >
-            <div class="max-h-full w-[32rem] overflow-auto rounded bg-white p-4 shadow-xl dark:bg-slate-900">
+            <div class="max-h-full w-[32rem] overflow-auto rounded-md bg-surface p-4 shadow-xl">
                 <h2 class="mb-1 text-lg font-semibold">"This device is out of room"</h2>
-                <p class="mb-3 text-sm text-slate-600 dark:text-slate-400">
+                <p class="mb-3 text-sm text-ink-3">
                     {move || {
                         let full = full.get();
 
@@ -280,13 +326,13 @@ fn OutOfRoom(full: Signal<StorageFull>, on_close: Callback<()>) -> impl IntoView
                     }}
                 </p>
 
-                <ul class="mb-3 divide-y divide-slate-200 text-sm dark:divide-slate-800">
+                <ul class="mb-3 divide-y divide-line text-sm">
                     {move || {
                         let held = pins.get().unwrap_or_default();
 
                         if held.is_empty() {
                             return view! {
-                                <li class="py-2 text-slate-500">
+                                <li class="py-2 text-ink-3">
                                     "Nothing is pinned. The browser itself has no room left for \
                                      this origin."
                                 </li>
@@ -307,7 +353,7 @@ fn OutOfRoom(full: Signal<StorageFull>, on_close: Callback<()>) -> impl IntoView
                                 view! {
                                     <li class="flex items-baseline gap-2 py-2">
                                         <span>{pin.name.clone()}</span>
-                                        <span class="text-xs text-slate-500">
+                                        <span class="text-xs text-ink-3">
                                             {format!(
                                                 "{} · {}",
                                                 if kind == Kind::Set { "set" } else { "song" },
@@ -317,12 +363,12 @@ fn OutOfRoom(full: Signal<StorageFull>, on_close: Callback<()>) -> impl IntoView
 
                                         <span class="ml-auto flex items-center gap-2">
                                             {coming_up.then(|| view! {
-                                                <span class="text-xs text-slate-500">
+                                                <span class="text-xs text-ink-3">
                                                     "kept because it is coming up"
                                                 </span>
                                             })}
                                             <button
-                                                class="underline"
+                                                class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                                                 prop:disabled=move || busy.get()
                                                 on:click=move |_| {
                                                     reclaim(Some((kind, id.clone())))
@@ -341,13 +387,13 @@ fn OutOfRoom(full: Signal<StorageFull>, on_close: Callback<()>) -> impl IntoView
 
                 <div class="flex flex-wrap items-center gap-3 text-sm">
                     <button
-                        class="rounded border border-slate-300 px-3 py-1 dark:border-slate-700"
+                        class="rounded-md border border-line-strong px-3 py-1"
                         prop:disabled=move || busy.get()
                         on:click=move |_| reclaim(None)
                     >
                         "Clear files that were only opened"
                     </button>
-                    <button class="ml-auto underline" on:click=move |_| on_close.run(())>
+                    <button class="ml-auto text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| on_close.run(())>
                         "Not now"
                     </button>
                 </div>

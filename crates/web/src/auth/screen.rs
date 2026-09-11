@@ -150,21 +150,21 @@ pub fn AuthScreen(
     };
 
     view! {
-        <div class="flex min-h-dvh items-center justify-center bg-white p-6 text-slate-900">
+        <div class="flex min-h-dvh items-center justify-center bg-surface p-6 text-ink">
             <form class="w-80 space-y-3" on:submit=submit>
                 <h1 class="text-xl font-semibold">{move || mode.get().heading()}</h1>
 
                 <Show when=move || invited && mode.get() == Mode::SignIn>
-                    <p class="rounded border border-sky-300 bg-sky-50 p-2 text-sm text-sky-900">
+                    <p class="rounded-md border border-accent/60 bg-accent/10 p-2 text-sm text-accent">
                         "Sign in with the address the invitation was sent to, and it will be waiting."
                     </p>
                 </Show>
 
                 <Show when=move || note.get().is_some()>
-                    <p class="text-sm text-sky-700">{move || note.get()}</p>
+                    <p class="text-sm text-accent">{move || note.get()}</p>
                 </Show>
                 <Show when=move || error.get().is_some()>
-                    <p class="text-sm text-red-600" data-testid="auth-error">{move || error.get()}</p>
+                    <p class="text-sm text-live-ink" data-testid="auth-error">{move || error.get()}</p>
                 </Show>
 
                 <Show
@@ -172,7 +172,7 @@ pub fn AuthScreen(
                     fallback=move || view! {
                         <Show when=move || mode.get() != Mode::Reset>
                             <input
-                                class="w-full rounded border border-slate-300 px-3 py-2"
+                                class="w-full rounded-md border border-line-strong px-3 py-2"
                                 type="email"
                                 autocomplete="email"
                                 placeholder="Email"
@@ -183,7 +183,7 @@ pub fn AuthScreen(
 
                         <Show when=move || mode.get() == Mode::Register>
                             <input
-                                class="w-full rounded border border-slate-300 px-3 py-2"
+                                class="w-full rounded-md border border-line-strong px-3 py-2"
                                 placeholder="Your name"
                                 prop:value=move || display_name.get()
                                 on:input=move |event| display_name.set(event_target_value(&event))
@@ -192,7 +192,7 @@ pub fn AuthScreen(
 
                         <Show when=move || mode.get() != Mode::Forgot>
                             <input
-                                class="w-full rounded border border-slate-300 px-3 py-2"
+                                class="w-full rounded-md border border-line-strong px-3 py-2"
                                 type="password"
                                 autocomplete=move || if mode.get() == Mode::SignIn {
                                     "current-password"
@@ -210,11 +210,11 @@ pub fn AuthScreen(
                         </Show>
                     }
                 >
-                    <p class="text-sm text-slate-500">
+                    <p class="text-sm text-ink-3">
                         "Enter the six-digit code from your authenticator, or one of your recovery codes."
                     </p>
                     <input
-                        class="w-full rounded border border-slate-300 px-3 py-2 tracking-widest"
+                        class="w-full rounded-md border border-line-strong px-3 py-2 tracking-widest"
                         inputmode="numeric"
                         autocomplete="one-time-code"
                         placeholder="000000"
@@ -224,18 +224,18 @@ pub fn AuthScreen(
                 </Show>
 
                 <button
-                    class="w-full rounded bg-slate-900 py-2 text-white disabled:opacity-50"
+                    class="w-full rounded-md bg-accent py-2 text-on-accent disabled:opacity-50"
                     disabled=move || busy.get()
                 >
                     {move || if busy.get() { "Just a moment…" } else { "Continue" }}
                 </button>
 
                 <Show when=move || mode.get() == Mode::SignIn>
-                    <p class="border-t border-slate-200 pt-3 text-center text-sm text-slate-500">
+                    <p class="border-t border-line pt-3 text-center text-sm text-ink-3">
                         "Or "
                         <button
                             type="button"
-                            class="underline"
+                            class="text-ink-3 hover:text-ink underline-offset-2 hover:underline"
                             on:click=move |_| on_local_mode.run(local::start("My songs"))
                         >
                             "use it on this device without an account"
@@ -244,18 +244,18 @@ pub fn AuthScreen(
                     </p>
                 </Show>
 
-                <div class="flex justify-between text-sm text-slate-500">
+                <div class="flex justify-between text-sm text-ink-3">
                     <Show when=move || mode.get() == Mode::SignIn>
-                        <button type="button" class="underline" on:click=move |_| mode.set(Mode::Register)>
+                        <button type="button" class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| mode.set(Mode::Register)>
                             "Create an account"
                         </button>
-                        <button type="button" class="underline" on:click=move |_| mode.set(Mode::Forgot)>
+                        <button type="button" class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| mode.set(Mode::Forgot)>
                             "Forgotten password"
                         </button>
                     </Show>
 
                     <Show when=move || matches!(mode.get(), Mode::Register | Mode::Forgot)>
-                        <button type="button" class="underline" on:click=move |_| mode.set(Mode::SignIn)>
+                        <button type="button" class="text-ink-3 hover:text-ink underline-offset-2 hover:underline" on:click=move |_| mode.set(Mode::SignIn)>
                             "Back to sign in"
                         </button>
                     </Show>
