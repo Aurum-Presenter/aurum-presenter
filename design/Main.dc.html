@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #E9B949; text-decoration: none; }
+    a:hover { color: #F5CE74; }
+    .row:hover { background: #14161B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; display: flex; flex-direction: column; background: #0B0C0F; color: #ECEEF2; font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif; font-size: 14px; overflow: hidden;">
+
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 24px; padding: 0 20px; border-bottom: 1px solid #23262E; background: #0E1014;">
+    <div style="display: flex; align-items: center; gap: 9px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L20 8 L20 16 L12 21 L4 16 L4 8 Z"></path><path d="M12 8.5 L12 15.5"></path><path d="M9 11 L15 11"></path></svg>
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.02em;">Aurum</span>
+    </div>
+
+    <nav style="display: flex; gap: 4px;">
+      <span style="padding: 6px 12px; border-radius: 6px; background: #1C1F26; color: #ECEEF2; font-weight: 600; font-size: 13px;">Library</span>
+      <span style="padding: 6px 12px; border-radius: 6px; color: #9BA3B0; font-size: 13px;">Sets</span>
+      <span style="padding: 6px 12px; border-radius: 6px; color: #9BA3B0; font-size: 13px;">Join session</span>
+    </nav>
+
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 11px; border: 1px solid #2B303A; border-radius: 6px; color: #C8CDD6; font-size: 13px;">
+        <span>Northgate Worship</span>
+        <span style="color: #697180; font-size: 12px;">owner</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9 L12 15 L18 9"></path></svg>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border-radius: 999px; background: #10241B; color: #3DD68C; font-size: 12px; font-weight: 500;">
+        <span style="width: 6px; height: 6px; border-radius: 999px; background: #3DD68C;"></span>
+        <span>Synced</span>
+      </div>
+
+      <div style="width: 30px; height: 30px; border-radius: 999px; background: #2B303A; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #C8CDD6;">TD</div>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; min-height: 0;">
+
+    <aside style="width: 252px; flex-shrink: 0; border-right: 1px solid #1B1E25; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 8px 10px 8px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: #697180;">Folders</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="2" stroke-linecap="round"><path d="M12 5 L12 19"></path><path d="M5 12 L19 12"></path></svg>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 8px; border-radius: 6px; background: #1C1F26;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 L20 6"></path><path d="M4 12 L20 12"></path><path d="M4 18 L14 18"></path></svg>
+        <span style="flex: 1; font-weight: 500;">All songs</span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 11px; color: #697180;">184</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 8px; border-radius: 6px; color: #C8CDD6;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 L10 7 L12 9.5 L21 9.5 L21 19 L3 19 Z"></path></svg>
+        <span style="flex: 1;">Hymns</span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 11px; color: #697180;">62</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 8px 0 26px; border-radius: 6px; color: #C8CDD6;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 L10 7 L12 9.5 L21 9.5 L21 19 L3 19 Z"></path></svg>
+        <span style="flex: 1;">Advent</span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 11px; color: #697180;">14</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 8px; border-radius: 6px; color: #C8CDD6;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 L10 7 L12 9.5 L21 9.5 L21 19 L3 19 Z"></path></svg>
+        <span style="flex: 1;">Modern</span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 11px; color: #697180;">87</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 8px; border-radius: 6px; color: #C8CDD6;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 L10 7 L12 9.5 L21 9.5 L21 19 L3 19 Z"></path></svg>
+        <span style="flex: 1;">Christmas Eve 2026</span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 11px; color: #697180;">9</span>
+      </div>
+
+      <div style="margin-top: auto; display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 8px; border-radius: 6px; color: #697180;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7 L20 7"></path><path d="M9 7 L9 5 L15 5 L15 7"></path><path d="M6 7 L7 20 L17 20 L18 7"></path></svg>
+        <span style="flex: 1;">Trash</span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 11px;">3</span>
+      </div>
+    </aside>
+
+    <main style="flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 16px 20px; gap: 14px;">
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="flex: 1; display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 13px; border: 1px solid #2B303A; border-radius: 8px; background: #101217;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#697180" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16 L21 21"></path></svg>
+          <span style="flex: 1; color: #697180;">Search titles, lyrics, tags</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 11px; color: #565E6C; border: 1px solid #2B303A; border-radius: 4px; padding: 2px 6px;">/</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 7px; height: 40px; padding: 0 15px; border-radius: 8px; background: {{accent}}; color: #17130A; font-weight: 600;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17130A" stroke-width="2.2" stroke-linecap="round"><path d="M12 5 L12 19"></path><path d="M5 12 L19 12"></path></svg>
+          <span>New song</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 7px; height: 40px; padding: 0 14px; border: 1px solid #2B303A; border-radius: 8px; color: #C8CDD6;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9BA3B0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16 L12 4"></path><path d="M7.5 8.5 L12 4 L16.5 8.5"></path><path d="M4 19 L20 19"></path></svg>
+          <span>Import</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 7px;">
+        <div style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border: 1px solid #2B303A; border-radius: 999px; color: #C8CDD6; font-size: 12px;">
+          <span style="color: #697180;">Sort</span><span style="font-weight: 500;">Title</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border: 1px solid #2B303A; border-radius: 999px; color: #C8CDD6; font-size: 12px;">
+          <span style="color: #697180;">Tag</span><span style="font-weight: 500;">All</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px; border: 1px solid rgba(233, 185, 73, 0.45); background: rgba(233, 185, 73, 0.10); color: {{accent}}; font-size: 12px;">
+          <span style="opacity: 0.7;">Key</span><span style="font-weight: 600; font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;">G</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18"></path><path d="M18 6 L6 18"></path></svg>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border: 1px solid #2B303A; border-radius: 999px; color: #697180; font-size: 12px;">
+          <span>Archived</span>
+        </div>
+        <span style="margin-left: auto; font-size: 12px; color: #697180;"><span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">8</span> of 184</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; gap: 0; padding: 0 12px 8px 12px; border-bottom: 1px solid #1B1E25; font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: #565E6C;">
+        <span>Song</span><span>Artist</span><span>Key</span><span>BPM</span><span>Tags</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; min-height: 0;">
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid {{accent}}; background: #14161B;">
+          <span style="font-size: 15px; font-weight: 600;">Amazing Grace</span>
+          <span style="color: #9BA3B0;">John Newton</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: {{accent}}; font-weight: 500;">G</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">72</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">hymn</span></span>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid transparent;">
+          <span style="font-size: 15px; font-weight: 500;">Be Thou My Vision</span>
+          <span style="color: #9BA3B0;">Trad. Irish</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #C8CDD6;">D</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">84</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">hymn</span></span>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid transparent;">
+          <span style="display: flex; align-items: baseline; gap: 9px;"><span style="font-size: 15px; font-weight: 500;">Come Thou Fount</span><span style="font-size: 11px; color: #C89B3C; border: 1px solid rgba(200, 155, 60, 0.35); border-radius: 4px; padding: 1px 6px;">possible duplicate</span></span>
+          <span style="color: #9BA3B0;">Robert Robinson</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #C8CDD6;">D</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">76</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">hymn</span></span>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid transparent;">
+          <span style="font-size: 15px; font-weight: 500;">Great Is Thy Faithfulness</span>
+          <span style="color: #9BA3B0;">Thomas Chisholm</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #C8CDD6;">E&#9837;</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">68</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">hymn</span><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">communion</span></span>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid transparent;">
+          <span style="font-size: 15px; font-weight: 500;">Holy, Holy, Holy</span>
+          <span style="color: #9BA3B0;">Reginald Heber</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #C8CDD6;">E&#9837;</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">88</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">hymn</span></span>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid transparent;">
+          <span style="font-size: 15px; font-weight: 500;">It Is Well With My Soul</span>
+          <span style="color: #9BA3B0;">Horatio Spafford</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #C8CDD6;">C</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">64</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">hymn</span></span>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid transparent;">
+          <span style="font-size: 15px; font-weight: 500;">The Old Rugged Cross</span>
+          <span style="color: #9BA3B0;">George Bennard</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #C8CDD6;">B&#9837;</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">70</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">hymn</span></span>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 190px 62px 62px 150px; align-items: center; gap: 0; height: 48px; padding: 0 12px; border-radius: 7px; border-left: 2px solid transparent; opacity: 0.45;">
+          <span style="display: flex; align-items: baseline; gap: 9px;"><span style="font-size: 15px; font-weight: 500;">Doxology</span><span style="font-size: 11px; color: #697180;">archived</span></span>
+          <span style="color: #9BA3B0;">Thomas Ken</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #C8CDD6;">G</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; color: #9BA3B0;">80</span>
+          <span style="display: flex; gap: 5px;"><span style="padding: 2px 8px; border-radius: 4px; background: #23262E; color: #9BA3B0; font-size: 11px;">short</span></span>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#E9B949","options":["#E9B949","#5AA9E6","#E5715A","#7FD1AE"],"section":"Theme"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#E9B949' };
+  }
+}
+</script>
+</body>
+</html>

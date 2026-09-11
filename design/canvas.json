@@ -1,0 +1,15 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Library", "x": 0, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Console.dc.html", "title": "Presentation console", "x": 1560, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Reader.dc.html", "title": "Chart reader — tablet on a stand", "x": 0, "y": 1020, "w": 900, "h": 1200 },
+    { "file": "Audience.dc.html", "title": "Audience output — 1920×1080", "x": 1020, "y": 1020, "w": 1280, "h": 720 }
+  ],
+  "annotations": [
+    { "id": "direction", "x": 0, "y": -220, "w": 620, "text": "STAGE DARK, CONSOLE-FIRST\n\nGround #0B0C0F · surfaces #14161B / #1C1F26 · hairlines #23262E\nGold #E9B949 (brand + selection) · red #F04B4B (live) · green #3DD68C (synced)\nArchivo for chrome and lyrics, JetBrains Mono for keys, tempo, codes\n6px radii · 40px desktop controls · 44px+ on the tablet\n\nThe accent is a tweak — try the swatches above any artboard." },
+    { "id": "library-note", "x": 1020, "y": 1820, "w": 380, "text": "AUDIENCE OUTPUT\n\nNo chrome, ever. What the room sees is type on a ground and nothing else — no logo, no clock, no progress bar. The gradient is the theme's background, set from the console's Theme panel." },
+    { "id": "reader-note", "x": 0, "y": 2260, "w": 620, "text": "CHART READER\n\nThe one screen read at arm's length, so it carries the largest type and the biggest hit targets (44px+). Key, capo and \"shapes in G\" are one object, because they are one decision — the app already computes the capo that keeps open shapes.\n\nWhat used to be four <select> dropdowns is now two segmented controls: a player mid-set should never open a menu." },
+    { "id": "console-note", "x": 3120, "y": 0, "w": 400, "text": "PRESENTATION CONSOLE\n\nLive is red and outlined; next is gold. That pairing runs through the whole console — the previews, the slide cards, the running-order chips — so the operator never has to read a label to know what the room is seeing.\n\nScreens report their own revision number, which is the sync engine's ack. An output that stops acking goes amber rather than disappearing." }
+  ],
+  "launch": { "view": "canvas" }
+}

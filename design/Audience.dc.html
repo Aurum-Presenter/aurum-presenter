@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #E9B949; }
+    a:hover { color: #F5CE74; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 720px; position: relative; background: #0A0E18; font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif; overflow: hidden;">
+
+  <div style="position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 8%, #1B2947 0%, #0E1526 42%, #070A12 100%);"></div>
+
+  <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 96px 120px;">
+    <p style="margin: 0; text-align: center; font-size: 74px; font-weight: 600; line-height: 1.22; letter-spacing: -0.015em; color: #F6F7F9; text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55); text-wrap: balance;">Amazing grace how sweet the sound<br>That saved a wretch like me</p>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

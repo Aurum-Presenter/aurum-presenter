@@ -18,3 +18,7 @@ coverage/
 # Rust and Trunk build output
 /target
 .trunk/
+
+# The seeded design canvas: 2.5 MB of editor payload, rebuilt from design/*.dc.html
+/design/*.html
+!/design/*.dc.html
