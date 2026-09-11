@@ -86,46 +86,93 @@ fn wanted(meta: &AppMeta) -> bool {
     meta.visits >= EARNED_AFTER && !dismissed && meta.installed_at.is_none()
 }
 
+/// The browser's install offer, as something a screen can read and act on.
+///
+/// One shape for the banner and for the About screen: whether the app is already installed,
+/// whether the browser has offered a prompt, and the iOS case, which has no prompt at all.
+#[derive(Clone, Copy)]
+pub struct Install {
+    pub installed: RwSignal<bool>,
+    pub available: RwSignal<bool>,
+    pub ios: bool,
+    prompt: StoredValue<Option<JsValue>, LocalStorage>,
+}
+
+impl Install {
+    /// Shows the browser's own prompt. On iOS there is none, and `ios` is the instruction to
+    /// say so instead.
+    pub fn ask(&self) {
+        let Some(event) = self.prompt.get_value() else {
+            return;
+        };
+
+        // `prompt()` and then `userChoice`: the browser answers with what the person chose, and
+        // a refusal is a month's silence rather than the same banner tomorrow.
+        let _ = js_sys::Reflect::get(&event, &JsValue::from_str("prompt"))
+            .ok()
+            .and_then(|held| held.dyn_into::<js_sys::Function>().ok())
+            .map(|call| call.call0(&event));
+
+        self.prompt.set_value(None);
+        self.available.set(false);
+    }
+}
+
+/// Listens for the two events the browser fires about installing, for as long as the caller
+/// lives. Called by any screen that offers to install the app.
+pub fn use_install() -> Install {
+    let held = Install {
+        installed: RwSignal::new(standalone()),
+        available: RwSignal::new(false),
+        ios: is_ios(),
+        prompt: StoredValue::new_local(None::<JsValue>),
+    };
+
+    let Some(window) = web_sys::window() else {
+        return held;
+    };
+
+    {
+        let on_prompt = Closure::<dyn Fn(web_sys::Event)>::new(move |event: web_sys::Event| {
+            // Held rather than shown: the browser's own moment is rarely the app's.
+            event.prevent_default();
+            held.prompt.set_value(Some(JsValue::from(event)));
+            held.available.set(true);
+        });
+
+        let _ = window.add_event_listener_with_callback(
+            "beforeinstallprompt",
+            on_prompt.as_ref().unchecked_ref(),
+        );
+        on_prompt.forget();
+    }
+
+    {
+        let on_installed = Closure::<dyn Fn()>::new(move || {
+            held.installed.set(true);
+            write(&AppMeta {
+                installed_at: Some(crate::now()),
+                ..read()
+            });
+        });
+
+        let _ = window.add_event_listener_with_callback(
+            "appinstalled",
+            on_installed.as_ref().unchecked_ref(),
+        );
+        on_installed.forget();
+    }
+
+    held
+}
+
 #[component]
 pub fn InstallBanner() -> impl IntoView {
-    let prompt = StoredValue::new_local(None::<JsValue>);
-    let available = RwSignal::new(false);
-    let installed = RwSignal::new(standalone());
+    let install = use_install();
+    let installed = install.installed;
+    let available = install.available;
     let showing_ios = RwSignal::new(false);
     let dismissed = RwSignal::new(!wanted(&read()));
-
-    if let Some(window) = web_sys::window() {
-        {
-            let on_prompt = Closure::<dyn Fn(web_sys::Event)>::new(move |event: web_sys::Event| {
-                // Held rather than shown: the browser's own moment is rarely the app's.
-                event.prevent_default();
-                prompt.set_value(Some(JsValue::from(event)));
-                available.set(true);
-            });
-
-            let _ = window.add_event_listener_with_callback(
-                "beforeinstallprompt",
-                on_prompt.as_ref().unchecked_ref(),
-            );
-            on_prompt.forget();
-        }
-
-        {
-            let on_installed = Closure::<dyn Fn()>::new(move || {
-                installed.set(true);
-                write(&AppMeta {
-                    installed_at: Some(crate::now()),
-                    ..read()
-                });
-            });
-
-            let _ = window.add_event_listener_with_callback(
-                "appinstalled",
-                on_installed.as_ref().unchecked_ref(),
-            );
-            on_installed.forget();
-        }
-    }
 
     let dismiss = move || {
         write(&AppMeta {
@@ -139,30 +186,18 @@ pub fn InstallBanner() -> impl IntoView {
         showing_ios.set(false);
     };
 
-    let install = move |_| {
-        if is_ios() {
+    let ask = move |_| {
+        if install.ios {
             showing_ios.set(true);
             return;
         }
 
-        let Some(event) = prompt.get_value() else {
-            return;
-        };
-
-        // `prompt()` and then `userChoice`: the browser answers with what the person chose, and
-        // a refusal is a month's silence rather than the same banner tomorrow.
-        let _ = js_sys::Reflect::get(&event, &JsValue::from_str("prompt"))
-            .ok()
-            .and_then(|held| held.dyn_into::<js_sys::Function>().ok())
-            .map(|call| call.call0(&event));
-
-        prompt.set_value(None);
-        available.set(false);
+        install.ask();
     };
 
     view! {
         <Show when=move || {
-            !installed.get() && !dismissed.get() && (available.get() || is_ios())
+            !installed.get() && !dismissed.get() && (available.get() || install.ios)
         }>
             <div
                 class="flex flex-wrap items-center gap-3 border-b border-sky-200 bg-sky-50 px-4 py-2 text-sm text-sky-900"
@@ -173,7 +208,7 @@ pub fn InstallBanner() -> impl IntoView {
                      network."
                 </span>
 
-                <button class="rounded bg-slate-900 px-3 py-1 text-white" on:click=install>
+                <button class="rounded bg-slate-900 px-3 py-1 text-white" on:click=ask>
                     "Install"
                 </button>
 

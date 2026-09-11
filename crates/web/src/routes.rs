@@ -5,7 +5,9 @@
 
 use leptos::prelude::*;
 use leptos::task::spawn_local;
+use leptos_router::NavigateOptions;
 use leptos_router::components::{ParentRoute, Route, Router, Routes};
+use leptos_router::hooks::use_navigate;
 use leptos_router::path;
 
 use crate::api::{Api, RestoreResult};
@@ -14,9 +16,13 @@ use crate::app::{provide_workspace, storage};
 use crate::auth::AuthScreen;
 use crate::auth::local;
 use crate::library::page::LibraryPage;
+use crate::library::trash::TrashPage;
 use crate::present::{AudiencePage, ControlPage, JoinPage, StagePage};
+use crate::pwa::share::SharePage;
 use crate::sets::{PrintPage, ReaderPage, SetPage, SetsPage};
-use crate::settings::ConflictsPage;
+use crate::settings::{
+    AboutPage, AccountPage, ConflictsPage, InvitePage, MembersPage, StoragePage,
+};
 use crate::sheets::SheetViewerPage;
 use crate::song::SongPage;
 
@@ -160,7 +166,7 @@ fn SignedIn(
 
     view! {
         <Router>
-            <Routes fallback=|| view! { <Placeholder title="Not found" /> }>
+            <Routes fallback=|| view! { <Redirect to="/library" /> }>
                 // The output windows sit outside the shell: they are screens in a room, not
                 // pages in an app, and a projector must never show a navigation bar.
                 <Route path=path!("/output/audience") view=AudiencePage />
@@ -170,7 +176,7 @@ fn SignedIn(
                     <Route path=path!("") view=LibraryPage />
                     <Route path=path!("library") view=LibraryPage />
                     <Route path=path!("library/folder/:folder_id") view=LibraryPage />
-                    <Route path=path!("library/trash") view=|| view! { <Placeholder title="Trash" /> } />
+                    <Route path=path!("library/trash") view=TrashPage />
                     <Route path=path!("song/:song_id") view=|| view! { <SongPage /> } />
                     <Route
                         path=path!("song/:song_id/edit")
@@ -183,25 +189,35 @@ fn SignedIn(
                     <Route path=path!("sets/:set_id/print") view=PrintPage />
                     <Route path=path!("join") view=JoinPage />
                     <Route path=path!("present/:session_id") view=ControlPage />
-                    <Route path=path!("settings/conflicts") view=ConflictsPage />
-                    <Route
-                        path=path!("settings/account")
-                        view=|| view! { <Placeholder title="Account" /> }
-                    />
+                    <Route path=path!("invite/:token") view=InvitePage />
+                    <Route path=path!("share") view=SharePage />
+                    <Route path=path!("settings/account") view=AccountPage />
+                    <Route path=path!("settings/members") view=MembersPage />
+                    <Route path=path!("settings/sync/conflicts") view=ConflictsPage />
+                    <Route path=path!("settings/storage") view=StoragePage />
+                    <Route path=path!("settings/trash") view=TrashPage />
+                    <Route path=path!("settings/about") view=AboutPage />
                 </ParentRoute>
             </Routes>
         </Router>
     }
 }
 
-/// A screen that has not been ported yet. Named, so a run through the app says plainly what is
-/// still to come rather than showing a blank page.
+/// An unknown path lands in the library rather than on an error: every route in this app is
+/// client-side, and a stale bookmark is not a failure worth a screen of its own.
 #[component]
-fn Placeholder(title: &'static str) -> impl IntoView {
-    view! {
-        <section class="space-y-2">
-            <h1 class="text-xl font-semibold" data-testid="screen-title">{title}</h1>
-            <p class="text-sm text-slate-500">"Not ported yet."</p>
-        </section>
-    }
+fn Redirect(to: &'static str) -> impl IntoView {
+    let navigate = use_navigate();
+
+    Effect::new(move |_| {
+        navigate(
+            to,
+            NavigateOptions {
+                replace: true,
+                ..NavigateOptions::default()
+            },
+        )
+    });
+
+    view! { <span /> }
 }

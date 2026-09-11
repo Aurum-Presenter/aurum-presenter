@@ -3,12 +3,17 @@
 //! Every list here is rendered from IndexedDB. There is no loading state for a song the device
 //! already has, because there is no request to wait for.
 
+use std::collections::HashMap;
+
+use leptos::ev::DragEvent;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::A;
-use leptos_router::hooks::use_params_map;
+use leptos_router::hooks::{use_navigate, use_params_map};
 
-use super::repository::{list_of, songs_in_folder};
+use super::folder_tree::{Counts, FolderActions, FolderTree, SONG_DRAG_TYPE};
+use super::import::ImportDialog;
+use super::repository::{FolderSongs, list_of, songs_in_folder};
 use super::search::{indexed, use_search};
 use crate::app::use_workspace;
 use crate::db::live::live_query;
@@ -44,6 +49,10 @@ pub fn LibraryPage() -> impl IntoView {
     let sort = RwSignal::new(Sort::default());
     let tag = RwSignal::new(String::new());
     let show_archived = RwSignal::new(false);
+    let importing = RwSignal::new(false);
+    let key = RwSignal::new(String::new());
+    let deleting = RwSignal::new(None::<Folder>);
+    let problem = RwSignal::new(None::<String>);
 
     let db = context.db;
 
@@ -118,6 +127,41 @@ pub fn LibraryPage() -> impl IntoView {
         names
     });
 
+    let keys = Signal::derive(move || {
+        let mut found: Vec<String> = all_songs
+            .get()
+            .iter()
+            .filter_map(|song| song.original_key.clone())
+            .collect();
+
+        found.sort();
+        found.dedup();
+        found
+    });
+
+    // What the folder tree shows beside each name: songs filed there, archived ones excluded.
+    let counts = Signal::derive(move || {
+        let mut tally: Counts = HashMap::new();
+
+        for song in all_songs.get().iter().filter(|song| song.archived == 0) {
+            *tally.entry(song.folder_id.clone()).or_default() += 1;
+        }
+
+        tally
+    });
+
+    // Two songs with the same title is usually an import run twice, and saying so on the row is
+    // cheaper than finding out during a set.
+    let duplicates = Signal::derive(move || {
+        let mut seen: HashMap<String, usize> = HashMap::new();
+
+        for song in all_songs.get() {
+            *seen.entry(song.title.trim().to_lowercase()).or_default() += 1;
+        }
+
+        seen
+    });
+
     let visible = Signal::derive(move || {
         let songs = all_songs.get();
 
@@ -138,6 +182,12 @@ pub fn LibraryPage() -> impl IntoView {
 
         if !wanted.is_empty() {
             rows.retain(|song| list_of(song.tags.as_deref()).contains(&wanted));
+        }
+
+        let in_key = key.get();
+
+        if !in_key.is_empty() {
+            rows.retain(|song| song.original_key.as_deref() == Some(in_key.as_str()));
         }
 
         // Re-sorting search results by title would throw the ranking away.
@@ -161,11 +211,83 @@ pub fn LibraryPage() -> impl IntoView {
     });
 
     let can_edit = context.can_edit();
+    let library = StoredValue::new(context.library());
+    let navigate = StoredValue::new_local(use_navigate());
+
+    // Every folder edit is the same shape: ask the repository, and say out loud what it refused.
+    let actions = FolderActions {
+        create: Callback::new(move |parent: Option<String>| {
+            let Some(name) = web_sys::window()
+                .and_then(|window| window.prompt_with_message("Folder name").ok().flatten())
+            else {
+                return;
+            };
+
+            if name.trim().is_empty() {
+                return;
+            }
+
+            spawn_local(async move {
+                if let Some(library) = library.get_value() {
+                    let _ = library.create_folder(&name, parent.as_deref()).await;
+                }
+            });
+        }),
+        rename: Callback::new(move |(id, name): (String, String)| {
+            spawn_local(async move {
+                if let Some(library) = library.get_value() {
+                    let _ = library.rename_folder(&id, &name).await;
+                }
+            });
+        }),
+        move_folder: Callback::new(move |(id, parent): (String, Option<String>)| {
+            spawn_local(async move {
+                let Some(library) = library.get_value() else {
+                    return;
+                };
+
+                match library.move_folder(&id, parent.as_deref()).await {
+                    Ok(()) => problem.set(None),
+                    Err(refused) => problem.set(Some(refused.to_string())),
+                }
+            });
+        }),
+        move_song: Callback::new(move |(id, folder): (String, Option<String>)| {
+            spawn_local(async move {
+                if let Some(library) = library.get_value() {
+                    let _ = library.move_song(&id, folder.as_deref()).await;
+                }
+            });
+        }),
+        delete: Callback::new(move |folder: Folder| deleting.set(Some(folder))),
+    };
+
+    let confirm_delete = move |choice: FolderSongs| {
+        let Some(folder) = deleting.get_untracked() else {
+            return;
+        };
+
+        deleting.set(None);
+
+        spawn_local(async move {
+            if let Some(library) = library.get_value() {
+                let _ = library.delete_folder(&folder.id, choice).await;
+            }
+
+            navigate.get_value()("/library", Default::default());
+        });
+    };
 
     view! {
         <div class="mx-auto flex max-w-6xl gap-6">
             <aside class="hidden w-56 shrink-0 md:block">
-                <FolderList folders=all_folders selected=folder_id />
+                <FolderTree
+                    folders=all_folders
+                    selected=folder_id
+                    can_edit=can_edit
+                    counts=counts
+                    actions=actions
+                />
                 <A href="/library/trash" attr:class="mt-4 block text-xs underline text-slate-500">
                     "Trash"
                 </A>
@@ -203,6 +325,18 @@ pub fn LibraryPage() -> impl IntoView {
                         </For>
                     </select>
 
+                    <Show when=move || !keys.get().is_empty()>
+                        <select
+                            class="rounded border border-slate-300 bg-transparent px-2 py-2 text-sm dark:border-slate-700"
+                            on:change=move |event| key.set(event_target_value(&event))
+                        >
+                            <option value="">"Any key"</option>
+                            <For each=move || keys.get() key=|name| name.clone() let:name>
+                                <option value=name.clone()>{name.clone()}</option>
+                            </For>
+                        </select>
+                    </Show>
+
                     <label class="flex items-center gap-1 text-xs text-slate-500">
                         <input
                             type="checkbox"
@@ -215,31 +349,69 @@ pub fn LibraryPage() -> impl IntoView {
 
                 <Show when=move || can_edit>
                     <AddSong folder_id />
+
+                    <button
+                        type="button"
+                        class="mb-3 rounded border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
+                        data-testid="open-import"
+                        on:click=move |_| importing.set(true)
+                    >
+                        "Import"
+                    </button>
                 </Show>
 
                 <ul class="divide-y divide-slate-200 dark:divide-slate-800" data-testid="song-list">
                     <For each=move || visible.get() key=|song| song.id.clone() let:song>
-                        <li class="py-2">
-                            <A href=format!("/song/{}", song.id) attr:class="block">
-                                <span class="font-medium">{song.title.clone()}</span>
-                                <Show when={
-                                    let artist = song.artist.clone();
-                                    move || artist.is_some()
-                                }>
-                                    <span class="ml-2 text-sm text-slate-500">
-                                        {song.artist.clone()}
-                                    </span>
-                                </Show>
-                                <Show when={
-                                    let key = song.original_key.clone();
-                                    move || key.is_some()
-                                }>
-                                    <span class="ml-2 text-xs text-slate-400">
-                                        {song.original_key.clone()}
-                                    </span>
-                                </Show>
-                            </A>
-                        </li>
+                        {
+                            let dragged = song.id.clone();
+                            let title = song.title.trim().to_lowercase();
+
+                            view! {
+                                <li
+                                    class="py-2"
+                                    draggable=if can_edit { "true" } else { "false" }
+                                    on:dragstart=move |event: DragEvent| {
+                                        if let Some(data) = event.data_transfer() {
+                                            let _ = data.set_data(SONG_DRAG_TYPE, &dragged);
+                                        }
+                                    }
+                                >
+                                    <A href=format!("/song/{}", song.id) attr:class="flex items-baseline gap-2">
+                                        <span class="font-medium">{song.title.clone()}</span>
+                                        <span class="text-sm text-slate-500">
+                                            {song.artist.clone()}
+                                        </span>
+                                        <span class="text-xs text-slate-400">
+                                            {song.original_key.clone()}
+                                        </span>
+                                        <Show when=move || {
+                                            duplicates.get().get(&title).copied().unwrap_or(0) > 1
+                                        }>
+                                            <span
+                                                class="text-xs text-slate-400"
+                                                title="Another song has this title"
+                                            >
+                                                "possible duplicate"
+                                            </span>
+                                        </Show>
+                                        <span class="ml-auto flex gap-1">
+                                            <For
+                                                each={
+                                                    let tags = list_of(song.tags.as_deref());
+                                                    move || tags.clone()
+                                                }
+                                                key=|name| name.clone()
+                                                let:name
+                                            >
+                                                <span class="rounded bg-slate-100 px-2 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                    {name.clone()}
+                                                </span>
+                                            </For>
+                                        </span>
+                                    </A>
+                                </li>
+                            }
+                        }
                     </For>
                 </ul>
 
@@ -251,8 +423,104 @@ pub fn LibraryPage() -> impl IntoView {
                             "No song matches that."
                         }}
                     </p>
+
+                    <Show when=move || can_edit && query.get().trim().is_empty()>
+                        <p class="pb-8 text-center">
+                            <button
+                                class="text-sm underline"
+                                on:click=move |_| importing.set(true)
+                            >
+                                "Import ChordPro or text files"
+                            </button>
+                        </p>
+                    </Show>
+                </Show>
+
+                <Show when=move || importing.get()>
+                    <ImportDialog
+                        folder_id=folder_id
+                        on_close=Callback::new(move |()| importing.set(false))
+                    />
                 </Show>
             </main>
+
+            <Show when=move || problem.get().is_some()>
+                <p
+                    class="fixed inset-x-4 bottom-4 rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800"
+                    data-testid="folder-problem"
+                    on:click=move |_| problem.set(None)
+                >
+                    {move || problem.get()}
+                </p>
+            </Show>
+
+            <Show when=move || deleting.get().is_some()>
+                <DeleteFolder
+                    folder=Signal::derive(move || deleting.get())
+                    songs=Signal::derive(move || {
+                        deleting
+                            .get()
+                            .and_then(|folder| counts.get().get(&Some(folder.id)).copied())
+                            .unwrap_or(0)
+                    })
+                    on_cancel=Callback::new(move |()| deleting.set(None))
+                    on_confirm=Callback::new(confirm_delete)
+                />
+            </Show>
+        </div>
+    }
+}
+
+/// Business rule 2: deleting a folder is never allowed to quietly decide what happens to the
+/// songs inside it.
+#[component]
+fn DeleteFolder(
+    folder: Signal<Option<Folder>>,
+    songs: Signal<usize>,
+    on_cancel: Callback<()>,
+    on_confirm: Callback<FolderSongs>,
+) -> impl IntoView {
+    view! {
+        <div
+            class="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 p-6"
+            data-testid="delete-folder"
+        >
+            <div class="w-96 rounded bg-white p-4 shadow-lg dark:bg-slate-900">
+                <h2 class="mb-2 font-semibold">
+                    {move || {
+                        let name = folder.get().map(|folder| folder.name).unwrap_or_default();
+
+                        format!("Delete “{name}”?")
+                    }}
+                </h2>
+                <p class="mb-4 text-sm text-slate-500">
+                    {move || match songs.get() {
+                        0 => "The folder is empty. Subfolders move up to its parent.".to_owned(),
+                        1 => "1 song is filed here. Nothing is deleted — choose where it goes."
+                            .to_owned(),
+                        many => format!(
+                            "{many} songs are filed here. Nothing is deleted — choose where they go.",
+                        ),
+                    }}
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        class="rounded bg-slate-900 px-3 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+                        on:click=move |_| on_confirm.run(FolderSongs::MoveToParent)
+                    >
+                        "Move songs to the parent folder"
+                    </button>
+                    <button
+                        class="rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                        on:click=move |_| on_confirm.run(FolderSongs::Archive)
+                    >
+                        "Archive the songs"
+                    </button>
+                    <button class="ml-auto text-sm underline" on:click=move |_| on_cancel.run(())>
+                        "Cancel"
+                    </button>
+                </div>
+            </div>
         </div>
     }
 }
@@ -320,109 +588,5 @@ fn AddSong(folder_id: Signal<Option<String>>) -> impl IntoView {
         <Show when=move || problem.get().is_some()>
             <p class="mb-2 text-sm text-red-600">{move || problem.get()}</p>
         </Show>
-    }
-}
-
-/// The folder tree, as a flat list with indentation — which is what a tree is once it is drawn.
-#[component]
-fn FolderList(folders: Signal<Vec<Folder>>, selected: Signal<Option<String>>) -> impl IntoView {
-    let ordered = Signal::derive(move || flatten(&folders.get(), None, 0));
-
-    view! {
-        <nav class="space-y-1 text-sm" data-testid="folder-tree">
-            <A
-                href="/library"
-                attr:class=move || if selected.get().is_none() {
-                    "block font-medium"
-                } else {
-                    "block text-slate-500"
-                }
-            >
-                "All songs"
-            </A>
-
-            <For each=move || ordered.get() key=|(folder, _)| folder.id.clone() let:entry>
-                {
-                    let (folder, depth) = entry;
-                    let id = folder.id.clone();
-
-                    view! {
-                        <A
-                            href=format!("/library/folder/{id}")
-                            attr:class=move || if selected.get().as_deref() == Some(id.as_str()) {
-                                "block font-medium"
-                            } else {
-                                "block text-slate-500"
-                            }
-                            attr:style=format!("padding-left: {}rem", depth as f64 * 0.75)
-                        >
-                            {folder.name.clone()}
-                        </A>
-                    }
-                }
-            </For>
-        </nav>
-    }
-}
-
-/// Depth-first, so a child is drawn under its parent rather than wherever the store returned it.
-fn flatten(folders: &[Folder], parent: Option<&str>, depth: usize) -> Vec<(Folder, usize)> {
-    let mut children: Vec<&Folder> = folders
-        .iter()
-        .filter(|folder| folder.parent_id.as_deref() == parent)
-        .collect();
-
-    children.sort_by(|a, b| a.position.cmp(&b.position).then(a.name.cmp(&b.name)));
-
-    children
-        .into_iter()
-        .flat_map(|folder| {
-            let mut branch = vec![(folder.clone(), depth)];
-            branch.extend(flatten(folders, Some(&folder.id), depth + 1));
-
-            branch
-        })
-        .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn folder(id: &str, parent: Option<&str>, position: i64) -> Folder {
-        Folder {
-            id: id.to_owned(),
-            parent_id: parent.map(str::to_owned),
-            name: id.to_owned(),
-            position,
-            ..Folder::default()
-        }
-    }
-
-    #[test]
-    fn draws_a_child_under_its_parent() {
-        let folders = [
-            folder("hymns", None, 0),
-            folder("advent", Some("hymns"), 0),
-            folder("modern", None, 1),
-        ];
-
-        let drawn = flatten(&folders, None, 0);
-
-        assert_eq!(
-            drawn
-                .iter()
-                .map(|(folder, depth)| (folder.id.as_str(), *depth))
-                .collect::<Vec<_>>(),
-            [("hymns", 0), ("advent", 1), ("modern", 0)]
-        );
-    }
-
-    /// Two offline devices can leave a loop in the tree; the pane must still draw.
-    #[test]
-    fn terminates_on_a_tree_that_loops() {
-        let folders = [folder("a", Some("b"), 0), folder("b", Some("a"), 0)];
-
-        assert!(flatten(&folders, None, 0).is_empty());
     }
 }

@@ -15,6 +15,7 @@ use crate::blobs::{BlobQueue, StorageFull};
 use crate::prefs::user;
 use crate::pwa::install::InstallBanner;
 use crate::pwa::update::UpdateToast;
+use crate::settings::SyncPanel;
 
 #[component]
 pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
@@ -23,6 +24,7 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
     let me = context.me;
     let online = context.online;
     let pending = context.pending;
+    let sync_open = RwSignal::new(false);
     let local = context.local;
 
     // A device that has run out of room, and the file that would not fit.
@@ -130,6 +132,7 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
                     )
                     data-testid="sync-chip"
                     title="Nothing is blocked while offline; the outbox drains when a connection returns."
+                    on:click=move |_| sync_open.set(true)
                 >
                     {move || {
                         let state = if online.get() { "synced" } else { "offline" };
@@ -152,6 +155,10 @@ pub fn Shell(on_sign_out: Callback<()>) -> impl IntoView {
             <main class="px-4 py-4">
                 <Outlet />
             </main>
+
+            <Show when=move || sync_open.get()>
+                <SyncPanel on_close=Callback::new(move |()| sync_open.set(false)) />
+            </Show>
         </div>
     }
 }

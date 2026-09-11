@@ -1,6 +1,7 @@
 //! The parts of the app that are about being an installed application rather than a page.
 
 pub mod install;
+pub mod share;
 pub mod update;
 pub mod wake_lock;
 

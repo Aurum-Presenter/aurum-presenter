@@ -4,7 +4,7 @@ title: One language for both halves — Rust on the server, Rust and WebAssembly
 type: change-request
 status: Approved
 created: 2026-09-08
-updated: 2026-09-08
+updated: 2026-09-11
 changes:
   - feature/2026-09-06-workspaces-and-access.md
   - feature/2026-09-06-song-library.md
@@ -259,6 +259,33 @@ Measured at the end of the phase, for the questions below:
 
 That shell is the rules plus Leptos plus a router-less page, not the app; the number is a floor,
 not an answer. It is recorded here so the growth is visible as the screens arrive.
+
+**`crates/web` is screen-complete.** Every React screen now has a Leptos counterpart and the
+router has no placeholders left: the library and its folder tree, the chart view and editor, sets,
+sheets, presentation, the PWA shell, and the last of them — trash, import, the share target and
+file handler, and the settings screens (account, members, invitation, offline storage, sync, and
+about).
+
+Four things the client port changed in kind rather than in language:
+
+- **`liveQuery` became `live_query(&["songs"], …)`.** A store name is the subscription: the read is
+  an ordinary async closure, and the version counter for each store outlives the screen that first
+  read it. That last part is not a detail — when the counter was owned by the first component to
+  read a store, navigating away disposed the owner and every later write went nowhere. The test
+  that guards it is named after the bug.
+- **Closures have to be `Fn`, so rows became components.** React re-renders a row by calling a
+  function again; Leptos builds the row once and the handlers live as long as it does. Anything
+  that would have been captured by move — a workspace context, an id — is held in a `StoredValue`,
+  and a list row with its own handlers is a component rather than a closure in a loop.
+- **The output error boundary is gone, with nothing put in its place.** React's `OutputBoundary`
+  caught a render that threw and repainted the theme background. A Rust render does not throw: a
+  panic ends the module, and there is no state left to re-render from. What the boundary actually
+  protected against — a white rectangle in front of a congregation while the first message is in
+  flight — is now structural, because the audience and stage screens paint the theme background
+  before any state arrives and never render a loading state at all.
+- **The service worker is built from the distribution Trunk just wrote.** Workbox injects the
+  precache manifest in a post-build hook over `crates/web/dist`, so the hashed WebAssembly module
+  is precached and Pdfium's four megabytes are deliberately not.
 
 ## Open questions
 

@@ -8,5 +8,9 @@ fn main() {
     aurum_web::pwa::register_service_worker();
     aurum_web::pwa::install::count_visit();
 
+    // The launch queue has exactly one consumer, and a later one gets nothing: a file opened
+    // with Aurum has to be claimed before the app is mounted.
+    aurum_web::pwa::share::accept_launch_files();
+
     leptos::mount::mount_to_body(aurum_web::routes::App);
 }

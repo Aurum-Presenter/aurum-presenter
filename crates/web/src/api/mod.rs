@@ -3,6 +3,7 @@
 pub mod account;
 pub mod client;
 pub mod models;
+pub mod workspace;
 
 pub use client::{Api, ApiError, RestoreResult};
 pub use models::{Account, Workspace};
