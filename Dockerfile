@@ -1,10 +1,11 @@
-# One binary, and a scratch of static assets is not even needed: the client is served separately.
+# One binary and a directory of static assets — acceptance criterion 7 of the rewrite.
 #
-# The build stage compiles the workspace; the runtime stage carries the executable and nothing
-# else that could be exploited. There is no interpreter here, no package manager and no
-# application source — which is the deployment story the rewrite was partly for.
+# Two build stages, because the client and the server are the same workspace compiled for two
+# targets: `aurum-api` natively, `aurum-web` to WebAssembly. The runtime stage carries the
+# executable and the distribution and nothing else. There is no interpreter here, no package
+# manager and no application source.
 
-FROM rust:1.94-slim-bookworm AS build
+FROM rust:1.94-slim-bookworm AS server
 
 WORKDIR /src
 
@@ -30,6 +31,30 @@ COPY crates crates
 RUN find crates -name '*.rs' -exec touch {} + \
  && cargo build --release -p aurum-api
 
+FROM rust:1.94-slim-bookworm AS client
+
+WORKDIR /src
+
+# Node is here for three things, none of them application logic: Tailwind reads the Rust for the
+# class names to emit, Workbox writes the service worker over the distribution Trunk has just
+# produced, and Pdfium is copied out of node_modules rather than committed.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl pkg-config libssl-dev nodejs npm \
+ && rm -rf /var/lib/apt/lists/* \
+ && rustup target add wasm32-unknown-unknown \
+ && cargo install --locked trunk@0.21.14
+
+COPY web/package.json web/package-lock.json web/
+RUN cd web && npm ci
+
+COPY Cargo.toml Cargo.lock Trunk.toml ./
+COPY crates crates
+COPY web web
+
+# Trunk reads the pinned tool versions out of Trunk.toml, fetches them once, then builds the
+# crate to WebAssembly, hashes the assets, and runs the service-worker hook over the result.
+RUN trunk build --release
+
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update \
@@ -37,12 +62,13 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --system --uid 10001 aurum
 
-COPY --from=build /src/target/release/aurum-api /usr/local/bin/aurum-api
+COPY --from=server /src/target/release/aurum-api /usr/local/bin/aurum-api
+COPY --from=client /src/crates/web/dist /app/web
 
 USER aurum
 WORKDIR /app
 
-ENV DATA_DIR=/app/var/data BIND=0.0.0.0:8080 SIGNAL_BIND=0.0.0.0:8081
+ENV DATA_DIR=/app/var/data BIND=0.0.0.0:8080 SIGNAL_BIND=0.0.0.0:8081 WEB_DIR=/app/web
 EXPOSE 8080 8081
 
 ENTRYPOINT ["aurum-api"]

@@ -4,7 +4,7 @@ title: Self-hosted WebSocket signalling for stage-view pairing
 type: change-request
 status: Approved
 created: 2026-09-06
-updated: 2026-09-06
+updated: 2026-09-08
 changes:
   - feature/2026-09-06-stage-view.md
 related:
@@ -13,6 +13,13 @@ related:
 ---
 
 # Self-hosted WebSocket signalling for stage-view pairing
+
+> **Amended by the [Rust rewrite](2026-09-08-rust-rewrite.md), 2026-09-08.** The long-lived process
+> this document had to argue for is no longer a cost: the relay is a task inside the API binary, on
+> a second port, because a tokio task can hold a socket open where PHP-FPM could not. FrankenPHP,
+> Swoole and a sidecar are all moot.
+> Everything else below still holds: the handshake, the room rules, the one-guest limit and the
+> SDP/ICE envelope are exactly as specified.
 
 ## Context
 

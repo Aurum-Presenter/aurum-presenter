@@ -11,7 +11,10 @@ import { fileURLToPath } from 'node:url';
  */
 export const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
-export const APP = process.env.AURUM_APP ?? 'http://127.0.0.1:4173';
+// One origin by default: the API binary serves the client's assets, so the app and the API are
+// the same host and port. `AURUM_APP=http://127.0.0.1:4174` points the suite at Trunk's dev
+// server instead, which is what a client change is worked against.
+export const APP = process.env.AURUM_APP ?? 'http://127.0.0.1:8080';
 export const API = process.env.AURUM_API ?? 'http://127.0.0.1:8080';
 
 /** The browser Playwright drives. Pre-installed in CI images; overridable everywhere else. */

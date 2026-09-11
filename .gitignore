@@ -1,16 +1,12 @@
 # Dependencies
 node_modules/
-/backend/vendor/
 
 # Build output
 dist/
-.vite/
 coverage/
-*.tsbuildinfo
 
 # The databases. control.sqlite plus one file per workspace, with their WAL sidecars.
-/backend/var/data/
-/backend/data/cache/
+/var/data/
 
 # Local environment
 .env

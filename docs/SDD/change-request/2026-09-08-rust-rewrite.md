@@ -287,10 +287,48 @@ Four things the client port changed in kind rather than in language:
   precache manifest in a post-build hook over `crates/web/dist`, so the hashed WebAssembly module
   is precached and Pdfium's four megabytes are deliberately not.
 
+**The cutover is done.** `frontend/` is gone, and with it the last of the JavaScript that was
+application code. What is left of it in the repository is `web/`: a Tailwind entry point, the
+Workbox service worker, and the script that copies Pdfium out of `node_modules`.
+
+The deployment is one binary and a directory of static assets, as acceptance criterion 7 asks.
+`aurum-api` serves `WEB_DIR` when it is set, and the interesting part is not that it serves a
+file — it is that a path which is not a file becomes the shell rather than a 404, because every
+route in this app is resolved in the browser, while a path under `/api/v1` is still a JSON error,
+because the sync engine classifies failures by status and parses the body. Four tests in
+`crates/api/tests/shell.rs` hold exactly that. The image builds both halves: one stage compiles
+`aurum-api`, another builds the client with Trunk, and the runtime stage carries the executable
+and the distribution and nothing else.
+
+The differential harness is retired: its last arm went with the TypeScript. Its final run, at the
+recorded seed, was clean over 120,000 cases — the record, and what holds those rules now, is in
+`differential/README.md`. The Rust side of it is kept, because a future port would want it.
+
+Measured on the finished client, built with `opt-level = "z"`, LTO, `panic = "abort"` and
+`wasm-opt -Oz`:
+
+| | Raw | Gzipped |
+|---|---|---|
+| Application module (WebAssembly) | 3.52 MB | 1.19 MB |
+| Application glue (JavaScript) | 107 KB | 15 KB |
+| Stylesheet | 26 KB | 5.6 KB |
+| Search worker (WebAssembly + glue) | 261 KB | 114 KB |
+| Service worker | 20 KB | 6.7 KB |
+
+That is the honest number, and it is the one open question this phase has sharpened rather than
+answered. The shell was 42.8 KB gzipped when it held the rules and a router-less page; it is
+1.19 MB now that it holds the app. Roughly 149 KB of that is the Pdfium bindings, which are
+linked into the module and cannot be deferred with the engine — the rest is Leptos and thirty
+screens. Whether it still reaches the library in under two seconds on a mid-range phone over a
+cold cache is measured, not assumed, before this criterion can be ticked; the fallbacks the
+`SheetRenderer` interface keeps open — moving the renderer into a second module loaded on demand,
+or route-level splitting — are unchanged and untouched by any screen.
+
 ## Open questions
 
-- [ ] Does the WebAssembly shell stay small enough that the two-second offline launch holds on a
-      mid-range phone, or does the client need route-level code splitting?
+- [ ] The shell is **1.19 MB gzipped**, measured on the finished client. Does the two-second
+      offline launch hold on a mid-range phone over a cold cache, or does the client need
+      route-level code splitting — or the sheet renderer moved into a module of its own?
 - [ ] Should the search index move into a WebAssembly worker as it is today, or is it fast enough
       in Rust on the main thread to delete the worker entirely?
 - [ ] Is `wasm-bindgen-test` in a headless browser worth wiring into CI, or is the end-to-end suite

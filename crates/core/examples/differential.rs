@@ -1,11 +1,13 @@
 //! One side of the differential harness: the Rust rules, driven from JSON.
 //!
 //! Reads `[{"rule": "...", "input": {...}}, …]` on stdin and writes one canonical result per
-//! case on stdout. Its twin in `differential/typescript.mjs` does the same through the
-//! TypeScript the port came from, and `differential/run.mjs` compares the two. The canonical
-//! shapes are defined here and mirrored there — deliberately hand-written on both sides rather
-//! than derived from either implementation's own types, so that a shared misunderstanding
-//! cannot hide a divergence.
+//! case on stdout. Its twins ran the same cases through the PHP and the TypeScript the port came
+//! from; both are gone, and what they established is in `differential/README.md`. The canonical
+//! shapes below were defined here and mirrored there — deliberately hand-written on both sides
+//! rather than derived from either implementation's own types, so that a shared misunderstanding
+//! could not hide a divergence.
+//!
+//! This side is kept because it still runs: a future port has a corpus and an oracle waiting.
 
 use std::io::Read;
 

@@ -88,7 +88,7 @@ key can never point at bytes that do not match it.
 - One bucket, private, no public access policy, versioning off.
 - Server-side encryption at rest enabled where the provider offers it.
 - CORS allows `PUT`/`GET` from the app origin only, since the client uploads and downloads
-  directly to the store rather than proxying through PHP.
+  directly to the store rather than proxying through the API.
 - A lifecycle rule aborts incomplete multipart uploads after 7 days, so an abandoned resumable
   upload does not accrue cost forever.
 - Purging on the 30-day soft-delete window (business rule 6) becomes a `DeleteObjects` batch in

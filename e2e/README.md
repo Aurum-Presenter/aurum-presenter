@@ -6,13 +6,14 @@ transposition and set overrides, presentation and pairing, sheets and annotation
 and offline writes, conflicts, local-only mode and claiming, storage pressure, session end.
 
 They are deliberately black-box. Nothing here imports application code, and nothing knows which
-language the server is written in — which is what makes this suite the oracle for the Rust
-rewrite: the same scripts must pass before and after each half is replaced.
+language either half is written in — which is what made this suite the oracle for the Rust
+rewrite: the same scripts, unweakened, passed against the PHP API and the React client, then
+against the Rust API with that same React client, and then against the Leptos client.
 
 ## Running
 
-The stack must be up: the API, the object store, the signalling relay and a web server for the
-built client.
+The stack must be up: `make up` is enough, because the API binary serves the client's assets,
+runs the signalling relay on a second port, and the object store comes up beside it.
 
 ```bash
 make e2e                       # seed a world, then run everything
@@ -21,7 +22,9 @@ node run.mjs --no-seed         # reuse the world from the last run
 node lib/seed.mjs              # seed only
 ```
 
-Point it somewhere else with `AURUM_APP` and `AURUM_API`; `CHROME_PATH` selects the browser.
+Point it somewhere else with `AURUM_APP` and `AURUM_API` — `AURUM_APP=http://127.0.0.1:4174`
+runs it against Trunk's dev server, which is what a client change is worked against.
+`CHROME_PATH` selects the browser.
 Screenshots land in `shots/` (or `SHOTS`).
 
 ## How a run gets its world

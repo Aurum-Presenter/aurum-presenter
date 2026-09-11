@@ -1,6 +1,6 @@
 # Software Design Document — Aurum Presenter
 
-[System overview](overview.md) · Last updated: 2026-09-08
+[System overview](overview.md) · Last updated: 2026-09-11
 
 Specification lives here, one document per unit of work. Nothing is built before its document
 is `Approved`.

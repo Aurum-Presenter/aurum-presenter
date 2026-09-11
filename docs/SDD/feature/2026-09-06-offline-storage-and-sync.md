@@ -26,7 +26,7 @@ delta replication with Supabase, conflict resolution, and which files are kept o
 
 ## Scope
 
-- IndexedDB (Dexie) as the working source of truth for all metadata on each device.
+- IndexedDB as the working source of truth for all metadata on each device.
 - A durable outbox of local mutations, replayed to Supabase when connectivity returns.
 - Delta pull per table using an `updated_at` watermark plus a server-assigned change sequence.
 - Conflict resolution: last-writer-wins per field, with a per-record conflict record kept for
@@ -103,7 +103,7 @@ folders, and a "download everything in this workspace" action with its size esti
 
 ## Backend
 
-**Local schema (Dexie)** — one store per synced table, plus:
+**Local schema (IndexedDB)** — one store per synced table, plus:
 
 | Store | Purpose |
 |---|---|
@@ -224,7 +224,7 @@ erDiagram
 ```
 
 **Indexes** — server: `(workspace_id, change_seq)` on every synced table, which is the only index
-the pull query needs; `applied_ops (applied_at)` for the purge job. Client: Dexie index on
+the pull query needs; `applied_ops (applied_at)` for the purge job. Client: an index on
 `outbox.seq` and `blobs.cached_at`.
 
 **Migration** — a shared `sync_columns` migration adds the four columns and the trigger to every

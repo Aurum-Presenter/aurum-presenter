@@ -210,7 +210,7 @@ erDiagram
 
 **Indexes** — `songs (workspace_id, updated_at)` for delta pull; `songs (workspace_id,
 folder_id)`; GIN on `songs (tags)`; `folders (workspace_id, parent_id, position)`;
-`folders (parent_id, lower(name))` unique. Client-side: Dexie compound index on
+`folders (parent_id, lower(name))` unique. Client-side: a compound index on
 `[workspace_id+folder_id]` and a separate inverted index table for search terms.
 
 **Migration** — initial schema, created with the workspaces migration.

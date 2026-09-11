@@ -6,18 +6,42 @@
 //! `options: [PERMISSION => WorkspaceManage]`. A route whose permission is wrong no longer
 //! compiles into something that runs; it does not compile.
 
+use std::path::Path;
+
 use axum::Json;
 use axum::http::{HeaderValue, Method, header};
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{any, delete, get, patch, post};
 use axum::{Router, response::IntoResponse};
 use serde_json::json;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 
 use crate::handlers::{account, auth, files, sync, workspaces};
 use crate::state::AppState;
 
+/// The API, plus the client's assets when this deployment carries them.
 pub fn router(state: AppState) -> Router {
+    match state.config.web_dir.clone() {
+        // Acceptance criterion 7: one binary and a directory of static assets. An unknown path
+        // under `/api/v1` still answers in JSON — only everything else becomes the shell.
+        Some(dir) => api_router(state)
+            .route("/api/v1/{*rest}", any(not_found))
+            .fallback_service(shell(&dir)),
+        None => api_router(state),
+    }
+}
+
+/// The shell for every client-side route.
+///
+/// The fallback has to be `index.html` itself rather than a 404: every route in the app is
+/// client-side — `/sets`, `/song/x`, `/present/y` — and a reload on any of them is a request the
+/// server has never heard of.
+fn shell(dir: &Path) -> ServeDir<ServeFile> {
+    ServeDir::new(dir).fallback(ServeFile::new(dir.join("index.html")))
+}
+
+fn api_router(state: AppState) -> Router {
     let cors = cors_layer(&state);
 
     Router::new()

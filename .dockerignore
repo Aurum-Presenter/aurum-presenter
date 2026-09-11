@@ -1,0 +1,16 @@
+# What must not reach the build context: it is either rebuilt inside the image, or it is data.
+target/
+crates/web/dist/
+web/node_modules/
+web/build/
+e2e/node_modules/
+e2e/shots/
+e2e/.state.json
+node_modules/
+.git/
+.trunk/
+.env
+.env.*
+!.env-dist
+var/
+docs/

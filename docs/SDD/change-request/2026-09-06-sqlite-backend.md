@@ -4,7 +4,7 @@ title: Self-hosted PHP backend on SQLite, replacing Supabase
 type: change-request
 status: Approved
 created: 2026-09-06
-updated: 2026-09-06
+updated: 2026-09-08
 changes:
   - feature/2026-09-06-workspaces-and-access.md
   - feature/2026-09-06-offline-storage-and-sync.md
@@ -20,6 +20,12 @@ related:
 ---
 
 # Self-hosted PHP backend on SQLite, replacing Supabase
+
+> **Amended by the [Rust rewrite](2026-09-08-rust-rewrite.md), 2026-09-08.** The server named here
+> is Rust and axum rather than PHP and Mezzio, and the client is Leptos compiled to WebAssembly
+> rather than React and Vite.
+> Everything else below still holds: the database is still SQLite, still one file per workspace plus
+> `control.sqlite`, still built from these migrations, and every rule in this document is unchanged.
 
 ## Context
 
@@ -52,12 +58,14 @@ is a file that can be copied.
 
 > Supabase-hosted; "endpoint" means a PostgREST table with RLS or an Edge Function.
 >
-> — [Accounts, workspaces and access control](../feature/2026-09-06-workspaces-and-access.md) § Backend
+> — [Accounts, workspaces and access control](../feature/2026-09-06-workspaces-and-access.md) §
+> Backend
 
 > Every synced table carries `updated_at` and a server-maintained `change_seq` (a bigint from a
 > per-workspace sequence).
 >
-> — [Offline storage and sync engine](../feature/2026-09-06-offline-storage-and-sync.md) § Business rules
+> — [Offline storage and sync engine](../feature/2026-09-06-offline-storage-and-sync.md) § Business
+> rules
 
 ## Requested change
 

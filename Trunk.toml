@@ -6,6 +6,13 @@
 target = "crates/web/index.html"
 dist = "crates/web/dist"
 
+# Pinned, not discovered. Trunk fetches these itself, and "whatever the latest release is" is not
+# a thing a reproducible build — or a build behind a proxy that will not serve the GitHub API —
+# can depend on. `wasm_bindgen` must match the `wasm-bindgen` crate in Cargo.lock exactly.
+[tools]
+wasm_bindgen = "0.2.128"
+wasm_opt = "version_123"
+
 # Tailwind reads the Rust for the class names it has to emit, so it runs before the build that
 # would otherwise beat it to the stylesheet.
 [[hooks]]

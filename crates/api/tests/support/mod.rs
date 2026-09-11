@@ -29,6 +29,15 @@ pub struct Server {
 static NEXT: AtomicU32 = AtomicU32::new(0);
 
 pub async fn server() -> Server {
+    build(None).await
+}
+
+/// A server that also carries the client's assets, as a deployment does.
+pub async fn server_serving(web_dir: std::path::PathBuf) -> Server {
+    build(Some(web_dir)).await
+}
+
+async fn build(web_dir: Option<std::path::PathBuf>) -> Server {
     let directory = std::env::temp_dir().join(format!(
         "aurum-test-{}-{}",
         std::process::id(),
@@ -42,6 +51,7 @@ pub async fn server() -> Server {
         signal_bind: "127.0.0.1:0".to_owned(),
         debug: true,
         cors_allowed_origins: vec!["http://localhost:5173".to_owned()],
+        web_dir,
         database: Database {
             control_path: directory.join("control.sqlite"),
             workspace_dir: directory.join("workspace"),
@@ -104,6 +114,33 @@ impl Answer {
 }
 
 impl Server {
+    /// A request whose answer is not JSON — the client's own assets, which the binary serves
+    /// when it has them.
+    pub async fn raw(&self, path: &str) -> (StatusCode, String) {
+        let response = self
+            .router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("GET")
+                    .uri(path)
+                    .body(Body::empty())
+                    .expect("a request"),
+            )
+            .await
+            .expect("a response");
+
+        let status = response.status();
+        let body = response
+            .into_body()
+            .collect()
+            .await
+            .expect("a body")
+            .to_bytes();
+
+        (status, String::from_utf8_lossy(&body).into_owned())
+    }
+
     pub async fn request(
         &self,
         method: &str,

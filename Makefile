@@ -62,17 +62,17 @@ mail: ## Deliver queued email (invitations, password resets)
 signal: ## Follow the stage-pairing relay, which shares the API's log
 	$(COMPOSE) logs -f api
 
+.PHONY: web-assets
+web-assets: ## Install the client's non-Rust assets (Tailwind, Workbox, the Pdfium engine)
+	cd web && npm install
+
 .PHONY: web
-web: ## Run the PWA dev server
-	cd frontend && npm run dev
+web: web-assets ## Run the client's dev server, proxying the API
+	trunk serve
 
-.PHONY: web-test
-web-test: ## Run the PWA test suite (chart parsing, transposition, conversion)
-	cd frontend && npm test
-
-.PHONY: differential
-differential: ## Run the same inputs through the TypeScript, the PHP and the Rust and diff them
-	node differential/run.mjs $(CASES)
+.PHONY: web-build
+web-build: web-assets ## Build the client into crates/web/dist
+	trunk build --release
 
 .PHONY: e2e
 e2e: ## Drive the running stack through a browser (SPEC=sheets runs a subset)

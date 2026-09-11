@@ -104,7 +104,7 @@ is lost; the Presentation API receiver page when cast.
    size; splits prefer blank lines, then sentence ends, then line ends. Never mid-line.
 3. Repeat directives (`{chorus}` referring to an earlier section) expand into their own slides.
 4. Non-song items become slides from their `content`; `blank` items become a black slide.
-5. A `sheet` display item becomes one slide per PDF page, rendered by `pdf.js` at output
+5. A `sheet` display item becomes one slide per PDF page, rendered by the sheet renderer at output
    resolution.
 6. The slide list is rebuilt only at session start and when the theme's font metrics change,
    never on slide advance.

@@ -12,6 +12,9 @@ pub struct Config {
     pub signal_bind: String,
     pub debug: bool,
     pub cors_allowed_origins: Vec<String>,
+    /// The client's built assets, served by this binary when it has them. `None` in development,
+    /// where Trunk serves them on its own port and proxies the API back here.
+    pub web_dir: Option<PathBuf>,
     pub database: Database,
     pub auth: Auth,
     pub storage: Storage,
@@ -109,6 +112,7 @@ impl Config {
             .map(|origin| origin.trim().to_owned())
             .filter(|origin| !origin.is_empty())
             .collect(),
+            web_dir: optional("WEB_DIR").map(PathBuf::from),
             database: Database {
                 control_path: optional("CONTROL_DB_PATH")
                     .map(PathBuf::from)
