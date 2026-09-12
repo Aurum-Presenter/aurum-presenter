@@ -38,8 +38,16 @@ WORKDIR /src
 # Node is here for three things, none of them application logic: Tailwind reads the Rust for the
 # class names to emit, Workbox writes the service worker over the distribution Trunk has just
 # produced, and Pdfium is copied out of node_modules rather than committed.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl pkg-config libssl-dev nodejs npm \
+#
+# Node comes from the official image, not Debian's apt package: bookworm pins Node 18, and
+# @tailwindcss/oxide needs >= 20 to install its native platform binary — under 18 the install
+# silently skips it, so `trunk build` fails at PreBuild with "Cannot find native binding".
+COPY --from=node:22-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:22-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+ && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl pkg-config libssl-dev \
  && rm -rf /var/lib/apt/lists/* \
  && rustup target add wasm32-unknown-unknown \
  && cargo install --locked trunk@0.21.14
@@ -64,6 +72,10 @@ RUN apt-get update \
 
 COPY --from=server /src/target/release/aurum-api /usr/local/bin/aurum-api
 COPY --from=client /src/crates/web/dist /app/web
+
+# Owned by aurum before the volume mount claims it, so the SQLite file it holds is writable by
+# the user the process actually runs as.
+RUN mkdir -p /app/var/data && chown -R aurum:aurum /app/var
 
 USER aurum
 WORKDIR /app
